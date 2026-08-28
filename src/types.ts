@@ -81,6 +81,15 @@ export interface Order {
   previousStatus?: OrderStatus; // Status before being moved to trash
 }
 
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  isActive?: boolean;
+  lastLogin?: string;
+}
+
 export interface StoreSettings {
   storeName: string;
   ruc: string;

@@ -122,15 +122,16 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   const [copiedClientUrl, setCopiedClientUrl] = useState(false);
 
   const clientFormUrl = typeof window !== 'undefined' ? `${window.location.origin}/pedidos` : '/pedidos';
+  const textToCopy = `Registra los datos de entrega aquí: ${clientFormUrl}`;
 
   const handleCopyClientUrl = async () => {
     try {
-      await navigator.clipboard.writeText(clientFormUrl);
+      await navigator.clipboard.writeText(textToCopy);
       setCopiedClientUrl(true);
       setTimeout(() => setCopiedClientUrl(false), 2500);
     } catch {
       const temp = document.createElement('textarea');
-      temp.value = clientFormUrl;
+      temp.value = textToCopy;
       document.body.appendChild(temp);
       temp.select();
       document.execCommand('copy');

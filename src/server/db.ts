@@ -153,12 +153,44 @@ export async function initDatabaseStructure(): Promise<{ success: boolean; messa
       );
     `);
 
+    // 5. Table: admin_users
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id VARCHAR(50) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'admin',
+        is_active BOOLEAN DEFAULT TRUE,
+        last_login TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    // Seed default admin users if they don't exist
+    const defaultSeedUsers = [
+      { id: 'usr-1', email: 'zhujrai@gmail.com', name: 'Zhujrai', role: 'superadmin' },
+      { id: 'usr-2', email: 'zhujrai278@gmail.com', name: 'Zhujrai 278', role: 'admin' },
+      { id: 'usr-3', email: 'lizlindaura@gmail.com', name: 'Liz Lindaura', role: 'admin' },
+      { id: 'usr-4', email: 'albsal611@gmail.com', name: 'Alberto Salinas', role: 'admin' },
+    ];
+
+    for (const u of defaultSeedUsers) {
+      await client.query(`
+        INSERT INTO admin_users (id, email, password_hash, name, role, is_active, updated_at)
+        VALUES ($1, $2, $3, $4, $5, TRUE, NOW())
+        ON CONFLICT (email) DO NOTHING;
+      `, [u.id, u.email.toLowerCase(), 'Itzelita', u.name, u.role]);
+    }
+
     // Indexes for fast queries
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
       CREATE INDEX IF NOT EXISTS idx_orders_dispatch_date ON orders(dispatch_date);
       CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON orders(customer_phone);
       CREATE INDEX IF NOT EXISTS idx_agencies_courier ON agencies(courier);
+      CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
     `);
 
     await client.query('COMMIT');
@@ -166,8 +198,8 @@ export async function initDatabaseStructure(): Promise<{ success: boolean; messa
 
     return {
       success: true,
-      message: 'Estructura de tablas en Supabase / PostgreSQL creada e inicializada correctamente.',
-      tables: ['orders', 'shipping_config', 'store_settings', 'agencies']
+      message: 'Estructura de tablas en Supabase / PostgreSQL creada e inicializada correctamente con usuarios administrativos.',
+      tables: ['orders', 'shipping_config', 'store_settings', 'agencies', 'admin_users']
     };
   } catch (err: any) {
     await client.query('ROLLBACK');
@@ -512,3 +544,43 @@ export async function saveStoreSettings(settings: StoreSettings): Promise<StoreS
     return settings;
   }
 }
+
+// ================= ADMIN USERS CRUD ================= //
+
+export async function fetchAdminUsers(): Promise<any[]> {
+  const p = getDbPool();
+  if (!p) {
+    return [
+      { id: 'usr-1', email: 'zhujrai@gmail.com', name: 'Zhujrai', role: 'superadmin', is_active: true },
+      { id: 'usr-2', email: 'zhujrai278@gmail.com', name: 'Zhujrai 278', role: 'admin', is_active: true },
+      { id: 'usr-3', email: 'lizlindaura@gmail.com', name: 'Liz Lindaura', role: 'admin', is_active: true },
+      { id: 'usr-4', email: 'albsal611@gmail.com', name: 'Alberto Salinas', role: 'admin', is_active: true },
+    ];
+  }
+
+  try {
+    const { rows } = await p.query(
+      'SELECT id, email, name, role, is_active, last_login, created_at, updated_at FROM admin_users ORDER BY created_at ASC'
+    );
+    return rows;
+  } catch (err) {
+    console.error('Error fetching admin users:', err);
+    return [];
+  }
+}
+
+export async function fetchAdminUserByEmail(email: string): Promise<any | null> {
+  const p = getDbPool();
+  if (!p) return null;
+
+  try {
+    const { rows } = await p.query(
+      'SELECT id, email, password_hash, name, role, is_active FROM admin_users WHERE LOWER(email) = $1',
+      [email.toLowerCase().trim()]
+    );
+    return rows[0] || null;
+  } catch {
+    return null;
+  }
+}
+

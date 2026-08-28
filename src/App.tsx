@@ -5,7 +5,8 @@ import {
   KnownCustomer, 
   StoreSettings,
   ShippingMethodsConfig,
-  Agency
+  Agency,
+  AdminUser
 } from './types';
 import { 
   STORE_SETTINGS, 
@@ -95,10 +96,53 @@ export default function App() {
   // Current view state: 'admin' (by default on /) or 'cliente' (on /pedidos)
   const [currentView, setCurrentView] = useState<'cliente' | 'admin'>(getInitialView);
 
-  // Admin authentication state
+  // Admin authentication state with persistent credentials check
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true';
+    const isSessionAuth = sessionStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true';
+    const isLocalAuth = localStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true';
+    const hasToken = Boolean(localStorage.getItem('logiperu_admin_token') || sessionStorage.getItem('logiperu_admin_token'));
+    return (isSessionAuth || isLocalAuth) && (hasToken || Boolean(localStorage.getItem('logiperu_admin_user')));
   });
+
+  // Current logged in admin user
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
+    const saved = localStorage.getItem('logiperu_admin_user') || sessionStorage.getItem('logiperu_admin_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  // Auto-verify saved session token with backend on mount
+  useEffect(() => {
+    const token = localStorage.getItem('logiperu_admin_token') || sessionStorage.getItem('logiperu_admin_token');
+    if (token) {
+      fetch('/api/admin/verify-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.valid) {
+            setIsAdminAuthenticated(true);
+            if (data.user) {
+              setAdminUser(data.user);
+              if (localStorage.getItem('logiperu_admin_token')) {
+                localStorage.setItem('logiperu_admin_user', JSON.stringify(data.user));
+              }
+            }
+          }
+        })
+        .catch(() => {
+          // If server temporarily unreachable, keep client session active
+        });
+    }
+  }, []);
 
   // Orders State with localStorage persistence
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -403,17 +447,34 @@ export default function App() {
   }, [marvisurAgencies]);
 
   // Handle admin login success
-  const handleAdminLoginSuccess = () => {
+  const handleAdminLoginSuccess = (token?: string, user?: AdminUser, remember = true) => {
     setIsAdminAuthenticated(true);
-    sessionStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
-    showToast('Sesión de Administrador iniciada correctamente');
+    if (user) {
+      setAdminUser(user);
+    }
+    if (remember) {
+      localStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
+      if (token) localStorage.setItem('logiperu_admin_token', token);
+      if (user) localStorage.setItem('logiperu_admin_user', JSON.stringify(user));
+    } else {
+      sessionStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
+      if (token) sessionStorage.setItem('logiperu_admin_token', token);
+      if (user) sessionStorage.setItem('logiperu_admin_user', JSON.stringify(user));
+    }
+    showToast(`¡Bienvenido ${user?.name || 'Administrador'}! Sesión iniciada.`);
   };
 
   // Handle admin logout
   const handleAdminLogout = () => {
     setIsAdminAuthenticated(false);
+    setAdminUser(null);
+    localStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
     sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-    showToast('Sesión de Administrador cerrada');
+    localStorage.removeItem('logiperu_admin_token');
+    sessionStorage.removeItem('logiperu_admin_token');
+    localStorage.removeItem('logiperu_admin_user');
+    sessionStorage.removeItem('logiperu_admin_user');
+    showToast('Sesión de Administrador cerrada correctamente');
   };
 
   // Handle new order creation from Client form
@@ -545,6 +606,7 @@ export default function App() {
       <Navbar
         currentView={currentView}
         isAdminAuthenticated={isAdminAuthenticated}
+        adminUser={adminUser}
         onNavigateToClient={() => navigateToView('cliente')}
         onNavigateToAdmin={() => navigateToView('admin')}
         onLogout={handleAdminLogout}

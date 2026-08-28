@@ -9,7 +9,7 @@ import {
   Check, 
   Camera
 } from 'lucide-react';
-import { StoreSettings } from '../types';
+import { StoreSettings, AdminUser } from '../types';
 import { getBrandLogo } from '../utils/formatters';
 import { LogoUploadModal } from './LogoUploadModal';
 import { ShareFormModal } from './ShareFormModal';
@@ -17,6 +17,7 @@ import { ShareFormModal } from './ShareFormModal';
 interface NavbarProps {
   currentView: 'cliente' | 'admin';
   isAdminAuthenticated: boolean;
+  adminUser?: AdminUser | null;
   onNavigateToClient: () => void;
   onNavigateToAdmin: () => void;
   onLogout: () => void;
@@ -31,6 +32,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   isAdminAuthenticated,
+  adminUser,
   onNavigateToClient,
   onNavigateToAdmin,
   onLogout,
@@ -138,15 +140,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Logo</span>
                 </button>
 
-                <div className={`hidden lg:flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-black shadow-2xs ${
+                <div className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs ${
                   isDark
                     ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-300'
                     : 'border-emerald-300 bg-emerald-50 text-emerald-950'
                 }`}>
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono-meta text-[11px]">OPERADOR</span>
+                  <span className="font-mono text-[11px] font-bold truncate max-w-[140px] sm:max-w-[200px]" title={adminUser?.email || 'Administrador'}>
+                    {adminUser?.email ? adminUser.email.split('@')[0] : 'ADMIN'}
+                  </span>
+                  {adminUser?.role === 'superadmin' && (
+                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      SUPER
+                    </span>
+                  )}
                   {pendingCount > 0 && (
-                    <span className="ml-1 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-blue-600 text-white">
+                    <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-blue-600 text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
                       {pendingCount}
                     </span>
                   )}
@@ -160,7 +169,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ? 'bg-zinc-900/80 hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
                       : 'bg-white hover:bg-red-50 text-zinc-800 hover:text-red-700 border-zinc-200 hover:border-red-300'
                   }`}
-                  title="Cerrar Sesión de Administrador"
+                  title={`Cerrar Sesión (${adminUser?.email || 'Admin'})`}
                 >
                   <LogOut className="w-3.5 h-3.5 stroke-[2.2]" />
                   <span>Salir</span>

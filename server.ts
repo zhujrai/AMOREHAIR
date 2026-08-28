@@ -12,15 +12,18 @@ import {
   fetchShippingConfig, 
   saveShippingConfig, 
   fetchStoreSettings, 
-  saveStoreSettings 
+  saveStoreSettings,
+  fetchAdminUsers 
 } from './src/server/db.ts';
 import {
+  authenticateUser,
   verifyAdminPin,
   checkRateLimit,
   recordFailedAttempt,
   resetRateLimit,
   generateAdminSessionToken,
-  validateAdminSessionToken
+  validateAdminSessionToken,
+  INITIAL_AUTHORIZED_USERS
 } from './src/server/auth.ts';
 
 async function startServer() {
@@ -44,10 +47,13 @@ async function startServer() {
     });
   });
 
-  // PIN-based Authentication with Rate Limiting and Timing Attack Protection
-  app.post('/api/admin/login', (req, res) => {
+  // User & Password Authentication with Rate Limiting & Brute-force Protection
+  app.post('/api/admin/login', async (req, res) => {
     const ip = req.ip || req.socket.remoteAddress || 'unknown-client';
-    const { pin } = req.body;
+    const { email, username, password, pin } = req.body;
+
+    const targetEmail = (email || username || '').trim().toLowerCase();
+    const targetPassword = (password || pin || '').trim();
 
     const rateCheck = checkRateLimit(ip);
     if (!rateCheck.allowed) {
@@ -59,22 +65,23 @@ async function startServer() {
       });
     }
 
-    if (!pin || typeof pin !== 'string') {
+    if (!targetEmail && !targetPassword) {
       return res.status(400).json({
         success: false,
-        error: 'Ingresa el PIN de seguridad.',
+        error: 'Ingresa tu usuario (correo) y contraseña.',
         remainingAttempts: rateCheck.remainingAttempts
       });
     }
 
-    const isValid = verifyAdminPin(pin);
+    // Support email + password authentication
+    const authResult = await authenticateUser(targetEmail, targetPassword);
 
-    if (!isValid) {
+    if (!authResult.success || !authResult.user) {
       const record = recordFailedAttempt(ip);
       if (record.lockoutSeconds > 0) {
         return res.status(429).json({
           success: false,
-          error: `PIN incorrecto. Límite de intentos alcanzado. Bloqueado por ${record.lockoutSeconds} segundos.`,
+          error: `Credenciales incorrectas. Límite de intentos alcanzado. Bloqueado por ${record.lockoutSeconds} segundos.`,
           lockoutSeconds: record.lockoutSeconds,
           remainingAttempts: 0
         });
@@ -82,7 +89,7 @@ async function startServer() {
 
       return res.status(401).json({
         success: false,
-        error: `PIN incorrecto. Te quedan ${record.remainingAttempts} ${record.remainingAttempts === 1 ? 'intento' : 'intentos'}.`,
+        error: authResult.error || `Usuario o contraseña incorrectos. Te quedan ${record.remainingAttempts} ${record.remainingAttempts === 1 ? 'intento' : 'intentos'}.`,
         remainingAttempts: record.remainingAttempts,
         lockoutSeconds: 0
       });
@@ -90,11 +97,12 @@ async function startServer() {
 
     // Success: reset rate limit & issue signed session token
     resetRateLimit(ip);
-    const session = generateAdminSessionToken();
+    const session = generateAdminSessionToken(authResult.user);
 
     return res.json({
       success: true,
-      message: 'Acceso administrativo autorizado.',
+      message: `¡Bienvenido, ${authResult.user.name}!`,
+      user: authResult.user,
       token: session.token,
       expiresAt: session.expiresAt
     });
@@ -102,8 +110,24 @@ async function startServer() {
 
   app.post('/api/admin/verify-token', (req, res) => {
     const { token } = req.body;
-    const isValid = validateAdminSessionToken(token);
-    res.json({ valid: isValid });
+    const result = validateAdminSessionToken(token);
+    res.json({ valid: result.valid, user: result.user });
+  });
+
+  // Get list of authorized admin user emails (for UI helpers/badges)
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      const users = await fetchAdminUsers();
+      res.json({
+        success: true,
+        users: users.map(u => ({ id: u.id, email: u.email, name: u.name, role: u.role, is_active: u.is_active }))
+      });
+    } catch {
+      res.json({
+        success: true,
+        users: INITIAL_AUTHORIZED_USERS.map(u => ({ id: u.id, email: u.email, name: u.name, role: u.role, is_active: true }))
+      });
+    }
   });
 
   // Database status and management endpoints
