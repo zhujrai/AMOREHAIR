@@ -80,13 +80,20 @@ export default function App() {
     }
   }, []);
 
-  // Current view state: 'cliente' or 'admin'
-  const [currentView, setCurrentView] = useState<'cliente' | 'admin'>(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '#admin') {
-      return 'admin';
+  // Helper to determine initial view based on URL pathname (/pedidos vs /)
+  const getInitialView = (): 'cliente' | 'admin' => {
+    if (typeof window === 'undefined') return 'admin';
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (path.startsWith('/pedidos') || hash === '#pedidos' || hash === '#cliente') {
+      return 'cliente';
     }
-    return 'cliente';
-  });
+    // Default main URL is the admin dashboard / PIN login
+    return 'admin';
+  };
+
+  // Current view state: 'admin' (by default on /) or 'cliente' (on /pedidos)
+  const [currentView, setCurrentView] = useState<'cliente' | 'admin'>(getInitialView);
 
   // Admin authentication state
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
@@ -314,29 +321,46 @@ export default function App() {
     showToast('Identidad y configuración de la empresa actualizadas');
   };
 
-  // Sync hash routing
+  // Sync browser path and hash changes (e.g. forward/back buttons, manual URL changes)
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash === '#admin') {
-        setCurrentView('admin');
-      } else {
+    const handleLocationChange = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path.startsWith('/pedidos') || hash === '#pedidos' || hash === '#cliente') {
         setCurrentView('cliente');
+      } else {
+        setCurrentView('admin');
       }
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
-  // Update hash when currentView changes
+  // Update browser URL and view state
   const navigateToView = (view: 'cliente' | 'admin') => {
     setCurrentView(view);
-    if (view === 'admin') {
-      window.location.hash = '#admin';
-    } else {
-      window.location.hash = '';
+    const targetPath = view === 'cliente' ? '/pedidos' : '/';
+    if (typeof window !== 'undefined' && window.location.pathname !== targetPath) {
+      window.history.pushState({ view }, '', targetPath);
     }
   };
+
+  // Sync document title dynamically
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const brandName = storeSettings.storeName || 'AMORE SALON HAIR STYLE';
+      if (currentView === 'cliente') {
+        document.title = `${brandName} • Formulario de Envíos`;
+      } else {
+        document.title = `${brandName} • Panel Administrativo`;
+      }
+    }
+  }, [currentView, storeSettings.storeName]);
 
   // Sync theme with document class & localStorage
   useEffect(() => {

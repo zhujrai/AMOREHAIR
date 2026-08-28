@@ -63,8 +63,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2.5 sm:gap-4">
             <div 
               className="flex items-center cursor-pointer select-none py-0" 
-              onClick={onNavigateToClient}
-              title="AMORE SALON HAIR STYLE"
+              onClick={isClientView ? onNavigateToClient : onNavigateToAdmin}
+              title={isClientView ? "AMORE SALON - Formulario de Envíos" : "AMORE SALON - Panel Administrativo"}
             >
               {brandLogo ? (
                 <div className="relative flex items-center h-12 sm:h-14 overflow-hidden">
@@ -87,11 +87,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <div className={`hidden sm:flex items-center gap-2 pl-3 border-l ${isDark ? 'border-white/10' : 'border-zinc-200'}`}>
               <span className="font-mono-meta text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-zinc-700 dark:text-zinc-300 font-extrabold">
-                {currentView === 'admin' ? 'TABLERO DE DESPACHOS' : 'PROGRAMACIÓN DE ENVÍOS'}
+                {currentView === 'admin' ? 'TABLERO DE DESPACHOS' : 'FORMULARIO DE ENVÍOS'}
               </span>
               {currentView === 'admin' && isAdminAuthenticated && (
                 <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
                   {totalOrdersCount ?? pendingCount} pedidos
+                </span>
+              )}
+              {currentView === 'cliente' && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono">
+                  /pedidos
                 </span>
               )}
             </div>
@@ -100,9 +105,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Header Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             
-            {/* If Admin is logged in, show status badge, Logo button, Share Link button, and Logout */}
+            {/* If Admin is logged in, show View Client Form button, status badge, Logo button, Share Link button, and Logout */}
             {currentView === 'admin' && isAdminAuthenticated && (
               <>
+                {/* Botón Ver Formulario Cliente (/pedidos) */}
+                <button
+                  id="navbar-view-client-form-btn"
+                  onClick={onNavigateToClient}
+                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                    isDark
+                      ? 'border-white/10 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200'
+                      : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-800'
+                  }`}
+                  title="Ver Formulario de Clientes (/pedidos)"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-blue-500" />
+                  <span>Ver Formulario</span>
+                </button>
+
                 {/* Botón Espacio para Logo de la Marca */}
                 <button
                   id="navbar-edit-logo-btn"
@@ -148,6 +168,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               </>
             )}
 
+            {/* If in Client view, offer button to go to Admin Panel */}
+            {currentView === 'cliente' && (
+              <button
+                id="header-goto-admin-btn"
+                onClick={onNavigateToAdmin}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
+                  isDark
+                    ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white'
+                    : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900'
+                }`}
+                title="Acceso al Tablero Administrativo"
+              >
+                <span>Panel Admin</span>
+              </button>
+            )}
+
             {/* If on Admin login screen, offer button back to public client form */}
             {currentView === 'admin' && !isAdminAuthenticated && (
               <button
@@ -158,9 +194,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-white'
                     : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900'
                 }`}
+                title="Ir al Formulario de Envíos (/pedidos)"
               >
                 <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
-                <span>Formulario</span>
+                <span>Formulario (/pedidos)</span>
               </button>
             )}
 

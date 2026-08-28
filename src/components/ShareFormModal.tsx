@@ -34,7 +34,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
   if (!isOpen) return null;
 
   const publicFormUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}${window.location.pathname}` 
+    ? `${window.location.origin}/pedidos` 
     : '';
 
   const defaultShareMessage = `📦 *${storeSettings.storeName || 'AMORE SALON HAIR STYLE'}*\nPor favor, registra los datos para programar tu envío aquí:\n👉 ${publicFormUrl}\n\n¡Muchas gracias por tu compra! ✨`;

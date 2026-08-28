@@ -482,6 +482,13 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+    
+    // Explicit SPA routes for client form and admin dashboard
+    app.get(['/', '/pedidos', '/pedidos/*', '/admin', '/dashboard'], (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+
+    // Catch-all for other subpaths
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

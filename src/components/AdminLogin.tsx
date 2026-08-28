@@ -170,12 +170,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="admin-pin-input" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+              <label htmlFor="admin-pin-input" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-zinc-500" />
-                PIN de Acceso
+                PIN de Seguridad
               </label>
               {remainingAttempts !== null && remainingAttempts < 5 && !isLocked && (
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
                   {remainingAttempts} {remainingAttempts === 1 ? 'intento' : 'intentos'}
                 </span>
               )}
@@ -185,7 +185,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
               <input
                 id="admin-pin-input"
                 type={showPin ? 'text' : 'password'}
-                placeholder="Ingresa el PIN..."
+                placeholder="Ingresa tu PIN..."
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 disabled={isLocked || isLoading}
@@ -214,23 +214,38 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             id="admin-pin-submit-btn"
             type="submit"
             disabled={isLoading || isLocked || !pin.trim()}
-            className="w-full py-3 px-4 rounded-2xl font-semibold text-sm text-white bg-zinc-900 hover:bg-black dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+            className="w-full py-3 px-4 rounded-2xl font-bold text-sm text-white bg-zinc-900 hover:bg-black dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>Ingresar</span>
+                <span>Ingresar al Tablero</span>
                 <LogIn className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
+        {/* Client Form Direct Link Banner */}
+        <div className="mt-6 pt-5 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col items-center gap-2 text-center">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            ¿Eres cliente o necesitas registrar un nuevo envío?
+          </p>
+          <button
+            type="button"
+            onClick={onBackToClient}
+            className="inline-flex items-center gap-1.5 text-xs font-black text-red-600 dark:text-[#FF7060] hover:underline cursor-pointer"
+          >
+            <span>Ir al Formulario de Envíos (/pedidos)</span>
+            <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+          </button>
+        </div>
+
         {/* Minimalist Security Badge */}
-        <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500">
+        <div className="mt-4 pt-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 font-medium">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Acceso seguro protegido</span>
+          <span>Acceso seguro • AMORE SALON Logística</span>
         </div>
 
       </div>
