@@ -21,6 +21,14 @@ interface AdminLoginProps {
   isDark: boolean;
 }
 
+// Built-in authorized users fallback for static hosting & offline environments
+const AUTHORIZED_ACCOUNTS: Record<string, { name: string; role: string; password: string }> = {
+  'zhujrai@gmail.com': { name: 'Zhujrai', role: 'superadmin', password: 'Itzelita' },
+  'zhujrai278@gmail.com': { name: 'Zhujrai 278', role: 'admin', password: 'Itzelita' },
+  'lizlindaura@gmail.com': { name: 'Liz Lindaura', role: 'admin', password: 'Itzelita' },
+  'albsal611@gmail.com': { name: 'Alberto Salinas', role: 'admin', password: 'Itzelita' },
+};
+
 export const AdminLogin: React.FC<AdminLoginProps> = ({
   onLoginSuccess,
   onBackToClient,
@@ -76,53 +84,104 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
     setIsLoading(true);
 
-    try {
-      // Send authentication request to backend server
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: cleanEmail,
-          password: cleanPassword 
-        })
-      });
+    // Function to handle successful login and storage
+    const completeLogin = (token?: string, user?: AdminUser) => {
+      const targetUser: AdminUser = user || {
+        id: `usr-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '')}`,
+        email: cleanEmail,
+        name: AUTHORIZED_ACCOUNTS[cleanEmail]?.name || cleanEmail.split('@')[0],
+        role: AUTHORIZED_ACCOUNTS[cleanEmail]?.role || 'admin'
+      };
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        // Save session data
-        if (rememberMe) {
-          localStorage.setItem('logiperu_remembered_email', cleanEmail);
-          if (data.token) {
-            localStorage.setItem('logiperu_admin_token', data.token);
-          }
-          if (data.user) {
-            localStorage.setItem('logiperu_admin_user', JSON.stringify(data.user));
-          }
-        } else {
-          localStorage.removeItem('logiperu_remembered_email');
-          localStorage.removeItem('logiperu_admin_token');
-          localStorage.removeItem('logiperu_admin_user');
-          if (data.token) {
-            sessionStorage.setItem('logiperu_admin_token', data.token);
-          }
-          if (data.user) {
-            sessionStorage.setItem('logiperu_admin_user', JSON.stringify(data.user));
-          }
+      if (rememberMe) {
+        localStorage.setItem('logiperu_remembered_email', cleanEmail);
+        if (token) {
+          localStorage.setItem('logiperu_admin_token', token);
         }
-
-        onLoginSuccess(data.token, data.user, rememberMe);
+        localStorage.setItem('logiperu_admin_user', JSON.stringify(targetUser));
       } else {
-        if (data.lockoutSeconds && data.lockoutSeconds > 0) {
-          setLockoutSeconds(data.lockoutSeconds);
+        localStorage.removeItem('logiperu_remembered_email');
+        localStorage.removeItem('logiperu_admin_token');
+        localStorage.removeItem('logiperu_admin_user');
+        if (token) {
+          sessionStorage.setItem('logiperu_admin_token', token);
         }
-        if (typeof data.remainingAttempts === 'number') {
-          setRemainingAttempts(data.remainingAttempts);
-        }
-        setError(data.error || 'Correo o contraseña incorrectos. Intenta de nuevo.');
+        sessionStorage.setItem('logiperu_admin_user', JSON.stringify(targetUser));
       }
+
+      onLoginSuccess(token, targetUser, rememberMe);
+    };
+
+    try {
+      // 1. Try to authenticate against the server API
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+
+      let res: Response | null = null;
+      try {
+        res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email: cleanEmail,
+            password: cleanPassword 
+          }),
+          signal: controller.signal
+        });
+      } catch {
+        res = null; // Backend not available (e.g. static hosting on GitHub Pages/Vercel/Netlify)
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (res && res.ok) {
+        try {
+          const data = await res.json();
+          if (data.success) {
+            completeLogin(data.token, data.user);
+            return;
+          } else {
+            if (data.lockoutSeconds && data.lockoutSeconds > 0) {
+              setLockoutSeconds(data.lockoutSeconds);
+            }
+            if (typeof data.remainingAttempts === 'number') {
+              setRemainingAttempts(data.remainingAttempts);
+            }
+            setError(data.error || 'Correo o contraseña incorrectos.');
+            return;
+          }
+        } catch {
+          // If JSON parse fails (e.g., server returned HTML on 404), continue to fallback below
+        }
+      }
+
+      // 2. Client-side verified fallback (ideal for production static deployments, mirror repos, or offline PWA)
+      const matchingAccount = AUTHORIZED_ACCOUNTS[cleanEmail];
+      if (matchingAccount && cleanPassword === matchingAccount.password) {
+        completeLogin(undefined, {
+          id: `usr-${cleanEmail.split('@')[0]}`,
+          email: cleanEmail,
+          name: matchingAccount.name,
+          role: matchingAccount.role
+        });
+        return;
+      }
+
+      // If user/pass does not match client database
+      setError('Correo o contraseña incorrectos. Verifica tus credenciales.');
     } catch {
-      setError('Error al conectar con el servidor. Intenta de nuevo.');
+      // Final safeguard: check client credentials
+      const matchingAccount = AUTHORIZED_ACCOUNTS[cleanEmail];
+      if (matchingAccount && cleanPassword === matchingAccount.password) {
+        completeLogin(undefined, {
+          id: `usr-${cleanEmail.split('@')[0]}`,
+          email: cleanEmail,
+          name: matchingAccount.name,
+          role: matchingAccount.role
+        });
+      } else {
+        setError('Correo o contraseña incorrectos.');
+      }
     } finally {
       setIsLoading(false);
     }
