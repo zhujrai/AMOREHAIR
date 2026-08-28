@@ -17,6 +17,7 @@ import { ShareFormModal } from './ShareFormModal';
 interface NavbarProps {
   currentView: 'cliente' | 'admin';
   isAdminAuthenticated: boolean;
+  adminUserEmail?: string | null;
   onNavigateToClient: () => void;
   onNavigateToAdmin: () => void;
   onLogout: () => void;
@@ -31,6 +32,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   isAdminAuthenticated,
+  adminUserEmail,
   onNavigateToClient,
   onNavigateToAdmin,
   onLogout,
@@ -138,13 +140,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Logo</span>
                 </button>
 
+                {/* Admin User Info / Email Badge */}
+                {adminUserEmail && (
+                  <div 
+                    className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-semibold max-w-[220px] truncate shadow-2xs ${
+                      isDark
+                        ? 'border-amber-500/20 bg-amber-500/10 text-amber-300'
+                        : 'border-amber-300/80 bg-amber-50 text-amber-950'
+                    }`}
+                    title={`Administrador autenticado: ${adminUserEmail}`}
+                  >
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                    <span className="truncate text-[11px] font-bold">{adminUserEmail}</span>
+                  </div>
+                )}
+
                 <div className={`hidden lg:flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-black shadow-2xs ${
                   isDark
                     ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-300'
                     : 'border-emerald-300 bg-emerald-50 text-emerald-950'
                 }`}>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono-meta text-[11px]">OPERADOR</span>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="font-mono-meta text-[11px]">ADMIN</span>
                   {pendingCount > 0 && (
                     <span className="ml-1 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-blue-600 text-white">
                       {pendingCount}
@@ -160,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ? 'bg-zinc-900/80 hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
                       : 'bg-white hover:bg-red-50 text-zinc-800 hover:text-red-700 border-zinc-200 hover:border-red-300'
                   }`}
-                  title="Cerrar Sesión de Administrador"
+                  title="Cerrar Sesión de Administrador (Google / Supabase)"
                 >
                   <LogOut className="w-3.5 h-3.5 stroke-[2.2]" />
                   <span>Salir</span>

@@ -153,12 +153,34 @@ export async function initDatabaseStructure(): Promise<{ success: boolean; messa
       );
     `);
 
+    // 5. Table: authorized_users
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS authorized_users (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        role VARCHAR(50) DEFAULT 'admin',
+        full_name VARCHAR(255),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      INSERT INTO authorized_users (email, role, full_name)
+      VALUES 
+        ('zhujrai@gmail.com', 'admin', 'Administrador AMORE'),
+        ('zhujrai278@gmail.com', 'admin', 'Administrador AMORE'),
+        ('lizlindaura@gmail.com', 'admin', 'Liz Lindaura'),
+        ('albsal611@gmail.com', 'admin', 'Alberto Salinas')
+      ON CONFLICT (email) DO UPDATE SET is_active = TRUE;
+    `);
+
     // Indexes for fast queries
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
       CREATE INDEX IF NOT EXISTS idx_orders_dispatch_date ON orders(dispatch_date);
       CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON orders(customer_phone);
       CREATE INDEX IF NOT EXISTS idx_agencies_courier ON agencies(courier);
+      CREATE INDEX IF NOT EXISTS idx_authorized_users_email ON authorized_users(email);
     `);
 
     await client.query('COMMIT');
@@ -167,7 +189,7 @@ export async function initDatabaseStructure(): Promise<{ success: boolean; messa
     return {
       success: true,
       message: 'Estructura de tablas en Supabase / PostgreSQL creada e inicializada correctamente.',
-      tables: ['orders', 'shipping_config', 'store_settings', 'agencies']
+      tables: ['orders', 'shipping_config', 'store_settings', 'agencies', 'authorized_users']
     };
   } catch (err: any) {
     await client.query('ROLLBACK');
@@ -512,3 +534,35 @@ export async function saveStoreSettings(settings: StoreSettings): Promise<StoreS
     return settings;
   }
 }
+
+// ================= AUTHORIZED ADMIN USERS ================= //
+
+export async function isAuthorizedAdminEmail(email: string): Promise<boolean> {
+  if (!email) return false;
+  const cleanEmail = email.trim().toLowerCase();
+  const defaultList = [
+    'zhujrai@gmail.com',
+    'zhujrai278@gmail.com',
+    'lizlindaura@gmail.com',
+    'albsal611@gmail.com'
+  ];
+  
+  const pool = getDbPool();
+  if (!pool) {
+    return defaultList.includes(cleanEmail);
+  }
+
+  try {
+    const res = await pool.query(
+      'SELECT email FROM authorized_users WHERE LOWER(email) = $1 AND (is_active IS NULL OR is_active = TRUE) LIMIT 1',
+      [cleanEmail]
+    );
+    if (res.rows.length > 0) return true;
+    // Fallback check against default allowed emails if table is empty
+    return defaultList.includes(cleanEmail);
+  } catch (err) {
+    console.error('Error checking authorized_users in DB:', err);
+    return defaultList.includes(cleanEmail);
+  }
+}
+

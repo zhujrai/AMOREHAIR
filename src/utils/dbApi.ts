@@ -121,17 +121,81 @@ ALTER TABLE agencies ADD COLUMN IF NOT EXISTS lat NUMERIC(10, 6);
 ALTER TABLE agencies ADD COLUMN IF NOT EXISTS lng NUMERIC(10, 6);
 ALTER TABLE agencies ADD COLUMN IF NOT EXISTS data JSONB;
 
--- 5. ACCESO Y PERMISOS TOTALES (RLS Deshabilitado para acceso continuo)
+-- 5. TABLA DE USUARIOS ADMINISTRADORES AUTORIZADOS
+CREATE TABLE IF NOT EXISTS authorized_users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  role VARCHAR(50) DEFAULT 'admin',
+  full_name VARCHAR(255),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Inserción inicial de administradores autorizados
+INSERT INTO authorized_users (email, role, full_name)
+VALUES 
+  ('zhujrai@gmail.com', 'admin', 'Administrador AMORE'),
+  ('zhujrai278@gmail.com', 'admin', 'Administrador AMORE'),
+  ('lizlindaura@gmail.com', 'admin', 'Liz Lindaura'),
+  ('albsal611@gmail.com', 'admin', 'Alberto Salinas')
+ON CONFLICT (email) DO UPDATE SET is_active = TRUE;
+
+-- 6. ACCESO Y PERMISOS TOTALES (RLS Deshabilitado para acceso continuo y validación)
 ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
 ALTER TABLE shipping_config DISABLE ROW LEVEL SECURITY;
 ALTER TABLE store_settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE agencies DISABLE ROW LEVEL SECURITY;
+ALTER TABLE authorized_users DISABLE ROW LEVEL SECURITY;
 
 GRANT ALL ON orders TO anon, authenticated, service_role;
 GRANT ALL ON shipping_config TO anon, authenticated, service_role;
 GRANT ALL ON store_settings TO anon, authenticated, service_role;
 GRANT ALL ON agencies TO anon, authenticated, service_role;
+GRANT ALL ON authorized_users TO anon, authenticated, service_role;
 `;
+
+/**
+ * Consulta la base de datos Supabase para verificar si un email está en authorized_users
+ */
+export async function checkUserAuthorization(email: string): Promise<{ authorized: boolean; error?: string }> {
+  if (!email) return { authorized: false, error: 'Email no proporcionado' };
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    
+    // Consulta directa en la tabla authorized_users
+    const { data, error } = await supabase
+      .from('authorized_users')
+      .select('email, role, is_active')
+      .ilike('email', cleanEmail)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Error consultando authorized_users en Supabase:', error.message);
+      // Fallback a endpoint de servidor si hay error de permisos en cliente
+      try {
+        const res = await fetch('/api/admin/verify-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail })
+        });
+        if (res.ok) {
+          const sData = await res.json();
+          return { authorized: !!sData.authorized };
+        }
+      } catch {}
+      return { authorized: false, error: error.message };
+    }
+
+    if (data && (data.is_active === undefined || data.is_active === true)) {
+      return { authorized: true };
+    }
+
+    return { authorized: false };
+  } catch (err: any) {
+    return { authorized: false, error: err.message };
+  }
+}
 
 export interface DbStatusInfo {
   connected: boolean;
