@@ -20,7 +20,10 @@ import {
   CheckCircle2,
   ArrowRight,
   HelpCircle,
-  Share2
+  Share2,
+  Sun,
+  Moon,
+  Lock
 } from 'lucide-react';
 import { Agency, KnownCustomer, Order, ShippingMethodsConfig, ShippingType, StoreSettings } from '../types';
 import { SHALOM_AGENCIES, OLVA_AGENCIES, MARVISUR_AGENCIES, LIMA_DISTRICTS } from '../data/agencies';
@@ -31,11 +34,13 @@ import {
   getCutoffDisplay,
   formatPeruvianDate, 
   getNext4DispatchDates,
-  generateOrderId 
+  generateOrderId,
+  getBrandLogo
 } from '../utils/formatters';
 import { ShippingTypeModal } from './ShippingTypeModal';
 import { AgencySearchModal } from './AgencySearchModal';
 import { DateSelectModal } from './DateSelectModal';
+import { ShareFormModal } from './ShareFormModal';
 
 interface ClientShippingFormProps {
   storeSettings: StoreSettings;
@@ -47,6 +52,7 @@ interface ClientShippingFormProps {
   marvisurAgencies?: Agency[];
   isDark: boolean;
   setIsDark?: (dark: boolean) => void;
+  onNavigateToAdmin?: () => void;
 }
 
 export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
@@ -66,6 +72,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   marvisurAgencies = MARVISUR_AGENCIES,
   isDark,
   setIsDark,
+  onNavigateToAdmin,
 }) => {
   // Form State
   const [phone, setPhone] = useState('');
@@ -100,6 +107,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   const [showOlvaSearchModal, setShowOlvaSearchModal] = useState(false);
   const [showMarvisurSearchModal, setShowMarvisurSearchModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Recognition animation state
   const [isKnownCustomer, setIsKnownCustomer] = useState(false);
@@ -107,6 +115,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   
   // Validation errors
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const brandLogo = getBrandLogo(isDark, storeSettings);
 
   // Dynamic cutoff hour based on selected shipping type
   const currentCutoffHour = getCutoffHourByShippingType(shippingType);
@@ -119,8 +129,9 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
     passed: false,
   });
 
-  // Calculate cutoff countdown for current shipping type
+  // Calculate cutoff countdown for current shipping type (only when a shipping type is selected)
   useEffect(() => {
+    if (!shippingType) return;
     const calculateTime = () => {
       const now = new Date();
       const cutoff = new Date(now);
@@ -139,7 +150,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
     calculateTime();
     const interval = setInterval(calculateTime, 15000);
     return () => clearInterval(interval);
-  }, [currentCutoffHour]);
+  }, [currentCutoffHour, shippingType]);
 
   // Recalculate dispatch date when shipping type changes
   useEffect(() => {
@@ -315,42 +326,102 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   else if (shippingType === 'olva') courierCutoffName = 'Olva Courier';
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 animate-in fade-in duration-300">
+    <div className="w-full max-w-2xl mx-auto px-2 sm:px-4 py-2 sm:py-5 animate-in fade-in duration-300">
       
-      {/* Texto minimalista de Hora de Corte */}
-      <div className="mb-4 flex items-center justify-center">
-        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xs ${
-          isDark 
-            ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' 
-            : 'bg-amber-50/90 text-amber-900 border border-amber-200'
-        }`}>
-          <span className="text-amber-500">⚡</span>
-          <span>
-            Corte {courierCutoffName}: <strong className="font-extrabold">{currentCutoffDisplay}</strong>
-          </span>
-          <span className="text-zinc-400 dark:text-zinc-600">•</span>
-          <span>
-            {shippingType === 'delivery_lima' ? (
-              <span>Despacho de 3 a 10 PM</span>
-            ) : timeRemaining.passed ? (
-              <span>Despacho en siguiente ciclo</span>
-            ) : (
-              <span>Quedan <strong className="font-extrabold text-rose-600 dark:text-rose-400">{timeRemaining.hours}h {timeRemaining.minutes}m</strong> para hoy</span>
-            )}
-          </span>
+      {/* Standalone Brand Header with Logo, Share & Theme Switcher (No Admin Panel Button) */}
+      <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4 px-1 sm:px-2">
+        <div className="flex items-center">
+          {brandLogo ? (
+            <div className="relative flex items-center h-12 sm:h-14 overflow-hidden">
+              <img
+                src={brandLogo}
+                alt={storeSettings.storeName || 'AMORE SALON'}
+                className="h-14 sm:h-16 w-auto max-w-[200px] sm:max-w-[280px] object-cover scale-y-[1.18] scale-x-[1.05] p-0 m-0 transition-transform"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-red-500/15 text-red-600 flex items-center justify-center font-black">
+                <Truck className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <span className="font-black text-sm tracking-tight uppercase text-zinc-950 dark:text-white">AMORE SALON</span>
+            </div>
+          )}
+        </div>
+
+        {/* Action Controls: Share & Theme Switcher */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            id="client-share-form-btn"
+            type="button"
+            onClick={() => setShowShareModal(true)}
+            className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
+              isDark
+                ? 'bg-zinc-900/90 hover:bg-zinc-800 border-white/10 text-white hover:border-blue-500/40'
+                : 'bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-900 hover:border-blue-500/40'
+            }`}
+            title="Compartir enlace del formulario"
+            aria-label="Compartir formulario"
+          >
+            <Share2 className="w-4 h-4 text-blue-500 stroke-[2.2]" />
+          </button>
+
+          {setIsDark && (
+            <button
+              id="client-theme-toggle-btn"
+              type="button"
+              onClick={() => setIsDark(!isDark)}
+              className={`p-2 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs ${
+                isDark
+                  ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-amber-400'
+                  : 'border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-800'
+              }`}
+              title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+              aria-label="Cambiar tema"
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-800" />}
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Horario de Corte Dinámico: Solo aparece si ya se ha seleccionado un método de envío */}
+      {shippingType && (
+        <div className="mb-3 sm:mb-4 flex items-center justify-center animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xs ${
+            isDark 
+              ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' 
+              : 'bg-amber-50/90 text-amber-900 border border-amber-200'
+          }`}>
+            <span className="text-amber-500">⚡</span>
+            <span>
+              Corte {courierCutoffName}: <strong className="font-extrabold">{currentCutoffDisplay}</strong>
+            </span>
+            <span className="text-zinc-400 dark:text-zinc-600">•</span>
+            <span>
+              {shippingType === 'delivery_lima' ? (
+                <span>Despacho de 3 a 10 PM</span>
+              ) : timeRemaining.passed ? (
+                <span>Despacho en siguiente ciclo</span>
+              ) : (
+                <span>Quedan <strong className="font-extrabold text-rose-600 dark:text-rose-400">{timeRemaining.hours}h {timeRemaining.minutes}m</strong> para hoy</span>
+              )}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* MAIN FORM CONTAINER WITH SOFT GLASSMORPHISM */}
-      <div className={`rounded-3xl sm:rounded-[32px] p-5 sm:p-8 backdrop-blur-xl transition-all shadow-xl ${
+      <div className={`rounded-3xl sm:rounded-[32px] p-4 sm:p-7 backdrop-blur-xl transition-all shadow-xl ${
         isDark 
           ? 'bg-[#18181F]/80 border border-white/10 text-white shadow-black/40' 
           : 'bg-white/85 border border-white/80 text-black shadow-zinc-200/50'
       }`}>
         
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4.5">
 
-          {/* 1. MODALIDAD DE ENVÍO Y SU ESPECIFICACIÓN CON EFECTO ÉNFASIS */}
+          {/* 1. MODALIDAD DE ENVÍO Y SU ESPECIFICACIÓN */}
           <div className="space-y-3">
             <div className="space-y-1.5">
               <label className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center justify-between">
@@ -364,42 +435,67 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                 )}
               </label>
 
-              <div
-                id="open-shipping-type-modal-btn"
-                onClick={() => {
-                  setShowShippingModal(true);
-                  if (errors.shippingType) setErrors((prev) => ({ ...prev, shippingType: '' }));
-                }}
-                className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
-                  errors.shippingType
-                    ? 'border-2 border-red-500 bg-red-500/10'
-                    : highlightModality
-                      ? 'border-2 border-rose-500 bg-rose-50 dark:bg-rose-950/40 ring-4 ring-rose-500/20 shadow-lg'
+              {/* Si NO está seleccionado, interfaz limpia y minimalista: Solo camioncito con palabra "Elegir" */}
+              {!shippingType ? (
+                <div
+                  id="open-shipping-type-modal-btn"
+                  onClick={() => {
+                    setShowShippingModal(true);
+                    if (errors.shippingType) setErrors((prev) => ({ ...prev, shippingType: '' }));
+                  }}
+                  className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
+                    errors.shippingType
+                      ? 'border-2 border-red-500 bg-red-500/10'
                       : isDark 
                         ? 'bg-rose-950/20 hover:bg-rose-950/35 border border-rose-500/20 text-white' 
                         : 'bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-black shadow-xs'
-                }`}
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    {shippingType === 'shalom' && <Building2 className="w-5 h-5 stroke-[2.2]" />}
-                    {shippingType === 'marvisur' && <Truck className="w-5 h-5 stroke-[2.2] text-blue-400" />}
-                    {shippingType === 'olva' && <Truck className="w-5 h-5 stroke-[2.2]" />}
-                    {shippingType === 'delivery_lima' && <Bike className="w-5 h-5 stroke-[2.2]" />}
-                    {shippingType === 'tienda' && <Store className="w-5 h-5 stroke-[2.2]" />}
-                    {!shippingType && <Truck className="w-5 h-5 stroke-[2.2]" />}
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Truck className="w-5 h-5 stroke-[2.2]" />
+                    </div>
+                    <span className="font-extrabold text-sm sm:text-base text-zinc-800 dark:text-zinc-100">
+                      Modalidad de Envío
+                    </span>
                   </div>
 
-                  <div>
-                    <div className={`font-extrabold text-sm sm:text-base ${
-                      shippingType 
-                        ? 'text-black dark:text-white' 
-                        : 'text-zinc-700 dark:text-zinc-200'
-                    }`}>
-                      {shippingType ? getShippingTypeLabel(shippingType) : 'Seleccionar modalidad de entrega o retiro...'}
+                  <span className="text-xs font-black px-4 py-2 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950">
+                    Elegir
+                  </span>
+                </div>
+              ) : (
+                /* Cuando ya está seleccionado, muestra el detalle completo y botón Cambiar */
+                <div
+                  id="open-shipping-type-modal-btn"
+                  onClick={() => {
+                    setShowShippingModal(true);
+                    if (errors.shippingType) setErrors((prev) => ({ ...prev, shippingType: '' }));
+                  }}
+                  className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
+                    errors.shippingType
+                      ? 'border-2 border-red-500 bg-red-500/10'
+                      : highlightModality
+                        ? 'border-2 border-rose-500 bg-rose-50 dark:bg-rose-950/40 ring-4 ring-rose-500/20 shadow-lg'
+                        : isDark 
+                          ? 'bg-rose-950/20 hover:bg-rose-950/35 border border-rose-500/20 text-white' 
+                          : 'bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-black shadow-xs'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      {shippingType === 'shalom' && <Building2 className="w-5 h-5 stroke-[2.2]" />}
+                      {shippingType === 'marvisur' && <Truck className="w-5 h-5 stroke-[2.2] text-blue-400" />}
+                      {shippingType === 'olva' && <Truck className="w-5 h-5 stroke-[2.2]" />}
+                      {shippingType === 'delivery_lima' && <Bike className="w-5 h-5 stroke-[2.2]" />}
+                      {shippingType === 'tienda' && <Store className="w-5 h-5 stroke-[2.2]" />}
                     </div>
-                    {shippingType ? (
-                      <div className="text-xs text-zinc-700 dark:text-zinc-300 font-bold mt-0.5">
+
+                    <div className="min-w-0">
+                      <div className="font-extrabold text-sm sm:text-base text-black dark:text-white truncate">
+                        {getShippingTypeLabel(shippingType)}
+                      </div>
+                      <div className="text-xs text-zinc-700 dark:text-zinc-300 font-bold mt-0.5 truncate">
                         {shippingType === 'shalom' && (
                           selectedShalomAgency 
                             ? `${selectedShalomAgency.department} / ${selectedShalomAgency.province} / ${selectedShalomAgency.name}`
@@ -418,22 +514,14 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                         {shippingType === 'delivery_lima' && (deliveryDistrict || 'Lima Metropolitana')}
                         {shippingType === 'tienda' && 'CyberPlaza - Lima Centro'}
                       </div>
-                    ) : (
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-0.5">
-                        Shalom, Marvisur, Olva, Delivery Lima o Retiro en Tienda
-                      </div>
-                    )}
+                    </div>
                   </div>
-                </div>
 
-                <span className={`text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors ${
-                  shippingType 
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white' 
-                    : 'bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-black'
-                }`}>
-                  {shippingType ? 'Cambiar' : 'Elegir'}
-                </span>
-              </div>
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-rose-600 hover:bg-rose-700 text-white ml-2">
+                    Cambiar
+                  </span>
+                </div>
+              )}
 
               {errors.shippingType && (
                 <p className="text-xs text-red-600 dark:text-red-400 font-bold flex items-center gap-1 mt-1">
@@ -982,13 +1070,29 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           <button
             id="submit-shipping-form-btn"
             type="submit"
-            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer mt-6"
+            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer mt-5"
           >
             <span className="text-white dark:text-zinc-950 font-black">GUARDAR</span>
             <span className="text-lg leading-none text-white dark:text-zinc-950 font-black">→</span>
           </button>
 
         </form>
+      </div>
+
+      {/* Acceso escondido discreto para administración (candadito abajo) */}
+      <div className="mt-6 sm:mt-8 pb-4 flex items-center justify-center">
+        {onNavigateToAdmin && (
+          <button
+            id="client-hidden-admin-lock-btn"
+            type="button"
+            onClick={onNavigateToAdmin}
+            className="p-2 rounded-full text-zinc-400 hover:text-zinc-700 dark:text-zinc-600 dark:hover:text-zinc-300 opacity-40 hover:opacity-100 transition-all cursor-pointer"
+            title="Acceso Administrativo"
+            aria-label="Acceso Administrativo"
+          >
+            <Lock className="w-3.5 h-3.5 stroke-[2]" />
+          </button>
+        )}
       </div>
 
       {/* Modals */}
@@ -1041,6 +1145,14 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
         isDark={isDark}
         cutoffHour={currentCutoffHour}
         shippingType={shippingType}
+      />
+
+      {/* Modal para Compartir Formulario */}
+      <ShareFormModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        storeSettings={storeSettings}
+        isDark={isDark}
       />
 
     </div>

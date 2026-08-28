@@ -602,21 +602,23 @@ export default function App() {
         </div>
       )}
 
-      {/* Top Navigation */}
-      <Navbar
-        currentView={currentView}
-        isAdminAuthenticated={isAdminAuthenticated}
-        adminUser={adminUser}
-        onNavigateToClient={() => navigateToView('cliente')}
-        onNavigateToAdmin={() => navigateToView('admin')}
-        onLogout={handleAdminLogout}
-        isDark={isDark}
-        setIsDark={setIsDark}
-        pendingCount={pendingCount}
-        totalOrdersCount={activeOrdersCount}
-        storeSettings={storeSettings}
-        onUpdateStoreSettings={handleUpdateStoreSettings}
-      />
+      {/* Top Navigation - Fixed / Sticky Header exclusively for Dispatch Admin Dashboard */}
+      {currentView === 'admin' && (
+        <Navbar
+          currentView={currentView}
+          isAdminAuthenticated={isAdminAuthenticated}
+          adminUser={adminUser}
+          onNavigateToClient={() => navigateToView('cliente')}
+          onNavigateToAdmin={() => navigateToView('admin')}
+          onLogout={handleAdminLogout}
+          isDark={isDark}
+          setIsDark={setIsDark}
+          pendingCount={pendingCount}
+          totalOrdersCount={activeOrdersCount}
+          storeSettings={storeSettings}
+          onUpdateStoreSettings={handleUpdateStoreSettings}
+        />
+      )}
 
       {/* Main Content Router */}
       <main className="flex-1">
@@ -631,6 +633,7 @@ export default function App() {
             marvisurAgencies={marvisurAgencies}
             isDark={isDark}
             setIsDark={setIsDark}
+            onNavigateToAdmin={() => navigateToView('admin')}
           />
         ) : !isAdminAuthenticated ? (
           <AdminLogin
