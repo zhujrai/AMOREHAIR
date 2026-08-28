@@ -33,7 +33,6 @@ import {
   fetchServerStoreSettings, 
   saveServerStoreSettings,
   fetchAgenciesWithPriority,
-  checkUserAuthorization,
   supabase
 } from './utils/dbApi';
 import { playNewOrderSound } from './utils/audioNotification';
@@ -96,15 +95,10 @@ export default function App() {
   // Current view state: 'admin' (by default on /) or 'cliente' (on /pedidos)
   const [currentView, setCurrentView] = useState<'cliente' | 'admin'>(getInitialView);
 
-  // Admin authentication state & Supabase Google User Email
+  // Admin authentication state
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true';
   });
-  const [adminUserEmail, setAdminUserEmail] = useState<string | null>(() => {
-    return localStorage.getItem('logiperu_admin_email_v1');
-  });
-  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
-  const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
 
   // Orders State with localStorage persistence
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -285,76 +279,6 @@ export default function App() {
     } catch {}
   }, []);
 
-  // Supabase Google Auth Session Verification against authorized_users database
-  useEffect(() => {
-    let isMounted = true;
-
-    const validateUserSession = async (userEmail: string) => {
-      const { authorized, error } = await checkUserAuthorization(userEmail);
-      if (!isMounted) return;
-
-      if (authorized) {
-        setIsAdminAuthenticated(true);
-        setAdminUserEmail(userEmail);
-        setAuthErrorMessage(null);
-        sessionStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
-        localStorage.setItem('logiperu_admin_email_v1', userEmail);
-      } else {
-        await supabase.auth.signOut().catch(() => {});
-        setIsAdminAuthenticated(false);
-        setAdminUserEmail(null);
-        sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-        localStorage.removeItem('logiperu_admin_email_v1');
-        const msg = `Acceso denegado: El correo "${userEmail}" no está registrado como administrador.`;
-        setAuthErrorMessage(msg);
-        showToast(msg);
-      }
-    };
-
-    // 1. Initial check of active session on mount / page reload
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.warn('Supabase getSession error:', error.message);
-      }
-      if (session?.user?.email) {
-        validateUserSession(session.user.email).finally(() => {
-          if (isMounted) setIsCheckingAuth(false);
-        });
-      } else {
-        if (isMounted) {
-          setIsAdminAuthenticated(false);
-          setAdminUserEmail(null);
-          sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-          localStorage.removeItem('logiperu_admin_email_v1');
-          setIsCheckingAuth(false);
-        }
-      }
-    }).catch(() => {
-      if (isMounted) setIsCheckingAuth(false);
-    });
-
-    // 2. Realtime listener for Auth changes (OAuth redirect back, login, signout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        if (session?.user?.email) {
-          await validateUserSession(session.user.email);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        if (isMounted) {
-          setIsAdminAuthenticated(false);
-          setAdminUserEmail(null);
-          sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-          localStorage.removeItem('logiperu_admin_email_v1');
-        }
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Store Settings (Remitente) with localStorage persistence
   const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_STORE_SETTINGS);
@@ -478,30 +402,18 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_MARVISUR_AGENCIES, JSON.stringify(marvisurAgencies));
   }, [marvisurAgencies]);
 
-  // Handle admin logout (Supabase Google OAuth)
-  const handleAdminLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error('Error al cerrar sesión de Supabase:', err);
-    } finally {
-      setIsAdminAuthenticated(false);
-      setAdminUserEmail(null);
-      setAuthErrorMessage(null);
-      sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-      localStorage.removeItem('logiperu_admin_email_v1');
-      showToast('Sesión de Administrador cerrada');
-    }
+  // Handle admin login success
+  const handleAdminLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+    sessionStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
+    showToast('Sesión de Administrador iniciada correctamente');
   };
 
-  // Handle preview simulation bypass (for AI Studio development)
-  const handleSimulateAdmin = (email: string = 'zhujrai@gmail.com') => {
-    setIsAdminAuthenticated(true);
-    setAdminUserEmail(email);
-    setAuthErrorMessage(null);
-    sessionStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
-    localStorage.setItem('logiperu_admin_email_v1', email);
-    showToast(`Sesión de prueba iniciada (${email})`);
+  // Handle admin logout
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
+    showToast('Sesión de Administrador cerrada');
   };
 
   // Handle new order creation from Client form
@@ -633,7 +545,6 @@ export default function App() {
       <Navbar
         currentView={currentView}
         isAdminAuthenticated={isAdminAuthenticated}
-        adminUserEmail={adminUserEmail}
         onNavigateToClient={() => navigateToView('cliente')}
         onNavigateToAdmin={() => navigateToView('admin')}
         onLogout={handleAdminLogout}
@@ -661,12 +572,10 @@ export default function App() {
           />
         ) : !isAdminAuthenticated ? (
           <AdminLogin
+            onLoginSuccess={handleAdminLoginSuccess}
             onBackToClient={() => navigateToView('cliente')}
-            onSimulateAdmin={handleSimulateAdmin}
             storeSettings={storeSettings}
             isDark={isDark}
-            errorMessage={authErrorMessage}
-            isCheckingAuth={isCheckingAuth}
           />
         ) : (
           <AdminKanban

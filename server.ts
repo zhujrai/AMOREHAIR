@@ -12,8 +12,7 @@ import {
   fetchShippingConfig, 
   saveShippingConfig, 
   fetchStoreSettings, 
-  saveStoreSettings,
-  isAuthorizedAdminEmail
+  saveStoreSettings 
 } from './src/server/db.ts';
 import {
   verifyAdminPin,
@@ -105,20 +104,6 @@ async function startServer() {
     const { token } = req.body;
     const isValid = validateAdminSessionToken(token);
     res.json({ valid: isValid });
-  });
-
-  // Verify authorized admin email against Supabase PostgreSQL DB
-  app.post('/api/admin/verify-email', async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email || typeof email !== 'string') {
-        return res.status(400).json({ authorized: false, error: 'Email requerido' });
-      }
-      const authorized = await isAuthorizedAdminEmail(email);
-      return res.json({ authorized, email });
-    } catch (err: any) {
-      return res.status(500).json({ authorized: false, error: err.message });
-    }
   });
 
   // Database status and management endpoints
