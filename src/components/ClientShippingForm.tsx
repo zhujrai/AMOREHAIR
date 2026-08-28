@@ -1,0 +1,1048 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Building2, 
+  Truck, 
+  Bike, 
+  Store, 
+  Calendar, 
+  MapPin, 
+  Phone, 
+  User, 
+  FileText, 
+  Sparkles, 
+  Clock, 
+  ChevronRight, 
+  Search, 
+  Info, 
+  AlertCircle,
+  PackageCheck,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  HelpCircle,
+  Share2
+} from 'lucide-react';
+import { Agency, KnownCustomer, Order, ShippingMethodsConfig, ShippingType, StoreSettings } from '../types';
+import { SHALOM_AGENCIES, OLVA_AGENCIES, MARVISUR_AGENCIES, LIMA_DISTRICTS } from '../data/agencies';
+import { 
+  getShippingTypeLabel, 
+  getShippingTypeBadge, 
+  getCutoffHourByShippingType,
+  getCutoffDisplay,
+  formatPeruvianDate, 
+  getNext4DispatchDates,
+  generateOrderId 
+} from '../utils/formatters';
+import { ShippingTypeModal } from './ShippingTypeModal';
+import { AgencySearchModal } from './AgencySearchModal';
+import { DateSelectModal } from './DateSelectModal';
+
+interface ClientShippingFormProps {
+  storeSettings: StoreSettings;
+  knownCustomers: KnownCustomer[];
+  onOrderCreated: (order: Order) => void;
+  shippingConfig?: ShippingMethodsConfig;
+  shalomAgencies?: Agency[];
+  olvaAgencies?: Agency[];
+  marvisurAgencies?: Agency[];
+  isDark: boolean;
+  setIsDark?: (dark: boolean) => void;
+}
+
+export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
+  storeSettings,
+  knownCustomers,
+  onOrderCreated,
+  shippingConfig = { 
+    shalom: true, 
+    olva: true, 
+    marvisur: true,
+    delivery_lima: true, 
+    tienda: true,
+    deliveryLimaCashOnDeliveryEnabled: true
+  },
+  shalomAgencies = SHALOM_AGENCIES,
+  olvaAgencies = OLVA_AGENCIES,
+  marvisurAgencies = MARVISUR_AGENCIES,
+  isDark,
+  setIsDark,
+}) => {
+  // Form State
+  const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [documentType, setDocumentType] = useState<'DNI' | 'CE'>('DNI');
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [shippingType, setShippingType] = useState<ShippingType | null>(null);
+  
+  // Shalom / Olva / Marvisur agency (null by default so user initiates selection)
+  const [selectedShalomAgency, setSelectedShalomAgency] = useState<Agency | null>(null);
+  const [selectedOlvaAgency, setSelectedOlvaAgency] = useState<Agency | null>(null);
+  const [selectedMarvisurAgency, setSelectedMarvisurAgency] = useState<Agency | null>(null);
+  const [olvaDeliveryMode, setOlvaDeliveryMode] = useState<'agencia' | 'domicilio'>('agencia');
+
+  // Highlight / emphasis effect for chosen shipping modality
+  const [highlightModality, setHighlightModality] = useState(false);
+
+  // Delivery Lima / Olva Domicilio
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryReference, setDeliveryReference] = useState('');
+  const [deliveryDistrict, setDeliveryDistrict] = useState(LIMA_DISTRICTS[0]);
+  const [isCashOnDelivery, setIsCashOnDelivery] = useState(false);
+
+  // Package & dispatch date
+  const [dispatchDate, setDispatchDate] = useState<string>('');
+  const [itemsDescription, setItemsDescription] = useState('Rutina personalizada');
+  const [notes, setNotes] = useState('');
+
+  // UI Modals - Modal opens when user clicks to choose or change shipping method
+  const [showShippingModal, setShowShippingModal] = useState<boolean>(false);
+  const [showShalomSearchModal, setShowShalomSearchModal] = useState(false);
+  const [showOlvaSearchModal, setShowOlvaSearchModal] = useState(false);
+  const [showMarvisurSearchModal, setShowMarvisurSearchModal] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+
+  // Recognition animation state
+  const [isKnownCustomer, setIsKnownCustomer] = useState(false);
+  const [recognizedName, setRecognizedName] = useState('');
+  
+  // Validation errors
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Dynamic cutoff hour based on selected shipping type
+  const currentCutoffHour = getCutoffHourByShippingType(shippingType);
+  const currentCutoffDisplay = getCutoffDisplay(shippingType);
+
+  // Countdown timer to cutoff
+  const [timeRemaining, setTimeRemaining] = useState<{ hours: number; minutes: number; passed: boolean }>({
+    hours: 0,
+    minutes: 0,
+    passed: false,
+  });
+
+  // Calculate cutoff countdown for current shipping type
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const cutoff = new Date(now);
+      cutoff.setHours(currentCutoffHour, 0, 0, 0);
+
+      const diffMs = cutoff.getTime() - now.getTime();
+      if (diffMs > 0) {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeRemaining({ hours, minutes, passed: false });
+      } else {
+        setTimeRemaining({ hours: 0, minutes: 0, passed: true });
+      }
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 15000);
+    return () => clearInterval(interval);
+  }, [currentCutoffHour]);
+
+  // Recalculate dispatch date when shipping type changes
+  useEffect(() => {
+    const available = getNext4DispatchDates(currentCutoffHour);
+    if (available.length > 0) {
+      const exists = available.some(d => d.dateStr === dispatchDate);
+      if (!exists || !dispatchDate) {
+        setDispatchDate(available[0].dateStr);
+      }
+    }
+  }, [currentCutoffHour]);
+
+  // Check phone in known customers list
+  useEffect(() => {
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length === 9) {
+      const match = knownCustomers.find((c) => c.phone === clean);
+      if (match) {
+        setIsKnownCustomer(true);
+        setRecognizedName(match.fullName);
+        setCustomerName(match.fullName);
+        setDocumentType(match.documentType);
+        setDocumentNumber(match.documentNumber);
+
+        if (match.preferredShippingType) {
+          setShippingType(match.preferredShippingType);
+        }
+        if (match.preferredAgency) {
+          const shalomMatch = shalomAgencies.find((a) => a.id === match.preferredAgency);
+          if (shalomMatch) setSelectedShalomAgency(shalomMatch);
+          const marvisurMatch = marvisurAgencies.find((a) => a.id === match.preferredAgency);
+          if (marvisurMatch) setSelectedMarvisurAgency(marvisurMatch);
+          const olvaMatch = olvaAgencies.find((a) => a.id === match.preferredAgency);
+          if (olvaMatch) setSelectedOlvaAgency(olvaMatch);
+        }
+        if (match.preferredAddress) {
+          setDeliveryAddress(match.preferredAddress);
+        }
+        if (match.preferredDistrict) {
+          setDeliveryDistrict(match.preferredDistrict);
+        }
+      } else {
+        setIsKnownCustomer(false);
+      }
+    } else {
+      setIsKnownCustomer(false);
+    }
+  }, [phone, knownCustomers, shalomAgencies, olvaAgencies, marvisurAgencies]);
+
+  const handleSelectShippingType = (type: ShippingType) => {
+    setShippingType(type);
+    setShowShippingModal(false);
+    setHighlightModality(true);
+    setTimeout(() => setHighlightModality(false), 3000);
+
+    // If Shalom, Marvisur or Olva (and no agency chosen), we can encourage selection
+    if (errors.shippingType) {
+      setErrors((prev) => ({ ...prev, shippingType: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errs: { [key: string]: string } = {};
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length !== 9 || !cleanPhone.startsWith('9')) {
+      errs.phone = 'Ingresa un celular peruano de 9 dígitos';
+    }
+
+    if (!customerName.trim()) {
+      errs.customerName = 'Ingresa tu nombre y apellido';
+    }
+
+    const cleanDoc = documentNumber.replace(/\D/g, '');
+    if (documentType === 'DNI') {
+      if (cleanDoc.length !== 8) {
+        errs.documentNumber = 'Ingresa un DNI válido de 8 números';
+      }
+    } else {
+      if (cleanDoc.length < 8 || cleanDoc.length > 12) {
+        errs.documentNumber = 'Ingresa un Carné de Extranjería válido';
+      }
+    }
+
+    if (!shippingType) {
+      errs.shippingType = 'Selecciona una modalidad de envío';
+    } else if (shippingType === 'shalom') {
+      if (!selectedShalomAgency) {
+        errs.agency = 'Debes seleccionar una agencia Shalom';
+      }
+    } else if (shippingType === 'marvisur') {
+      if (!selectedMarvisurAgency) {
+        errs.agency = 'Debes seleccionar una sucursal Marvisur';
+      }
+    } else if (shippingType === 'olva') {
+      if (olvaDeliveryMode === 'agencia') {
+        if (!selectedOlvaAgency) {
+          errs.agency = 'Debes seleccionar una agencia Olva Courier';
+        }
+      } else {
+        if (!deliveryAddress.trim()) {
+          errs.deliveryAddress = 'Ingresa la dirección para Olva';
+        }
+      }
+    } else if (shippingType === 'delivery_lima') {
+      if (!deliveryAddress.trim()) {
+        errs.deliveryAddress = 'Ingresa la dirección de entrega';
+      }
+      if (!deliveryDistrict) {
+        errs.deliveryDistrict = 'Selecciona tu distrito en Lima';
+      }
+    }
+
+    if (!dispatchDate) {
+      errs.dispatchDate = 'Selecciona una fecha de envío';
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm() || !shippingType) {
+      const firstError = document.querySelector('.border-red-500, .text-red-500, .text-red-600');
+      firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const orderId = generateOrderId();
+    const newOrder: Order = {
+      id: orderId,
+      createdAt: new Date().toISOString(),
+      dispatchDate: dispatchDate,
+      status: 'nuevos',
+      customerName: customerName.trim(),
+      customerPhone: phone.replace(/\D/g, ''),
+      documentType: documentType,
+      documentNumber: documentNumber.trim(),
+      shippingType: shippingType,
+      itemsDescription: itemsDescription.trim() || 'Rutina personalizada',
+      notes: notes.trim() || undefined,
+      whatsappSent: false,
+    };
+
+    if (shippingType === 'shalom') {
+      newOrder.agency = selectedShalomAgency || undefined;
+    } else if (shippingType === 'marvisur') {
+      newOrder.agency = selectedMarvisurAgency || undefined;
+    } else if (shippingType === 'olva') {
+      if (olvaDeliveryMode === 'agencia') {
+        newOrder.agency = selectedOlvaAgency || undefined;
+      } else {
+        newOrder.deliveryAddress = deliveryAddress.trim();
+        newOrder.deliveryDistrict = deliveryDistrict;
+        newOrder.deliveryReference = deliveryReference.trim();
+      }
+    } else if (shippingType === 'delivery_lima') {
+      newOrder.deliveryAddress = deliveryAddress.trim();
+      newOrder.deliveryDistrict = deliveryDistrict;
+      newOrder.deliveryReference = deliveryReference.trim();
+      newOrder.isCashOnDelivery = isCashOnDelivery;
+      newOrder.deliveryFee = 15.00;
+    }
+
+    onOrderCreated(newOrder);
+  };
+
+  let courierCutoffName = 'Shalom';
+  if (shippingType === 'marvisur') courierCutoffName = 'Marvisur';
+  else if (shippingType === 'delivery_lima') courierCutoffName = 'Delivery Lima';
+  else if (shippingType === 'tienda') courierCutoffName = 'Retiro en Tienda';
+  else if (shippingType === 'olva') courierCutoffName = 'Olva Courier';
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 animate-in fade-in duration-300">
+      
+      {/* Texto minimalista de Hora de Corte */}
+      <div className="mb-4 flex items-center justify-center">
+        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xs ${
+          isDark 
+            ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' 
+            : 'bg-amber-50/90 text-amber-900 border border-amber-200'
+        }`}>
+          <span className="text-amber-500">⚡</span>
+          <span>
+            Corte {courierCutoffName}: <strong className="font-extrabold">{currentCutoffDisplay}</strong>
+          </span>
+          <span className="text-zinc-400 dark:text-zinc-600">•</span>
+          <span>
+            {shippingType === 'delivery_lima' ? (
+              <span>Despacho de 3 a 10 PM</span>
+            ) : timeRemaining.passed ? (
+              <span>Despacho en siguiente ciclo</span>
+            ) : (
+              <span>Quedan <strong className="font-extrabold text-rose-600 dark:text-rose-400">{timeRemaining.hours}h {timeRemaining.minutes}m</strong> para hoy</span>
+            )}
+          </span>
+        </div>
+      </div>
+
+      {/* MAIN FORM CONTAINER WITH SOFT GLASSMORPHISM */}
+      <div className={`rounded-3xl sm:rounded-[32px] p-5 sm:p-8 backdrop-blur-xl transition-all shadow-xl ${
+        isDark 
+          ? 'bg-[#18181F]/80 border border-white/10 text-white shadow-black/40' 
+          : 'bg-white/85 border border-white/80 text-black shadow-zinc-200/50'
+      }`}>
+        
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+
+          {/* 1. MODALIDAD DE ENVÍO Y SU ESPECIFICACIÓN CON EFECTO ÉNFASIS */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  Modalidad de Envío <span className="text-rose-500 font-bold">*</span>
+                </span>
+                {shippingType && (
+                  <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                    Paso 1 completado
+                  </span>
+                )}
+              </label>
+
+              <div
+                id="open-shipping-type-modal-btn"
+                onClick={() => {
+                  setShowShippingModal(true);
+                  if (errors.shippingType) setErrors((prev) => ({ ...prev, shippingType: '' }));
+                }}
+                className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
+                  errors.shippingType
+                    ? 'border-2 border-red-500 bg-red-500/10'
+                    : highlightModality
+                      ? 'border-2 border-rose-500 bg-rose-50 dark:bg-rose-950/40 ring-4 ring-rose-500/20 shadow-lg'
+                      : isDark 
+                        ? 'bg-rose-950/20 hover:bg-rose-950/35 border border-rose-500/20 text-white' 
+                        : 'bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-black shadow-xs'
+                }`}
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    {shippingType === 'shalom' && <Building2 className="w-5 h-5 stroke-[2.2]" />}
+                    {shippingType === 'marvisur' && <Truck className="w-5 h-5 stroke-[2.2] text-blue-400" />}
+                    {shippingType === 'olva' && <Truck className="w-5 h-5 stroke-[2.2]" />}
+                    {shippingType === 'delivery_lima' && <Bike className="w-5 h-5 stroke-[2.2]" />}
+                    {shippingType === 'tienda' && <Store className="w-5 h-5 stroke-[2.2]" />}
+                    {!shippingType && <Truck className="w-5 h-5 stroke-[2.2]" />}
+                  </div>
+
+                  <div>
+                    <div className={`font-extrabold text-sm sm:text-base ${
+                      shippingType 
+                        ? 'text-black dark:text-white' 
+                        : 'text-zinc-700 dark:text-zinc-200'
+                    }`}>
+                      {shippingType ? getShippingTypeLabel(shippingType) : 'Seleccionar modalidad de entrega o retiro...'}
+                    </div>
+                    {shippingType ? (
+                      <div className="text-xs text-zinc-700 dark:text-zinc-300 font-bold mt-0.5">
+                        {shippingType === 'shalom' && (
+                          selectedShalomAgency 
+                            ? `${selectedShalomAgency.department} / ${selectedShalomAgency.province} / ${selectedShalomAgency.name}`
+                            : 'Agencia pendiente de selección'
+                        )}
+                        {shippingType === 'marvisur' && (
+                          selectedMarvisurAgency 
+                            ? `${selectedMarvisurAgency.department} / ${selectedMarvisurAgency.province || selectedMarvisurAgency.name}`
+                            : 'Sucursal pendiente de selección'
+                        )}
+                        {shippingType === 'olva' && (
+                          olvaDeliveryMode === 'agencia' 
+                            ? (selectedOlvaAgency ? selectedOlvaAgency.name : 'Agencia pendiente de selección')
+                            : 'Envío a Domicilio'
+                        )}
+                        {shippingType === 'delivery_lima' && (deliveryDistrict || 'Lima Metropolitana')}
+                        {shippingType === 'tienda' && 'CyberPlaza - Lima Centro'}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-0.5">
+                        Shalom, Marvisur, Olva, Delivery Lima o Retiro en Tienda
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <span className={`text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors ${
+                  shippingType 
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                    : 'bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-black'
+                }`}>
+                  {shippingType ? 'Cambiar' : 'Elegir'}
+                </span>
+              </div>
+
+              {errors.shippingType && (
+                <p className="text-xs text-red-600 dark:text-red-400 font-bold flex items-center gap-1 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {errors.shippingType}
+                </p>
+              )}
+            </div>
+
+            {/* 1.1 ESPECIFICACIÓN: SHALOM CON ÉNFASIS */}
+            {shippingType === 'shalom' && (
+              <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
+                isDark 
+                  ? 'bg-[#202029]/80 border border-rose-500/20' 
+                  : 'bg-rose-50/50 border border-rose-200/80 shadow-2xs'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-rose-500" />
+                    Agencia Shalom <span className="text-rose-500 font-bold">*</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                    Búsqueda GPS / Texto
+                  </span>
+                </div>
+
+                <div 
+                  id="select-shalom-agency-btn"
+                  onClick={() => {
+                    setShowShalomSearchModal(true);
+                    if (errors.agency) setErrors((prev) => ({ ...prev, agency: '' }));
+                  }}
+                  className={`p-3.5 rounded-xl cursor-pointer transition-all ${
+                    errors.agency
+                      ? 'border-2 border-red-500 bg-red-500/10'
+                      : selectedShalomAgency
+                        ? isDark ? 'bg-rose-950/25 hover:bg-rose-950/40 border border-rose-500/20' : 'bg-white hover:bg-rose-50/80 border border-rose-200 shadow-2xs'
+                        : isDark ? 'bg-rose-950/40 hover:bg-rose-950/60 border border-rose-500/40' : 'bg-white hover:bg-rose-50 border-2 border-rose-400 shadow-xs ring-2 ring-rose-400/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      {selectedShalomAgency ? (
+                        <>
+                          <div className="font-extrabold text-xs sm:text-sm text-black dark:text-white truncate flex items-center gap-1.5">
+                            <span>{selectedShalomAgency.name}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                              {selectedShalomAgency.district || selectedShalomAgency.province}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
+                            {selectedShalomAgency.address}
+                          </p>
+                        </>
+                      ) : (
+                        <div className="text-xs sm:text-sm font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                          <Search className="w-4 h-4" />
+                          <span>Selecciona sucursal o agencia</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                      {selectedShalomAgency ? 'Cambiar' : 'Elegir'}
+                    </span>
+                  </div>
+                </div>
+
+                {errors.agency && (
+                  <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 font-bold">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    {errors.agency}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 1.2 ESPECIFICACIÓN: MARVISUR */}
+            {shippingType === 'marvisur' && (
+              <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
+                isDark 
+                  ? 'bg-[#202029]/80 border border-blue-500/20' 
+                  : 'bg-blue-50/50 border border-blue-200/80 shadow-2xs'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-blue-500" />
+                    Sucursal Expreso Marvisur <span className="text-blue-500 font-bold">*</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                    Búsqueda GPS / Texto
+                  </span>
+                </div>
+
+                <div 
+                  id="select-marvisur-agency-btn"
+                  onClick={() => {
+                    setShowMarvisurSearchModal(true);
+                    if (errors.agency) setErrors((prev) => ({ ...prev, agency: '' }));
+                  }}
+                  className={`p-3.5 rounded-xl cursor-pointer transition-all ${
+                    errors.agency
+                      ? 'border-2 border-red-500 bg-red-500/10'
+                      : selectedMarvisurAgency
+                        ? isDark ? 'bg-blue-950/25 hover:bg-blue-950/40 border border-blue-500/20' : 'bg-white hover:bg-blue-50/80 border border-blue-200 shadow-2xs'
+                        : isDark ? 'bg-blue-950/40 hover:bg-blue-950/60 border border-blue-500/40' : 'bg-white hover:bg-blue-50 border-2 border-blue-400 shadow-xs ring-2 ring-blue-400/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      {selectedMarvisurAgency ? (
+                        <>
+                          <div className="font-extrabold text-xs sm:text-sm text-black dark:text-white truncate flex items-center gap-1.5">
+                            <span>{selectedMarvisurAgency.name}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
+                              {selectedMarvisurAgency.department}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
+                            {selectedMarvisurAgency.address}
+                          </p>
+                        </>
+                      ) : (
+                        <div className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                          <Search className="w-4 h-4" />
+                          <span>Selecciona sucursal Marvisur</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                      {selectedMarvisurAgency ? 'Cambiar' : 'Elegir'}
+                    </span>
+                  </div>
+                </div>
+
+                {errors.agency && (
+                  <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 font-bold">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    {errors.agency}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 1.2 ESPECIFICACIÓN: OLVA COURIER CON ÉNFASIS */}
+            {shippingType === 'olva' && (
+              <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
+                isDark 
+                  ? 'bg-[#202029]/80 border border-amber-500/20' 
+                  : 'bg-amber-50/50 border border-amber-200/80 shadow-2xs'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs">Modalidad Olva Courier</span>
+                  <div className="flex gap-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setOlvaDeliveryMode('agencia')}
+                      className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                        olvaDeliveryMode === 'agencia' ? 'bg-amber-600 text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-zinc-200'
+                      }`}
+                    >
+                      En Agencia
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOlvaDeliveryMode('domicilio')}
+                      className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                        olvaDeliveryMode === 'domicilio' ? 'bg-amber-600 text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-zinc-200'
+                      }`}
+                    >
+                      A Domicilio
+                    </button>
+                  </div>
+                </div>
+
+                {olvaDeliveryMode === 'agencia' ? (
+                  <div>
+                    <div 
+                      id="select-olva-agency-btn"
+                      onClick={() => {
+                        setShowOlvaSearchModal(true);
+                        if (errors.agency) setErrors((prev) => ({ ...prev, agency: '' }));
+                      }}
+                      className={`p-3.5 rounded-xl cursor-pointer transition-all ${
+                        errors.agency
+                          ? 'border-2 border-red-500 bg-red-500/10'
+                          : selectedOlvaAgency
+                            ? isDark ? 'bg-amber-950/25 hover:bg-amber-950/40 border border-amber-500/20' : 'bg-white hover:bg-amber-50/80 border border-amber-200 shadow-2xs'
+                            : isDark ? 'bg-amber-950/40 hover:bg-amber-950/60 border border-amber-500/40' : 'bg-white hover:bg-amber-50 border-2 border-amber-400 shadow-xs ring-2 ring-amber-400/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          {selectedOlvaAgency ? (
+                            <>
+                              <div className="font-extrabold text-xs sm:text-sm text-black dark:text-white truncate">{selectedOlvaAgency.name}</div>
+                              <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">{selectedOlvaAgency.address}</p>
+                            </>
+                          ) : (
+                            <div className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                              <Search className="w-4 h-4" />
+                              <span>Selecciona sucursal o agencia</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                          {selectedOlvaAgency ? 'Cambiar' : 'Elegir'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {errors.agency && (
+                      <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 font-bold mt-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        {errors.agency}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="Dirección exacta para entrega por Olva Courier"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
+                      isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black placeholder-zinc-500 border border-zinc-200 shadow-2xs'
+                    }`}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* 1.3 ESPECIFICACIÓN: DELIVERY LIMA METROPOLITANA CON ÉNFASIS */}
+            {shippingType === 'delivery_lima' && (
+              <div className={`p-4 rounded-2xl space-y-3 transition-all animate-in fade-in duration-200 ${
+                isDark 
+                  ? 'bg-[#202029]/80 border border-blue-500/20' 
+                  : 'bg-blue-50/50 border border-blue-200/80 shadow-2xs'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs block">
+                    Datos de Entrega (Lima Metropolitana)
+                  </span>
+                  <span className="text-[11px] font-extrabold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 px-2.5 py-0.5 rounded-full">
+                    🛵 Entrega de 3:00 PM a 10:00 PM
+                  </span>
+                </div>
+
+                <select
+                  value={deliveryDistrict}
+                  onChange={(e) => setDeliveryDistrict(e.target.value)}
+                  className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
+                    isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black border border-zinc-200 shadow-2xs'
+                  }`}
+                >
+                  {LIMA_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="Dirección exacta (Av, Calle, Jr, Número, Dpto)"
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
+                    errors.deliveryAddress 
+                      ? 'border-2 border-red-500 ring-2 ring-red-500/20' 
+                      : isDark 
+                        ? 'bg-zinc-900 text-white border border-white/10' 
+                        : 'bg-white text-black placeholder-zinc-500 border border-zinc-200 shadow-2xs'
+                  }`}
+                />
+
+                <input
+                  type="text"
+                  placeholder="Referencia (piso, timbre, color de casa, etc.)"
+                  value={deliveryReference}
+                  onChange={(e) => setDeliveryReference(e.target.value)}
+                  className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
+                    isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black placeholder-zinc-500 border border-zinc-200 shadow-2xs'
+                  }`}
+                />
+
+                {/* OPCIÓN DE PAGO CONTRAENTREGA */}
+                {shippingConfig.deliveryLimaCashOnDeliveryEnabled !== false && (
+                  <div className={`mt-3 pt-3 ${isDark ? 'border-t border-zinc-800' : 'border-t border-zinc-200'} space-y-2.5`}>
+                    <label 
+                      id="client-cod-toggle"
+                      className={`flex items-start gap-3 cursor-pointer select-none p-3.5 rounded-2xl transition-all ${
+                        isCashOnDelivery
+                          ? isDark ? 'bg-amber-950/40 text-amber-200 border border-amber-500/30' : 'bg-amber-50 text-amber-950 border border-amber-300 shadow-2xs'
+                          : isDark ? 'bg-zinc-900 border border-white/5' : 'bg-white border border-zinc-200 shadow-2xs'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isCashOnDelivery}
+                        onChange={(e) => setIsCashOnDelivery(e.target.checked)}
+                        className="w-4.5 h-4.5 text-black rounded border-zinc-400 focus:ring-black cursor-pointer mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <span className="text-xs font-extrabold text-black dark:text-white flex items-center gap-1.5">
+                          💵 Solicitar Pago Contraentrega (Lima)
+                        </span>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5">
+                          Pagas el valor de tus productos al recibir con el motorizado (Efectivo o Yape / Plin).
+                        </p>
+                      </div>
+                    </label>
+
+                    {isCashOnDelivery && (
+                      <div className={`p-3.5 rounded-2xl ${
+                        isDark 
+                          ? 'bg-amber-950/50 text-amber-100 border border-amber-500/30' 
+                          : 'bg-amber-50 text-amber-950 border border-amber-200'
+                      } text-xs space-y-1.5 animate-in fade-in`}>
+                        <div className="flex items-center gap-1.5 font-extrabold text-amber-950 dark:text-amber-300">
+                          <Info className="w-4 h-4 text-amber-700 flex-shrink-0 stroke-[2.5]" />
+                          <span>Abono previo de transporte requerido</span>
+                        </div>
+                        <p className="text-xs leading-relaxed text-amber-950 dark:text-zinc-100 font-medium">
+                          Para programar tu despacho contraentrega, se debe realizar el <strong>abono del costo de delivery/transporte antes de la hora de corte</strong> (<strong className="text-black dark:text-amber-300 font-extrabold">{currentCutoffDisplay}</strong>).
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 1.4 ESPECIFICACIÓN: RETIRO EN TIENDA */}
+            {shippingType === 'tienda' && (
+              <div className={`p-4 rounded-2xl space-y-1.5 transition-all animate-in fade-in duration-200 ${
+                isDark ? 'bg-emerald-950/25 border border-emerald-500/20 text-white' : 'bg-emerald-50 border border-emerald-200 text-emerald-950'
+              }`}>
+                <div className="font-extrabold text-xs text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                  <Store className="w-4 h-4" />
+                  <span>Retiro en {storeSettings.storeName}</span>
+                </div>
+                <p className="text-xs text-emerald-950 dark:text-zinc-200 font-medium">
+                  {storeSettings.address} • {storeSettings.openingHours}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 2. NÚMERO CELULAR / WHATSAPP */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="phone-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                <span>Número Celular / WhatsApp</span>
+                <span className="text-rose-500 font-bold">*</span>
+              </label>
+              
+              {isKnownCustomer && (
+                <div 
+                  id="known-customer-badge"
+                  className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 border border-amber-400 dark:border-amber-500 text-amber-950 dark:text-amber-300 text-xs font-bold shadow-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 fill-amber-400" />
+                  <span>¡Cliente frecuente!</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <span className={`px-3.5 py-3 rounded-2xl text-xs font-bold border flex items-center justify-center select-none ${
+                isDark ? 'bg-white/10 border-white/15 text-white' : 'bg-zinc-100 border-zinc-200 text-black'
+              }`}>
+                🇵🇪 +51
+              </span>
+
+              <div className="relative flex-1">
+                <input
+                  id="phone-input"
+                  type="tel"
+                  maxLength={9}
+                  placeholder=""
+                  value={phone}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setPhone(val);
+                    if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                    errors.phone 
+                      ? 'border-red-500 ring-2 ring-red-500/30' 
+                      : isDark
+                        ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white focus:ring-2 focus:ring-white/20'
+                        : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black focus:ring-2 focus:ring-black/10'
+                  }`}
+                />
+
+                {phone.length === 9 && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {errors.phone && (
+              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 font-bold">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                {errors.phone}
+              </p>
+            )}
+          </div>
+
+          {/* 3. DOCUMENTO & IDENTIFICACIÓN */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="doc-number-input" className="text-black dark:text-zinc-100 font-extrabold text-xs block">
+                Documento <span className="text-rose-500 font-bold">*</span>
+              </label>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold">
+                {documentNumber.length}/{documentType === 'DNI' ? '8' : '12'} dígitos
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-28 sm:w-36 flex-shrink-0">
+                <select
+                  id="doc-type-select"
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value as 'DNI' | 'CE')}
+                  className={`w-full px-3 py-3 rounded-2xl text-xs font-extrabold border transition-colors cursor-pointer ${
+                    isDark 
+                      ? 'bg-white/[0.06] border-white/15 text-white focus:bg-[#111113] focus:border-white' 
+                      : 'bg-zinc-50 border-zinc-200 text-black focus:bg-white focus:border-black'
+                  }`}
+                >
+                  <option value="DNI">DNI</option>
+                  <option value="CE">C.E.</option>
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <input
+                  id="doc-number-input"
+                  type="text"
+                  maxLength={documentType === 'DNI' ? 8 : 12}
+                  placeholder={documentType === 'DNI' ? '8 dígitos' : 'Número C.E.'}
+                  value={documentNumber}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setDocumentNumber(val);
+                    if (errors.documentNumber) setErrors((prev) => ({ ...prev, documentNumber: '' }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                    errors.documentNumber 
+                      ? 'border-red-500 ring-2 ring-red-500/30' 
+                      : isDark
+                        ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white focus:ring-2 focus:ring-white/20'
+                        : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black focus:ring-2 focus:ring-black/10'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {errors.documentNumber && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-bold">{errors.documentNumber}</p>
+            )}
+          </div>
+
+          {/* 4. DESTINATARIO (ETIQUETA: "Tu nombre completo") */}
+          <div className="space-y-1.5">
+            <label htmlFor="customer-name-input" className="text-black dark:text-zinc-100 font-extrabold text-xs block">
+              Tu nombre completo <span className="text-rose-500 font-bold">*</span>
+            </label>
+
+            <input
+              id="customer-name-input"
+              type="text"
+              placeholder=""
+              value={customerName}
+              onChange={(e) => {
+                setCustomerName(e.target.value);
+                if (errors.customerName) setErrors((prev) => ({ ...prev, customerName: '' }));
+              }}
+              className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                errors.customerName 
+                  ? 'border-red-500 ring-2 ring-red-500/30' 
+                  : isDark
+                    ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white focus:ring-2 focus:ring-white/20'
+                    : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black focus:ring-2 focus:ring-black/10'
+              }`}
+            />
+
+            {errors.customerName && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-bold">{errors.customerName}</p>
+            )}
+          </div>
+
+          {/* 5. FECHA DE ENVÍO (RETIRADO "Otras fechas") */}
+          <div className="space-y-1.5">
+            <label className="text-black dark:text-zinc-100 font-extrabold text-xs block">
+              Fecha de envío <span className="text-rose-500 font-bold">*</span>
+            </label>
+
+            <div
+              id="open-date-modal-btn"
+              onClick={() => setShowDateModal(true)}
+              className={`p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
+                isDark 
+                  ? 'bg-rose-950/20 hover:bg-rose-950/35 border border-rose-500/20 text-white' 
+                  : 'bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-black shadow-xs'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📅</span>
+                <div>
+                  <div className="font-extrabold text-sm capitalize text-black dark:text-white">
+                    {formatPeruvianDate(dispatchDate)}
+                  </div>
+                </div>
+              </div>
+
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                Cambiar
+              </span>
+            </div>
+          </div>
+
+          {/* 6. COMENTARIO (OPCIONAL) */}
+          <div className="space-y-1.5 pt-1">
+            <label htmlFor="order-notes-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center justify-between">
+              <span>Comentario</span>
+              <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">Opcional</span>
+            </label>
+            <input
+              id="order-notes-input"
+              type="text"
+              placeholder=""
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                isDark 
+                  ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white' 
+                  : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black'
+              }`}
+            />
+          </div>
+
+          {/* 7. BTN ACTION: GUARDAR */}
+          <button
+            id="submit-shipping-form-btn"
+            type="submit"
+            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer mt-6"
+          >
+            <span className="text-white dark:text-zinc-950 font-black">GUARDAR</span>
+            <span className="text-lg leading-none text-white dark:text-zinc-950 font-black">→</span>
+          </button>
+
+        </form>
+      </div>
+
+      {/* Modals */}
+      <ShippingTypeModal
+        isOpen={showShippingModal}
+        onClose={() => setShowShippingModal(false)}
+        selectedType={shippingType}
+        onSelect={handleSelectShippingType}
+        shippingConfig={shippingConfig}
+        isDark={isDark}
+        setIsDark={setIsDark}
+        storeSettings={storeSettings}
+      />
+
+      <AgencySearchModal
+        isOpen={showShalomSearchModal}
+        onClose={() => setShowShalomSearchModal(false)}
+        agencies={shalomAgencies}
+        selectedAgencyId={selectedShalomAgency?.id}
+        onSelect={(agency) => setSelectedShalomAgency(agency)}
+        courierName="Shalom"
+        isDark={isDark}
+      />
+
+      <AgencySearchModal
+        isOpen={showMarvisurSearchModal}
+        onClose={() => setShowMarvisurSearchModal(false)}
+        agencies={marvisurAgencies}
+        selectedAgencyId={selectedMarvisurAgency?.id}
+        onSelect={(agency) => setSelectedMarvisurAgency(agency)}
+        courierName="Marvisur"
+        isDark={isDark}
+      />
+
+      <AgencySearchModal
+        isOpen={showOlvaSearchModal}
+        onClose={() => setShowOlvaSearchModal(false)}
+        agencies={olvaAgencies}
+        selectedAgencyId={selectedOlvaAgency?.id}
+        onSelect={(agency) => setSelectedOlvaAgency(agency)}
+        courierName="Olva"
+        isDark={isDark}
+      />
+
+      <DateSelectModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        selectedDate={dispatchDate}
+        onSelect={(date) => setDispatchDate(date)}
+        isDark={isDark}
+        cutoffHour={currentCutoffHour}
+        shippingType={shippingType}
+      />
+
+    </div>
+  );
+};

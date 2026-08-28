@@ -1,0 +1,8 @@
+{
+  "name": "AMORE SALON HAIR STYLE",
+  "description": "Sistema integral de logística de envíos para AMORE SALON HAIR STYLE con formulario para clientes (Shalom, Olva, Delivery Lima, Tienda), tablero Kanban para administración y generador de rótulos térmicos.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
