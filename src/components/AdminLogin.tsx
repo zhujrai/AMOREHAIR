@@ -4,12 +4,11 @@ import {
   ArrowLeft, 
   Eye, 
   EyeOff, 
-  AlertCircle,
-  LogIn,
-  Mail,
-  KeyRound,
-  ShieldCheck,
-  Timer
+  AlertCircle, 
+  LogIn, 
+  Mail, 
+  KeyRound, 
+  Timer 
 } from 'lucide-react';
 import { StoreSettings, AdminUser } from '../types';
 import { getBrandLogo } from '../utils/formatters';
@@ -227,9 +226,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
           )}
 
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-              Acceso Administrativo
-            </h2>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
               Ingresa con tu usuario y contraseña de operador
             </p>
@@ -337,7 +333,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
           </div>
 
           {/* Remember Session Checkbox */}
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center pt-1">
             <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-zinc-600 dark:text-zinc-400">
               <input
                 type="checkbox"
@@ -348,9 +344,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
               />
               <span>Recordar sesión en este equipo</span>
             </label>
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono">
-              v1.5 Auth
-            </span>
           </div>
 
           {/* Submit Button */}
@@ -384,12 +377,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             <span>Ir al Formulario de Envíos (/pedidos)</span>
             <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
           </button>
-        </div>
-
-        {/* Minimalist Security Badge */}
-        <div className="mt-4 pt-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 font-medium">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Acceso seguro protegido con tokens de sesión</span>
         </div>
 
       </div>
