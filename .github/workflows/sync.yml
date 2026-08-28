@@ -3,7 +3,7 @@ name: Mirror to Zhujrai
 on:
   push:
     branches:
-      - main # O la rama principal que uses (ej. master)
+      - main
 
 jobs:
   sync:
@@ -15,8 +15,6 @@ jobs:
           fetch-depth: 0
 
       - name: Push to mirror repository
-        env:
-          TOKEN: ${{ secrets.SYNC_TOKEN }}
         run: |
-            git remote add mirror https://$TOKEN@github.com/zhujrai/AMOREHAIR.git
-            git push --force mirror main
+          git remote add mirror https://${{ secrets.SYNC_TOKEN }}@github.com/zhujrai/AMOREHAIR.git
+          git push --force mirror main
