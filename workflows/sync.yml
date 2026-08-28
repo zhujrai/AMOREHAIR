@@ -1,0 +1,22 @@
+name: Mirror to Zhujrai
+
+on:
+  push:
+    branches:
+      - main # O la rama principal que uses (ej. master)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to mirror repository
+        env:
+          TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          git remote add mirror https://$TOKEN@github.com/zhujrai/AMOREHAIR.git
+          git push --force mirror main
