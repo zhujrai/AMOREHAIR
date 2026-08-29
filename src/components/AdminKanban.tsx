@@ -263,31 +263,31 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[1840px] mx-auto px-3 sm:px-5 lg:px-6 xl:px-8 py-3.5 sm:py-5 space-y-4">
+    <div className="w-full max-w-[1840px] mx-auto px-2.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-4 space-y-2.5 sm:space-y-3.5">
       
       {/* Top Helper Banner: Quick Client Form Link (/pedidos) */}
-      <div className={`px-4 py-2.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 transition-all text-xs ${
+      <div className={`px-3 py-1.5 sm:py-2 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 transition-all text-xs ${
         isDark 
           ? 'bg-blue-950/20 border-blue-500/20 text-blue-200' 
           : 'bg-blue-50/70 border-blue-200/80 text-blue-950'
       }`}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-bold flex items-center gap-1.5">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <span className="font-bold flex items-center gap-1.5 flex-shrink-0">
             <Link2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
             <span>Enlace para Clientes:</span>
           </span>
-          <code className={`px-2 py-0.5 rounded-lg font-mono text-[11px] font-bold ${
+          <code className={`px-2 py-0.5 rounded-lg font-mono text-[11px] font-bold truncate ${
             isDark ? 'bg-zinc-900 text-blue-300 border border-blue-500/30' : 'bg-white text-blue-900 border border-blue-200 shadow-2xs'
           }`}>
             {clientFormUrl}
           </code>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
           <button
             type="button"
             onClick={handleCopyClientUrl}
-            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs text-[11px] ${
+            className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs text-[11px] ${
               copiedClientUrl
                 ? 'bg-emerald-600 text-white'
                 : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -311,7 +311,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               type="button"
               onClick={onSwitchToClient}
-              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all cursor-pointer text-[11px] border ${
+              className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer text-[11px] border ${
                 isDark 
                   ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:bg-zinc-800' 
                   : 'bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-100'
@@ -326,32 +326,33 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
       </div>
 
       {/* Filter, Search & Actions Bar */}
-      <div className={`p-3 sm:p-3.5 rounded-2xl border mb-5 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 ${
-        isDark ? 'bg-[#18181D] border-white/10' : 'bg-white border-zinc-200 shadow-2xs'
+      <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 ${
+        isDark ? 'bg-[#18181D] border-white/10' : 'bg-white border-zinc-200/90 shadow-2xs'
       }`}>
         
         {/* Left: Search & Courier Filters */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
           {/* Search */}
-          <div className="relative w-full sm:w-72 lg:w-80">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full sm:w-64 lg:w-72 flex-shrink-0" title="Cliente, DNI, teléfono o código...">
+            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               id="kanban-search-input"
               type="text"
-              placeholder="Buscar por cliente, DNI, teléfono o código..."
+              placeholder="Buscar"
+              title="Cliente, DNI, teléfono o código..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full pl-9 pr-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-white/30 ${
+              className={`w-full pl-8.5 pr-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-white/30 ${
                 isDark 
                   ? 'bg-[#111115] border-white/10 text-white placeholder-zinc-500' 
-                  : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500'
+                  : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-400'
               }`}
             />
           </div>
 
           {/* Courier Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar py-0.5">
-            <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 pr-1 flex items-center gap-1">
+            <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-400 pr-0.5 flex items-center gap-1 flex-shrink-0">
               <Filter className="w-3.5 h-3.5" />
               Courier:
             </span>
@@ -359,7 +360,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               id="filter-courier-todos"
               onClick={() => setCourierFilter('todos')}
-              className={`px-3 py-1.5 rounded-xl font-black transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-black transition-all whitespace-nowrap cursor-pointer text-xs ${
                 courierFilter === 'todos'
                   ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
                   : isDark ? 'bg-zinc-900 text-zinc-400 hover:text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -371,7 +372,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               id="filter-courier-shalom"
               onClick={() => setCourierFilter('shalom')}
-              className={`px-3 py-1.5 rounded-xl font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'shalom'
                   ? 'bg-red-600 text-white shadow-xs'
                   : isDark ? 'bg-red-950/30 text-red-400 hover:bg-red-950/50' : 'bg-red-50 text-red-900 hover:bg-red-100'
@@ -384,7 +385,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               id="filter-courier-marvisur"
               onClick={() => setCourierFilter('marvisur')}
-              className={`px-3 py-1.5 rounded-xl font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'marvisur'
                   ? 'bg-blue-700 text-white shadow-xs'
                   : isDark ? 'bg-blue-950/30 text-blue-400 hover:bg-blue-950/50' : 'bg-blue-50 text-blue-900 hover:bg-blue-100'
@@ -397,7 +398,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               id="filter-courier-olva"
               onClick={() => setCourierFilter('olva')}
-              className={`px-3 py-1.5 rounded-xl font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'olva'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : isDark ? 'bg-amber-950/30 text-amber-400 hover:bg-amber-950/50' : 'bg-amber-50 text-amber-950 hover:bg-amber-100'
@@ -410,7 +411,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               id="filter-courier-delivery"
               onClick={() => setCourierFilter('delivery_lima')}
-              className={`px-3 py-1.5 rounded-xl font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'delivery_lima'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : isDark ? 'bg-blue-950/30 text-blue-400 hover:bg-blue-950/50' : 'bg-blue-50 text-blue-950 hover:bg-blue-100'
@@ -423,7 +424,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             <button
               id="filter-courier-tienda"
               onClick={() => setCourierFilter('tienda')}
-              className={`px-3 py-1.5 rounded-xl font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'tienda'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : isDark ? 'bg-emerald-950/30 text-emerald-400 hover:bg-emerald-950/50' : 'bg-emerald-50 text-emerald-950 hover:bg-emerald-100'
@@ -652,13 +653,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         id={`order-card-${order.id}`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, order.id)}
-                        className={`w-full max-w-full min-w-0 p-3.5 rounded-2xl border transition-all duration-150 shadow-2xs hover:shadow-md cursor-grab active:cursor-grabbing group overflow-hidden box-border ${
+                        className={`w-full max-w-full min-w-0 p-3 rounded-xl border transition-all duration-150 shadow-2xs hover:shadow-md cursor-grab active:cursor-grabbing group overflow-hidden box-border ${
                           shippingStyle.cardClasses
                         }`}
                       >
                         {/* Top: Checkbox Selección, ID, Courier Badge & Payment Badge */}
-                        <div className="flex items-center justify-between gap-1 mb-2 min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0 flex-nowrap">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-nowrap flex-1 overflow-hidden">
                             <input
                               type="checkbox"
                               checked={selectedForPrintIds.includes(order.id)}
@@ -671,18 +672,18 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 );
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 rounded text-amber-600 accent-amber-600 cursor-pointer flex-shrink-0"
+                              className="w-3.5 h-3.5 rounded text-amber-600 accent-amber-600 cursor-pointer flex-shrink-0"
                               title="Seleccionar para imprimir rótulo"
                             />
-                            <span className="font-mono font-black text-xs px-2 py-0.5 rounded-lg bg-black/10 dark:bg-white/10 text-zinc-950 dark:text-zinc-100 border border-black/10 dark:border-white/10">
+                            <span className="font-mono font-black text-xs px-2 py-0.5 rounded-lg bg-black/10 dark:bg-white/10 text-zinc-950 dark:text-zinc-100 border border-black/10 dark:border-white/10 whitespace-nowrap flex-shrink-0 leading-none select-all">
                               #{order.id}
                             </span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md border truncate ${paymentStyle.paymentBadgeClass}`} title={paymentStyle.paymentLabel}>
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md border whitespace-nowrap flex-shrink-0 leading-none truncate ${paymentStyle.paymentBadgeClass}`} title={paymentStyle.paymentLabel}>
                               {paymentStyle.paymentIcon} {order.shippingType === 'delivery_lima' && order.isCashOnDelivery ? 'Contraentrega' : (order.shippingType === 'tienda' ? 'Tienda' : 'Pagado')}
                             </span>
                           </div>
 
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border truncate max-w-[140px] ${
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap flex-shrink-0 leading-none truncate ${
                             isDark ? badge.bgDark : badge.bgLight
                           } ${
                             isDark ? badge.textDark : badge.textLight
@@ -724,7 +725,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 className="w-3.5 h-3.5 object-contain flex-shrink-0 group-hover/wame:scale-110 transition-transform"
                                 referrerPolicy="no-referrer"
                               />
-                              <span>{displayPhone}</span>
+                              <span className="whitespace-nowrap">{displayPhone}</span>
                             </a>
                           </div>
                         </div>

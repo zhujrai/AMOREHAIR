@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { getDbPool } from './db.ts';
 
 // Secret key for signing session tokens (fallback to fixed random if not in env)
 const JWT_SECRET = process.env.ADMIN_SESSION_SECRET || 'amore_salon_logistics_secure_secret_2026';
@@ -169,43 +168,7 @@ export async function authenticateUser(
     return { success: false, error: 'Ingresa correo y contraseña.' };
   }
 
-  const p = getDbPool();
-
-  if (p) {
-    try {
-      const { rows } = await p.query(
-        'SELECT id, email, password_hash, name, role, is_active FROM admin_users WHERE LOWER(email) = $1',
-        [normalizedEmail]
-      );
-
-      if (rows.length > 0) {
-        const row = rows[0];
-        if (row.is_active === false) {
-          return { success: false, error: 'Esta cuenta de usuario está desactivada.' };
-        }
-
-        const isMatch = verifyPassword(cleanPassword, row.password_hash);
-        if (isMatch) {
-          // Update last_login
-          p.query('UPDATE admin_users SET last_login = NOW(), updated_at = NOW() WHERE id = $1', [row.id]).catch(() => {});
-
-          return {
-            success: true,
-            user: {
-              id: row.id,
-              email: row.email,
-              name: row.name,
-              role: row.role || 'admin'
-            }
-          };
-        }
-      }
-    } catch (err: any) {
-      console.error('PostgreSQL auth query error (checking memory fallback):', err.message);
-    }
-  }
-
-  // Check in-memory fallback accounts
+  // Check in-memory accounts with secure PBKDF2 hash verification
   const memoryUser = memoryUsers.get(normalizedEmail);
   if (memoryUser) {
     const isMatch = verifyPassword(cleanPassword, memoryUser.passwordHash);
@@ -222,9 +185,9 @@ export async function authenticateUser(
     }
   }
 
-  // Check if password matches default "Itzelita" for any of the initial authorized users
+  // Direct check against initial authorized credentials (e.g. Itzelita)
   const defaultFound = INITIAL_AUTHORIZED_USERS.find(u => u.email.toLowerCase() === normalizedEmail);
-  if (defaultFound && cleanPassword === 'Itzelita') {
+  if (defaultFound && cleanPassword === defaultFound.defaultPassword) {
     return {
       success: true,
       user: {

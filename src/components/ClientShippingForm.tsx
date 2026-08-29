@@ -328,24 +328,24 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   return (
     <div className="w-full max-w-2xl mx-auto px-2 sm:px-4 py-2 sm:py-5 animate-in fade-in duration-300">
       
-      {/* Standalone Brand Header with Logo, Share & Theme Switcher (No Admin Panel Button) */}
-      <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4 px-1 sm:px-2">
+      {/* Standalone Brand Header with Logo, Title, Share & Theme Switcher */}
+      <div className="flex items-center justify-between gap-3 mb-2 sm:mb-3 px-1 sm:px-2">
         <div className="flex items-center">
           {brandLogo ? (
-            <div className="relative flex items-center h-12 sm:h-14 overflow-hidden">
+            <div className="relative flex items-center h-14 sm:h-18 overflow-hidden">
               <img
                 src={brandLogo}
                 alt={storeSettings.storeName || 'AMORE SALON'}
-                className="h-14 sm:h-16 w-auto max-w-[200px] sm:max-w-[280px] object-cover scale-y-[1.18] scale-x-[1.05] p-0 m-0 transition-transform"
+                className="h-16 sm:h-20 w-auto max-w-[240px] sm:max-w-[340px] object-cover scale-y-[1.18] scale-x-[1.05] p-0 m-0 transition-transform"
                 referrerPolicy="no-referrer"
               />
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-red-500/15 text-red-600 flex items-center justify-center font-black">
-                <Truck className="w-4 h-4 stroke-[2.5]" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-red-500/15 text-red-600 flex items-center justify-center font-black shadow-sm">
+                <Truck className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="font-black text-sm tracking-tight uppercase text-zinc-950 dark:text-white">AMORE SALON</span>
+              <span className="font-black text-base sm:text-lg tracking-tight uppercase text-zinc-950 dark:text-white">AMORE SALON</span>
             </div>
           )}
         </div>
@@ -356,10 +356,10 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             id="client-share-form-btn"
             type="button"
             onClick={() => setShowShareModal(true)}
-            className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
+            className={`p-2 sm:p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs backdrop-blur-md ${
               isDark
-                ? 'bg-zinc-900/90 hover:bg-zinc-800 border-white/10 text-white hover:border-blue-500/40'
-                : 'bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-900 hover:border-blue-500/40'
+                ? 'bg-zinc-900/80 hover:bg-zinc-800/90 border-white/10 text-white hover:border-blue-500/40'
+                : 'bg-white/80 hover:bg-white border-zinc-200 text-zinc-900 hover:border-blue-500/40'
             }`}
             title="Compartir enlace del formulario"
             aria-label="Compartir formulario"
@@ -372,10 +372,10 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               id="client-theme-toggle-btn"
               type="button"
               onClick={() => setIsDark(!isDark)}
-              className={`p-2 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs ${
+              className={`p-2 sm:p-2.5 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs backdrop-blur-md ${
                 isDark
-                  ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-amber-400'
-                  : 'border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-800'
+                  ? 'border-white/10 bg-zinc-900/80 hover:bg-zinc-800/90 text-amber-400'
+                  : 'border-zinc-200 bg-white/80 hover:bg-white text-zinc-800'
               }`}
               title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
               aria-label="Cambiar tema"
@@ -383,6 +383,18 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-800" />}
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Title above form */}
+      <div className="mb-2.5 sm:mb-3 px-1 sm:px-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-white">
+            Formulario de envío
+          </h1>
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Completa tus datos para coordinar el despacho de tu pedido
+          </p>
         </div>
       </div>
 
@@ -412,11 +424,11 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
         </div>
       )}
 
-      {/* MAIN FORM CONTAINER WITH SOFT GLASSMORPHISM */}
-      <div className={`rounded-3xl sm:rounded-[32px] p-4 sm:p-7 backdrop-blur-xl transition-all shadow-xl ${
+      {/* MAIN FORM CONTAINER WITH MACOS GLASSMORPHISM & FLUID MOBILE ADAPTATION */}
+      <div className={`rounded-2xl sm:rounded-[28px] p-3.5 sm:p-7 backdrop-blur-2xl transition-all shadow-xl macos-card ${
         isDark 
-          ? 'bg-[#18181F]/80 border border-white/10 text-white shadow-black/40' 
-          : 'bg-white/85 border border-white/80 text-black shadow-zinc-200/50'
+          ? 'bg-[#18181F]/85 border border-white/[0.12] text-white shadow-black/50' 
+          : 'bg-white/90 border border-black/[0.06] text-black shadow-zinc-300/40 ring-1 ring-black/[0.02]'
       }`}>
         
         <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4.5">
@@ -1066,13 +1078,13 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             />
           </div>
 
-          {/* 7. BTN ACTION: GUARDAR */}
+          {/* 7. BTN ACTION: REGISTRAR */}
           <button
             id="submit-shipping-form-btn"
             type="submit"
-            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer mt-5"
+            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.008] active:scale-[0.992] flex items-center justify-center gap-2 cursor-pointer mt-5 backdrop-blur-md"
           >
-            <span className="text-white dark:text-zinc-950 font-black">GUARDAR</span>
+            <span className="text-white dark:text-zinc-950 font-black tracking-wider">REGISTRAR</span>
             <span className="text-lg leading-none text-white dark:text-zinc-950 font-black">→</span>
           </button>
 

@@ -21,13 +21,23 @@
 :root {
   color-scheme: light;
   color: #101010;
-  background-color: #FAFAFA;
+  background-color: #F6F7F9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 :root.dark {
   color-scheme: dark;
   color: #FFFFFF;
-  background-color: #111113;
+  background-color: #0E0E12;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* macOS subtle glass effects */
+.macos-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* Ensure all form labels, headings, and texts in light mode stay dark */
