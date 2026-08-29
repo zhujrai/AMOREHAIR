@@ -603,7 +603,7 @@ export default function App() {
       )}
 
       {/* Top Navigation - Fixed / Sticky Header exclusively for Dispatch Admin Dashboard */}
-      {currentView === 'admin' && (
+      {currentView === 'admin' && isAdminAuthenticated && (
         <Navbar
           currentView={currentView}
           isAdminAuthenticated={isAdminAuthenticated}
@@ -704,18 +704,20 @@ export default function App() {
             © 2026 AMORE SALON HAIR STYLE
           </div>
 
-          <div className="flex items-center gap-5">
-            <button
-              id="footer-operator-login-btn"
-              type="button"
-              onClick={() => navigateToView('admin')}
-              className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Acceso Administración"
-              aria-label="Acceso Administración"
-            >
-              <Lock className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {currentView !== 'admin' && !isAdminAuthenticated && (
+            <div className="flex items-center gap-5">
+              <button
+                id="footer-operator-login-btn"
+                type="button"
+                onClick={() => navigateToView('admin')}
+                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                title="Acceso Administración"
+                aria-label="Acceso Administración"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </footer>
 

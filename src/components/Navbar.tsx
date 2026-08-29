@@ -122,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   title="Ver Formulario de Clientes (/pedidos)"
                 >
                   <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-blue-500" />
-                  <span>Ver Formulario</span>
+                  <span>Form pedidos</span>
                 </button>
 
                 {/* Botón Espacio para Logo de la Marca */}
@@ -206,7 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Ir al Formulario de Envíos (/pedidos)"
               >
                 <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
-                <span>Formulario (/pedidos)</span>
+                <span>Form pedidos</span>
               </button>
             )}
 

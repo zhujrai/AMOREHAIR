@@ -374,7 +374,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             onClick={onBackToClient}
             className="inline-flex items-center gap-1.5 text-xs font-black text-red-600 dark:text-[#FF7060] hover:underline cursor-pointer"
           >
-            <span>Ir al Formulario de Envíos (/pedidos)</span>
+            <span>Form pedidos</span>
             <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
           </button>
         </div>

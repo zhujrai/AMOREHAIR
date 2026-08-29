@@ -22,8 +22,7 @@ import {
   HelpCircle,
   Share2,
   Sun,
-  Moon,
-  Lock
+  Moon
 } from 'lucide-react';
 import { Agency, KnownCustomer, Order, ShippingMethodsConfig, ShippingType, StoreSettings } from '../types';
 import { SHALOM_AGENCIES, OLVA_AGENCIES, MARVISUR_AGENCIES, LIMA_DISTRICTS } from '../data/agencies';
@@ -1089,22 +1088,6 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           </button>
 
         </form>
-      </div>
-
-      {/* Acceso escondido discreto para administración (candadito abajo) */}
-      <div className="mt-6 sm:mt-8 pb-4 flex items-center justify-center">
-        {onNavigateToAdmin && (
-          <button
-            id="client-hidden-admin-lock-btn"
-            type="button"
-            onClick={onNavigateToAdmin}
-            className="p-2 rounded-full text-zinc-400 hover:text-zinc-700 dark:text-zinc-600 dark:hover:text-zinc-300 opacity-40 hover:opacity-100 transition-all cursor-pointer"
-            title="Acceso Administrativo"
-            aria-label="Acceso Administrativo"
-          >
-            <Lock className="w-3.5 h-3.5 stroke-[2]" />
-          </button>
-        )}
       </div>
 
       {/* Modals */}
