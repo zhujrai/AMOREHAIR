@@ -15,6 +15,8 @@ import {
   Search, 
   Info, 
   AlertCircle,
+  AlertTriangle,
+  WifiOff,
   PackageCheck,
   ShieldCheck,
   CheckCircle2,
@@ -52,6 +54,7 @@ interface ClientShippingFormProps {
   isDark: boolean;
   setIsDark?: (dark: boolean) => void;
   onNavigateToAdmin?: () => void;
+  isDbConnected?: boolean;
 }
 
 export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
@@ -72,6 +75,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   isDark,
   setIsDark,
   onNavigateToAdmin,
+  isDbConnected = true,
 }) => {
   // Form State
   const [phone, setPhone] = useState('');
@@ -86,8 +90,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   const [selectedMarvisurAgency, setSelectedMarvisurAgency] = useState<Agency | null>(null);
   const [olvaDeliveryMode, setOlvaDeliveryMode] = useState<'agencia' | 'domicilio'>('agencia');
 
-  // Highlight / emphasis effect for chosen shipping modality
-  const [highlightModality, setHighlightModality] = useState(false);
+  // Highlight / emphasis effect for next step (agency selection)
+  const [highlightAgencyStep, setHighlightAgencyStep] = useState(false);
 
   // Delivery Lima / Olva Domicilio
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -151,61 +155,117 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
     return () => clearInterval(interval);
   }, [currentCutoffHour, shippingType]);
 
-  // Recalculate dispatch date when shipping type changes
+  // Recalculate dispatch date when shipping type changes or cutoff updates
   useEffect(() => {
-    const available = getNext4DispatchDates(currentCutoffHour);
+    const available = getNext4DispatchDates(currentCutoffHour, shippingType);
     if (available.length > 0) {
       const exists = available.some(d => d.dateStr === dispatchDate);
       if (!exists || !dispatchDate) {
         setDispatchDate(available[0].dateStr);
       }
     }
-  }, [currentCutoffHour]);
+  }, [currentCutoffHour, shippingType]);
 
-  // Check phone in known customers list
-  useEffect(() => {
-    const clean = phone.replace(/\D/g, '');
-    if (clean.length === 9) {
-      const match = knownCustomers.find((c) => c.phone === clean);
-      if (match) {
-        setIsKnownCustomer(true);
-        setRecognizedName(match.fullName);
-        setCustomerName(match.fullName);
-        setDocumentType(match.documentType);
-        setDocumentNumber(match.documentNumber);
-
-        if (match.preferredShippingType) {
-          setShippingType(match.preferredShippingType);
-        }
-        if (match.preferredAgency) {
-          const shalomMatch = shalomAgencies.find((a) => a.id === match.preferredAgency);
-          if (shalomMatch) setSelectedShalomAgency(shalomMatch);
-          const marvisurMatch = marvisurAgencies.find((a) => a.id === match.preferredAgency);
-          if (marvisurMatch) setSelectedMarvisurAgency(marvisurMatch);
-          const olvaMatch = olvaAgencies.find((a) => a.id === match.preferredAgency);
-          if (olvaMatch) setSelectedOlvaAgency(olvaMatch);
-        }
-        if (match.preferredAddress) {
-          setDeliveryAddress(match.preferredAddress);
-        }
-        if (match.preferredDistrict) {
-          setDeliveryDistrict(match.preferredDistrict);
-        }
-      } else {
-        setIsKnownCustomer(false);
-      }
-    } else {
-      setIsKnownCustomer(false);
+  // Reusable helper to populate data when a customer match is found
+  const applyCustomerMatch = (match: KnownCustomer) => {
+    setIsKnownCustomer(true);
+    setRecognizedName(match.fullName);
+    if (!customerName || customerName !== match.fullName) {
+      setCustomerName(match.fullName);
     }
-  }, [phone, knownCustomers, shalomAgencies, olvaAgencies, marvisurAgencies]);
+    if (match.documentNumber && (!documentNumber || documentNumber !== match.documentNumber)) {
+      setDocumentNumber(match.documentNumber);
+      if (match.documentType) setDocumentType(match.documentType);
+    }
+    if (match.phone && (!phone || phone !== match.phone)) {
+      setPhone(match.phone);
+    }
+
+    if (!shippingType && match.preferredShippingType) {
+      setShippingType(match.preferredShippingType);
+    }
+    if (match.preferredAgency) {
+      const shalomMatch = shalomAgencies.find((a) => a.id === match.preferredAgency);
+      if (shalomMatch && !selectedShalomAgency) setSelectedShalomAgency(shalomMatch);
+      const marvisurMatch = marvisurAgencies.find((a) => a.id === match.preferredAgency);
+      if (marvisurMatch && !selectedMarvisurAgency) setSelectedMarvisurAgency(marvisurMatch);
+      const olvaMatch = olvaAgencies.find((a) => a.id === match.preferredAgency);
+      if (olvaMatch && !selectedOlvaAgency) setSelectedOlvaAgency(olvaMatch);
+    }
+    if (match.preferredAddress && !deliveryAddress) {
+      setDeliveryAddress(match.preferredAddress);
+    }
+    if (match.preferredDistrict && !deliveryDistrict) {
+      setDeliveryDistrict(match.preferredDistrict);
+    }
+  };
+
+  // Handler for document number input with immediate autofill
+  const handleDocNumberChange = (raw: string) => {
+    const clean = raw.replace(/\D/g, '');
+    setDocumentNumber(clean);
+    if (errors.documentNumber) setErrors((prev) => ({ ...prev, documentNumber: '' }));
+
+    if ((documentType === 'DNI' && clean.length === 8) || (documentType === 'CE' && clean.length >= 8)) {
+      const match = knownCustomers.find(
+        (c) => c.documentNumber?.replace(/\D/g, '') === clean
+      );
+      if (match) {
+        applyCustomerMatch(match);
+      }
+    }
+  };
+
+  // Handler for phone number input with immediate autofill
+  const handlePhoneChange = (raw: string) => {
+    const clean = raw.replace(/\D/g, '');
+    setPhone(clean);
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+
+    if (clean.length === 9) {
+      const match = knownCustomers.find(
+        (c) => c.phone?.replace(/\D/g, '') === clean
+      );
+      if (match) {
+        applyCustomerMatch(match);
+      }
+    }
+  };
+
+  // Check known customers on initial load or async updates
+  useEffect(() => {
+    if (knownCustomers.length === 0) return;
+    const cleanDoc = documentNumber.replace(/\D/g, '');
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    if ((documentType === 'DNI' && cleanDoc.length === 8) || (documentType === 'CE' && cleanDoc.length >= 8)) {
+      const matchDoc = knownCustomers.find((c) => c.documentNumber?.replace(/\D/g, '') === cleanDoc);
+      if (matchDoc) {
+        applyCustomerMatch(matchDoc);
+        return;
+      }
+    }
+
+    if (cleanPhone.length === 9) {
+      const matchPhone = knownCustomers.find((c) => c.phone?.replace(/\D/g, '') === cleanPhone);
+      if (matchPhone) {
+        applyCustomerMatch(matchPhone);
+      }
+    }
+  }, [knownCustomers]);
 
   const handleSelectShippingType = (type: ShippingType) => {
     setShippingType(type);
     setShowShippingModal(false);
-    setHighlightModality(true);
-    setTimeout(() => setHighlightModality(false), 3000);
+    
+    // Highlight agency selection as next logical step if an agency-based courier is chosen
+    if (type === 'shalom' || type === 'marvisur' || type === 'olva') {
+      setHighlightAgencyStep(true);
+      setTimeout(() => setHighlightAgencyStep(false), 4500);
+    } else {
+      setHighlightAgencyStep(false);
+    }
 
-    // If Shalom, Marvisur or Olva (and no agency chosen), we can encourage selection
     if (errors.shippingType) {
       setErrors((prev) => ({ ...prev, shippingType: '' }));
     }
@@ -476,7 +536,6 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   </span>
                 </div>
               ) : (
-                /* Cuando ya está seleccionado, muestra el detalle completo y botón Cambiar */
                 <div
                   id="open-shipping-type-modal-btn"
                   onClick={() => {
@@ -486,27 +545,25 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
                     errors.shippingType
                       ? 'border-2 border-red-500 bg-red-500/10'
-                      : highlightModality
-                        ? 'border-2 border-rose-500 bg-rose-50 dark:bg-rose-950/40 ring-4 ring-rose-500/20 shadow-lg'
-                        : isDark 
-                          ? 'bg-rose-950/20 hover:bg-rose-950/35 border border-rose-500/20 text-white' 
-                          : 'bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-black shadow-xs'
+                      : isDark 
+                        ? 'bg-[#18161B] hover:bg-[#201E24] border border-[#713B50]/30 text-white shadow-xs' 
+                        : 'bg-white hover:bg-[#FAF8F5] border border-[#E5E0E3] text-[#29272B] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="w-11 h-11 rounded-2xl bg-[#713B50] dark:bg-white text-white dark:text-[#29272B] flex items-center justify-center flex-shrink-0 shadow-sm">
                       {shippingType === 'shalom' && <Building2 className="w-5 h-5 stroke-[2.2]" />}
-                      {shippingType === 'marvisur' && <Truck className="w-5 h-5 stroke-[2.2] text-blue-400" />}
+                      {shippingType === 'marvisur' && <Truck className="w-5 h-5 stroke-[2.2] text-blue-200 dark:text-blue-600" />}
                       {shippingType === 'olva' && <Truck className="w-5 h-5 stroke-[2.2]" />}
                       {shippingType === 'delivery_lima' && <Bike className="w-5 h-5 stroke-[2.2]" />}
                       {shippingType === 'tienda' && <Store className="w-5 h-5 stroke-[2.2]" />}
                     </div>
 
                     <div className="min-w-0">
-                      <div className="font-extrabold text-sm sm:text-base text-black dark:text-white truncate">
+                      <div className="font-extrabold text-sm sm:text-base text-[#29272B] dark:text-white truncate">
                         {getShippingTypeLabel(shippingType)}
                       </div>
-                      <div className="text-xs text-zinc-700 dark:text-zinc-300 font-bold mt-0.5 truncate">
+                      <div className="text-xs text-[#625D63] dark:text-zinc-300 font-bold mt-0.5 truncate">
                         {shippingType === 'shalom' && (
                           selectedShalomAgency 
                             ? `${selectedShalomAgency.department} / ${selectedShalomAgency.province} / ${selectedShalomAgency.name}`
@@ -528,7 +585,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-rose-600 hover:bg-rose-700 text-white ml-2">
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-[#713B50] hover:bg-[#5A2E3F] text-white ml-2">
                     Cambiar
                   </span>
                 </div>
@@ -542,59 +599,68 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               )}
             </div>
 
-            {/* 1.1 ESPECIFICACIÓN: SHALOM CON ÉNFASIS */}
+            {/* 1.1 ESPECIFICACIÓN: SHALOM CON RESALTE DE SIGUIENTE PASO */}
             {shippingType === 'shalom' && (
               <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
                 isDark 
-                  ? 'bg-[#202029]/80 border border-rose-500/20' 
-                  : 'bg-rose-50/50 border border-rose-200/80 shadow-2xs'
+                  ? 'bg-[#1C1A1F] border border-[#E5E0E3]/15' 
+                  : 'bg-[#FAF8F5] border border-[#E5E0E3] shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-rose-500" />
-                    Agencia Shalom <span className="text-rose-500 font-bold">*</span>
+                  <span className="text-[#29272B] dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#713B50] dark:text-[#C69A55]" />
+                    Agencia Shalom <span className="text-[#713B50] dark:text-[#C69A55] font-bold">*</span>
                   </span>
-                  <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                    Búsqueda GPS / Texto
-                  </span>
+                  {!selectedShalomAgency ? (
+                    <span className="text-[11px] font-bold text-[#713B50] dark:text-[#C69A55] bg-[#713B50]/10 dark:bg-[#C69A55]/20 px-2.5 py-0.5 rounded-full animate-pulse">
+                      👉 Siguiente paso: Elige tu agencia
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold text-[#477568] dark:text-emerald-400">
+                      ✓ Agencia seleccionada
+                    </span>
+                  )}
                 </div>
 
                 <div 
                   id="select-shalom-agency-btn"
                   onClick={() => {
+                    setHighlightAgencyStep(false);
                     setShowShalomSearchModal(true);
                     if (errors.agency) setErrors((prev) => ({ ...prev, agency: '' }));
                   }}
                   className={`p-3.5 rounded-xl cursor-pointer transition-all ${
                     errors.agency
                       ? 'border-2 border-red-500 bg-red-500/10'
-                      : selectedShalomAgency
-                        ? isDark ? 'bg-rose-950/25 hover:bg-rose-950/40 border border-rose-500/20' : 'bg-white hover:bg-rose-50/80 border border-rose-200 shadow-2xs'
-                        : isDark ? 'bg-rose-950/40 hover:bg-rose-950/60 border border-rose-500/40' : 'bg-white hover:bg-rose-50 border-2 border-rose-400 shadow-xs ring-2 ring-rose-400/20'
+                      : !selectedShalomAgency
+                        ? 'border-2 border-[#713B50] ring-4 ring-[#713B50]/20 bg-white dark:bg-[#201D22] shadow-md animate-pulse'
+                        : isDark 
+                          ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
+                          : 'bg-white hover:bg-zinc-50 border border-[#E5E0E3] text-[#29272B] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {selectedShalomAgency ? (
                         <>
-                          <div className="font-extrabold text-xs sm:text-sm text-black dark:text-white truncate flex items-center gap-1.5">
+                          <div className="font-extrabold text-xs sm:text-sm text-[#29272B] dark:text-white truncate flex items-center gap-1.5">
                             <span>{selectedShalomAgency.name}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#713B50]/10 text-[#713B50] dark:text-[#C69A55] font-bold">
                               {selectedShalomAgency.district || selectedShalomAgency.province}
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
+                          <p className="text-xs text-[#625D63] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
                             {selectedShalomAgency.address}
                           </p>
                         </>
                       ) : (
-                        <div className="text-xs sm:text-sm font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                        <div className="text-xs sm:text-sm font-bold text-[#713B50] dark:text-[#C69A55] flex items-center gap-1.5">
                           <Search className="w-4 h-4" />
-                          <span>Selecciona sucursal o agencia</span>
+                          <span>Toca aquí para elegir tu sucursal o agencia Shalom</span>
                         </div>
                       )}
                     </div>
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#713B50] hover:bg-[#5A2E3F] text-white shadow-xs flex-shrink-0 transition-colors">
                       {selectedShalomAgency ? 'Cambiar' : 'Elegir'}
                     </span>
                   </div>
@@ -613,55 +679,64 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             {shippingType === 'marvisur' && (
               <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
                 isDark 
-                  ? 'bg-[#202029]/80 border border-blue-500/20' 
-                  : 'bg-blue-50/50 border border-blue-200/80 shadow-2xs'
+                  ? 'bg-[#1C1A1F] border border-[#E5E0E3]/15' 
+                  : 'bg-[#FAF8F5] border border-[#E5E0E3] shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
-                    <Truck className="w-4 h-4 text-blue-500" />
-                    Sucursal Expreso Marvisur <span className="text-blue-500 font-bold">*</span>
+                  <span className="text-[#29272B] dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-[#376C80]" />
+                    Sucursal Expreso Marvisur <span className="text-[#376C80] font-bold">*</span>
                   </span>
-                  <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                    Búsqueda GPS / Texto
-                  </span>
+                  {!selectedMarvisurAgency ? (
+                    <span className="text-[11px] font-bold text-[#376C80] dark:text-sky-400 bg-[#376C80]/10 px-2.5 py-0.5 rounded-full animate-pulse">
+                      👉 Siguiente paso: Elige tu sucursal
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold text-[#477568] dark:text-emerald-400">
+                      ✓ Sucursal seleccionada
+                    </span>
+                  )}
                 </div>
 
                 <div 
                   id="select-marvisur-agency-btn"
                   onClick={() => {
+                    setHighlightAgencyStep(false);
                     setShowMarvisurSearchModal(true);
                     if (errors.agency) setErrors((prev) => ({ ...prev, agency: '' }));
                   }}
                   className={`p-3.5 rounded-xl cursor-pointer transition-all ${
                     errors.agency
                       ? 'border-2 border-red-500 bg-red-500/10'
-                      : selectedMarvisurAgency
-                        ? isDark ? 'bg-blue-950/25 hover:bg-blue-950/40 border border-blue-500/20' : 'bg-white hover:bg-blue-50/80 border border-blue-200 shadow-2xs'
-                        : isDark ? 'bg-blue-950/40 hover:bg-blue-950/60 border border-blue-500/40' : 'bg-white hover:bg-blue-50 border-2 border-blue-400 shadow-xs ring-2 ring-blue-400/20'
+                      : !selectedMarvisurAgency
+                        ? 'border-2 border-[#376C80] ring-4 ring-[#376C80]/20 bg-white dark:bg-[#201D22] shadow-md animate-pulse'
+                        : isDark 
+                          ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
+                          : 'bg-white hover:bg-zinc-50 border border-[#E5E0E3] text-[#29272B] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {selectedMarvisurAgency ? (
                         <>
-                          <div className="font-extrabold text-xs sm:text-sm text-black dark:text-white truncate flex items-center gap-1.5">
+                          <div className="font-extrabold text-xs sm:text-sm text-[#29272B] dark:text-white truncate flex items-center gap-1.5">
                             <span>{selectedMarvisurAgency.name}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#376C80]/10 text-[#376C80] dark:text-blue-400 font-bold">
                               {selectedMarvisurAgency.department}
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
+                          <p className="text-xs text-[#625D63] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
                             {selectedMarvisurAgency.address}
                           </p>
                         </>
                       ) : (
-                        <div className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                        <div className="text-xs sm:text-sm font-bold text-[#376C80] dark:text-sky-300 flex items-center gap-1.5">
                           <Search className="w-4 h-4" />
-                          <span>Selecciona sucursal Marvisur</span>
+                          <span>Toca aquí para elegir tu sucursal Marvisur</span>
                         </div>
                       )}
                     </div>
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#376C80] hover:bg-[#2C5768] text-white shadow-xs flex-shrink-0 transition-colors">
                       {selectedMarvisurAgency ? 'Cambiar' : 'Elegir'}
                     </span>
                   </div>
@@ -676,21 +751,21 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               </div>
             )}
 
-            {/* 1.2 ESPECIFICACIÓN: OLVA COURIER CON ÉNFASIS */}
+            {/* 1.3 ESPECIFICACIÓN: OLVA COURIER */}
             {shippingType === 'olva' && (
               <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
                 isDark 
-                  ? 'bg-[#202029]/80 border border-amber-500/20' 
-                  : 'bg-amber-50/50 border border-amber-200/80 shadow-2xs'
+                  ? 'bg-[#1C1A1F] border border-[#E5E0E3]/15' 
+                  : 'bg-[#FAF8F5] border border-[#E5E0E3] shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-black dark:text-zinc-100 font-extrabold text-xs">Modalidad Olva Courier</span>
+                  <span className="text-[#29272B] dark:text-zinc-100 font-extrabold text-xs">Modalidad Olva Courier</span>
                   <div className="flex gap-1 text-xs">
                     <button
                       type="button"
                       onClick={() => setOlvaDeliveryMode('agencia')}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
-                        olvaDeliveryMode === 'agencia' ? 'bg-amber-600 text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-zinc-200'
+                        olvaDeliveryMode === 'agencia' ? 'bg-[#713B50] text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-zinc-200'
                       }`}
                     >
                       En Agencia
@@ -699,7 +774,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                       type="button"
                       onClick={() => setOlvaDeliveryMode('domicilio')}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
-                        olvaDeliveryMode === 'domicilio' ? 'bg-amber-600 text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-zinc-200'
+                        olvaDeliveryMode === 'domicilio' ? 'bg-[#713B50] text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-zinc-900 dark:text-zinc-200'
                       }`}
                     >
                       A Domicilio
@@ -712,32 +787,35 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     <div 
                       id="select-olva-agency-btn"
                       onClick={() => {
+                        setHighlightAgencyStep(false);
                         setShowOlvaSearchModal(true);
                         if (errors.agency) setErrors((prev) => ({ ...prev, agency: '' }));
                       }}
                       className={`p-3.5 rounded-xl cursor-pointer transition-all ${
                         errors.agency
                           ? 'border-2 border-red-500 bg-red-500/10'
-                          : selectedOlvaAgency
-                            ? isDark ? 'bg-amber-950/25 hover:bg-amber-950/40 border border-amber-500/20' : 'bg-white hover:bg-amber-50/80 border border-amber-200 shadow-2xs'
-                            : isDark ? 'bg-amber-950/40 hover:bg-amber-950/60 border border-amber-500/40' : 'bg-white hover:bg-amber-50 border-2 border-amber-400 shadow-xs ring-2 ring-amber-400/20'
+                          : !selectedOlvaAgency
+                            ? 'border-2 border-[#C69A55] ring-4 ring-[#C69A55]/20 bg-white dark:bg-[#201D22] shadow-md animate-pulse'
+                            : isDark 
+                              ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
+                              : 'bg-white hover:bg-zinc-50 border border-[#E5E0E3] text-[#29272B] shadow-2xs'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           {selectedOlvaAgency ? (
                             <>
-                              <div className="font-extrabold text-xs sm:text-sm text-black dark:text-white truncate">{selectedOlvaAgency.name}</div>
-                              <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">{selectedOlvaAgency.address}</p>
+                              <div className="font-extrabold text-xs sm:text-sm text-[#29272B] dark:text-white truncate">{selectedOlvaAgency.name}</div>
+                              <p className="text-xs text-[#625D63] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">{selectedOlvaAgency.address}</p>
                             </>
                           ) : (
-                            <div className="text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                            <div className="text-xs sm:text-sm font-bold text-[#B47B28] dark:text-amber-300 flex items-center gap-1.5">
                               <Search className="w-4 h-4" />
-                              <span>Selecciona sucursal o agencia</span>
+                              <span>Toca aquí para elegir tu sucursal o agencia Olva</span>
                             </div>
                           )}
                         </div>
-                        <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white shadow-xs flex-shrink-0 transition-colors">
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#713B50] hover:bg-[#5A2E3F] text-white shadow-xs flex-shrink-0 transition-colors">
                           {selectedOlvaAgency ? 'Cambiar' : 'Elegir'}
                         </span>
                       </div>
@@ -879,87 +957,40 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             )}
           </div>
 
-          {/* 2. NÚMERO CELULAR / WHATSAPP */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label htmlFor="phone-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
-                <span>Número Celular / WhatsApp</span>
-                <span className="text-rose-500 font-bold">*</span>
-              </label>
-              
-              {isKnownCustomer && (
-                <div 
-                  id="known-customer-badge"
-                  className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 border border-amber-400 dark:border-amber-500 text-amber-950 dark:text-amber-300 text-xs font-bold shadow-xs"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 fill-amber-400" />
-                  <span>¡Cliente frecuente!</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <span className={`px-3.5 py-3 rounded-2xl text-xs font-bold border flex items-center justify-center select-none ${
-                isDark ? 'bg-white/10 border-white/15 text-white' : 'bg-zinc-100 border-zinc-200 text-black'
-              }`}>
-                🇵🇪 +51
-              </span>
-
-              <div className="relative flex-1">
-                <input
-                  id="phone-input"
-                  type="tel"
-                  maxLength={9}
-                  placeholder=""
-                  value={phone}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    setPhone(val);
-                    if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
-                  }}
-                  className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
-                    errors.phone 
-                      ? 'border-red-500 ring-2 ring-red-500/30' 
-                      : isDark
-                        ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white focus:ring-2 focus:ring-white/20'
-                        : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black focus:ring-2 focus:ring-black/10'
-                  }`}
-                />
-
-                {phone.length === 9 && (
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-                  </div>
-                )}
+          {/* RECOGNIZED CUSTOMER BANNER IF MATCHED */}
+          {isKnownCustomer && (
+            <div 
+              id="known-customer-banner"
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-950 dark:text-amber-200 text-xs font-bold animate-in fade-in"
+            >
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 fill-amber-400 flex-shrink-0" />
+                <span>¡Cliente frecuente reconocido: <strong>{recognizedName || customerName}</strong>!</span>
               </div>
+              <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold hidden sm:inline">
+                Datos completados
+              </span>
             </div>
+          )}
 
-            {errors.phone && (
-              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 font-bold">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                {errors.phone}
-              </p>
-            )}
-          </div>
-
-          {/* 3. DOCUMENTO & IDENTIFICACIÓN */}
-          <div className="space-y-1.5">
+          {/* 2. TU DOCUMENTO (Pre-llena teléfono y nombre si ya existe) */}
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label htmlFor="doc-number-input" className="text-black dark:text-zinc-100 font-extrabold text-xs block">
-                Documento <span className="text-rose-500 font-bold">*</span>
+                Tu Documento <span className="text-rose-500 font-bold">*</span>
               </label>
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold">
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold">
                 {documentNumber.length}/{documentType === 'DNI' ? '8' : '12'} dígitos
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="w-28 sm:w-36 flex-shrink-0">
+              <div className="w-24 sm:w-28 flex-shrink-0">
                 <select
                   id="doc-type-select"
                   value={documentType}
                   onChange={(e) => setDocumentType(e.target.value as 'DNI' | 'CE')}
-                  className={`w-full px-3 py-3 rounded-2xl text-xs font-extrabold border transition-colors cursor-pointer ${
+                  className={`w-full px-2.5 py-2.5 rounded-xl text-xs font-extrabold border transition-colors cursor-pointer ${
                     isDark 
                       ? 'bg-white/[0.06] border-white/15 text-white focus:bg-[#111113] focus:border-white' 
                       : 'bg-zinc-50 border-zinc-200 text-black focus:bg-white focus:border-black'
@@ -970,19 +1001,15 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                 </select>
               </div>
 
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 relative">
                 <input
                   id="doc-number-input"
                   type="text"
                   maxLength={documentType === 'DNI' ? 8 : 12}
-                  placeholder={documentType === 'DNI' ? '8 dígitos' : 'Número C.E.'}
+                  placeholder={documentType === 'DNI' ? '8 dígitos (DNI)' : 'Número C.E.'}
                   value={documentNumber}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    setDocumentNumber(val);
-                    if (errors.documentNumber) setErrors((prev) => ({ ...prev, documentNumber: '' }));
-                  }}
-                  className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+                  onChange={(e) => handleDocNumberChange(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
                     errors.documentNumber 
                       ? 'border-red-500 ring-2 ring-red-500/30' 
                       : isDark
@@ -990,6 +1017,12 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                         : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black focus:ring-2 focus:ring-black/10'
                   }`}
                 />
+
+                {((documentType === 'DNI' && documentNumber.length === 8) || (documentType === 'CE' && documentNumber.length >= 8)) && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -998,8 +1031,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             )}
           </div>
 
-          {/* 4. DESTINATARIO (ETIQUETA: "Tu nombre completo") */}
-          <div className="space-y-1.5">
+          {/* 3. DESTINATARIO: NOMBRE COMPLETO */}
+          <div className="space-y-1">
             <label htmlFor="customer-name-input" className="text-black dark:text-zinc-100 font-extrabold text-xs block">
               Tu nombre completo <span className="text-rose-500 font-bold">*</span>
             </label>
@@ -1007,13 +1040,13 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             <input
               id="customer-name-input"
               type="text"
-              placeholder=""
+              placeholder="Nombres y Apellidos"
               value={customerName}
               onChange={(e) => {
                 setCustomerName(e.target.value);
                 if (errors.customerName) setErrors((prev) => ({ ...prev, customerName: '' }));
               }}
-              className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+              className={`w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
                 errors.customerName 
                   ? 'border-red-500 ring-2 ring-red-500/30' 
                   : isDark
@@ -1027,8 +1060,57 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             )}
           </div>
 
-          {/* 5. FECHA DE ENVÍO (RETIRADO "Otras fechas") */}
-          <div className="space-y-1.5">
+          {/* 4. NÚMERO CELULAR / WHATSAPP (UBICADO LUEGO DE NOMBRE COMPLETO) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label htmlFor="phone-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                <span>Número Celular / WhatsApp</span>
+                <span className="text-rose-500 font-bold">*</span>
+              </label>
+            </div>
+
+            <div className="flex gap-2">
+              <span className={`px-3 py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center select-none ${
+                isDark ? 'bg-white/10 border-white/15 text-white' : 'bg-zinc-100 border-zinc-200 text-black'
+              }`}>
+                🇵🇪 +51
+              </span>
+
+              <div className="relative flex-1">
+                <input
+                  id="phone-input"
+                  type="tel"
+                  maxLength={9}
+                  placeholder="9XXXXXXXX"
+                  value={phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
+                    errors.phone 
+                      ? 'border-red-500 ring-2 ring-red-500/30' 
+                      : isDark
+                        ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white focus:ring-2 focus:ring-white/20'
+                        : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black focus:ring-2 focus:ring-black/10'
+                  }`}
+                />
+
+                {phone.length === 9 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {errors.phone && (
+              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 font-bold">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                {errors.phone}
+              </p>
+            )}
+          </div>
+
+          {/* 5. FECHA DE ENVÍO */}
+          <div className="space-y-1">
             <label className="text-black dark:text-zinc-100 font-extrabold text-xs block">
               Fecha de envío <span className="text-rose-500 font-bold">*</span>
             </label>
@@ -1036,46 +1118,62 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             <div
               id="open-date-modal-btn"
               onClick={() => setShowDateModal(true)}
-              className={`p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
+              className={`p-2.5 sm:p-3 rounded-xl flex items-center justify-between cursor-pointer transition-all ${
                 isDark 
                   ? 'bg-rose-950/20 hover:bg-rose-950/35 border border-rose-500/20 text-white' 
                   : 'bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-black shadow-xs'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">📅</span>
-                <div>
-                  <div className="font-extrabold text-sm capitalize text-black dark:text-white">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-lg">📅</span>
+                <div className="min-w-0">
+                  <div className="font-extrabold text-xs sm:text-sm capitalize text-black dark:text-white truncate">
                     {formatPeruvianDate(dispatchDate)}
                   </div>
                 </div>
               </div>
 
-              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex-shrink-0 transition-colors">
+              <span className="text-xs font-bold px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-xs flex-shrink-0 transition-colors">
                 Cambiar
               </span>
             </div>
           </div>
 
           {/* 6. COMENTARIO (OPCIONAL) */}
-          <div className="space-y-1.5 pt-1">
+          <div className="space-y-1 pt-0.5">
             <label htmlFor="order-notes-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center justify-between">
               <span>Comentario</span>
-              <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">Opcional</span>
+              <span className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">Opcional</span>
             </label>
             <input
               id="order-notes-input"
               type="text"
-              placeholder=""
+              placeholder="Instrucciones adicionales para tu entrega"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className={`w-full px-4 py-3 rounded-2xl text-sm font-bold border transition-all ${
+              className={`w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
                 isDark 
                   ? 'bg-white/[0.06] border-white/15 text-white placeholder-zinc-500 focus:bg-[#111113] focus:border-white' 
                   : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500 focus:bg-white focus:border-black'
               }`}
             />
           </div>
+
+          {/* ALERTA DE CONEXIÓN A BASE DE DATOS EN FORMULARIO */}
+          {!isDbConnected && (
+            <div 
+              id="client-db-offline-alert"
+              className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 dark:text-amber-200 text-xs flex items-start gap-2.5 animate-in fade-in"
+            >
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 stroke-[2.2] flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-extrabold block">Modo sin conexión con la base de datos</span>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium leading-relaxed">
+                  Puedes completar y registrar tu pedido con normalidad. Se guardará de forma segura en este dispositivo y se sincronizará con la central automáticamente cuando vuelva la conexión.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* 7. BTN ACTION: REGISTRAR */}
           <button

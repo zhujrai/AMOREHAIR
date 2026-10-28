@@ -252,17 +252,26 @@ async function startServer() {
           const list = Array.isArray(rawData) ? rawData : (rawData.data || rawData.agencies || rawData.items || []);
           
           if (Array.isArray(list) && list.length > 0) {
-            const normalized = list.map((item: any, idx: number) => ({
-              id: item.id || item.codigo || `sh-api-${idx + 1}`,
-              name: item.nombre || item.nombres || item.name || `${item.departamento || 'Lima'} / ${item.provincia || 'Lima'} / ${item.distrito || item.local || 'Central'}`,
-              department: item.departamento || item.department || (item.name && item.name.includes('/') ? item.name.split('/')[0].trim() : 'Lima'),
-              province: item.provincia || item.province || (item.name && item.name.includes('/') ? item.name.split('/')[1]?.trim() : 'Lima'),
-              district: item.distrito || item.district || (item.name && item.name.includes('/') ? item.name.split('/')[2]?.trim() : 'Principal'),
-              address: item.direccion || item.address || item.dir || 'Dirección de agencia Shalom',
-              code: item.codigo || item.code || `SH-${idx + 1}`,
-              schedule: item.horario || item.schedule || 'Lun - Sáb: 8:00 AM - 7:00 PM',
-              phone: item.telefono || item.phone
-            }));
+            const isPuntoPro = (item: any) => {
+              const tipo = String(item.tipo || item.type || '').toUpperCase();
+              const name = String(item.name || item.nombre || item.nombres || '').toLowerCase();
+              return tipo === 'PUNTO PRO' || name.includes('punto pro');
+            };
+
+            const normalized = list
+              .filter((item: any) => !isPuntoPro(item))
+              .map((item: any, idx: number) => ({
+                id: item.id || item.codigo || `sh-api-${idx + 1}`,
+                name: item.nombre || item.nombres || item.name || `${item.departamento || 'Lima'} / ${item.provincia || 'Lima'} / ${item.distrito || item.local || 'Central'}`,
+                department: item.departamento || item.department || (item.name && item.name.includes('/') ? item.name.split('/')[0].trim() : 'Lima'),
+                province: item.provincia || item.province || (item.name && item.name.includes('/') ? item.name.split('/')[1]?.trim() : 'Lima'),
+                district: item.distrito || item.district || (item.name && item.name.includes('/') ? item.name.split('/')[2]?.trim() : 'Principal'),
+                address: item.direccion || item.address || item.dir || 'Dirección de agencia Shalom',
+                code: item.codigo || item.code || `SH-${idx + 1}`,
+                schedule: item.horario || item.schedule || 'Lun - Sáb: 8:00 AM - 7:00 PM',
+                phone: item.telefono || item.phone,
+                tipo: item.tipo || 'AGENCIA'
+              }));
 
             return res.json({
               success: true,
@@ -279,11 +288,17 @@ async function startServer() {
         clearTimeout(timeoutId);
       }
 
-      // Filter contingency database by query if query exists
-      let result = SHALOM_AGENCIES;
+      // Filter contingency database by query if query exists (exclude Punto PRO)
+      const isPuntoPro = (a: any) => {
+        const tipo = String(a.tipo || '').toUpperCase();
+        const name = String(a.name || '').toLowerCase();
+        return tipo === 'PUNTO PRO' || name.includes('punto pro');
+      };
+
+      let result = SHALOM_AGENCIES.filter(a => !isPuntoPro(a));
       if (q.trim()) {
         const queryLower = q.toLowerCase();
-        result = SHALOM_AGENCIES.filter(a => 
+        result = result.filter(a => 
           a.name.toLowerCase().includes(queryLower) ||
           a.department.toLowerCase().includes(queryLower) ||
           a.province.toLowerCase().includes(queryLower) ||

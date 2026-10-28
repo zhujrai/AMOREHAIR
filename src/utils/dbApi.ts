@@ -144,17 +144,38 @@ export interface DbStatusInfo {
 }
 
 export async function checkDatabaseStatus(): Promise<DbStatusInfo> {
+  // Verificación inmediata de conectividad de red local
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return {
+      connected: false,
+      configured: true,
+      host: 'db.nltbacpanvmvtrzhjdxz.supabase.co',
+      database: 'postgres (Supabase Cloud)',
+      message: 'Sin conexión a internet (dispositivo sin red).',
+    };
+  }
+
   try {
-    const { count: orderCount, error: oErr } = await supabase
+    // Timeout de seguridad de 5 segundos para evitar cuelgues ante conexiones lentas
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Tiempo de espera agotado al conectar con la base de datos (timeout 5s)')), 5000)
+    );
+
+    const queryPromise = supabase
       .from('orders')
       .select('*', { count: 'exact', head: true });
 
+    const result = await Promise.race([queryPromise, timeoutPromise]) as any;
+    const { count: orderCount, error: oErr } = result;
+
     if (oErr) {
-      // Try fallback to server endpoint
-      const res = await fetch('/api/db/status');
-      if (res.ok) {
-        return await res.json();
-      }
+      // Intentar fallback al endpoint del servidor local
+      try {
+        const res = await fetch('/api/db/status');
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch {}
       throw new Error(oErr.message);
     }
 
@@ -169,7 +190,7 @@ export async function checkDatabaseStatus(): Promise<DbStatusInfo> {
       database: 'postgres (Supabase Cloud)',
       orderCount: orderCount ?? 0,
       agencyCount: agencyCount ?? 0,
-      message: 'Conectado exitosamente a Supabase Cloud.',
+      message: 'Conectado exitosamente a la base de datos.',
     };
   } catch (err: any) {
     return {
@@ -177,7 +198,7 @@ export async function checkDatabaseStatus(): Promise<DbStatusInfo> {
       configured: true,
       host: 'db.nltbacpanvmvtrzhjdxz.supabase.co',
       database: 'postgres (Supabase Cloud)',
-      message: `Error al conectar con Supabase: ${err.message || 'Verifica tu conexión a internet o la tabla orders'}`,
+      message: `Error al conectar con la base de datos: ${err.message || 'Verifica tu conexión a internet o el servidor'}`,
     };
   }
 }
@@ -652,11 +673,18 @@ export async function fetchAgenciesWithPriority(courier: 'shalom' | 'marvisur' |
   data: Agency[];
   source: 'supabase_db' | 'live_api' | 'contingency_fallback';
 }> {
+  const isPuntoPro = (a: Agency) => {
+    const tipo = String(a.tipo || '').toUpperCase();
+    const name = String(a.name || '').toLowerCase();
+    return tipo === 'PUNTO PRO' || name.includes('punto pro');
+  };
+
   // 1. PRIMER PASO: Consultar Supabase
   const fromDb = await fetchAgenciesFromDatabase(courier);
   if (fromDb.length > 0) {
+    const cleanDb = courier === 'shalom' ? fromDb.filter(a => !isPuntoPro(a)) : fromDb;
     return {
-      data: fromDb,
+      data: cleanDb,
       source: 'supabase_db',
     };
   }
@@ -680,6 +708,7 @@ export async function fetchAgenciesWithPriority(courier: 'shalom' | 'marvisur' |
     if (fallbackList.length === 0) {
       fallbackList = SHALOM_AGENCIES;
     }
+    fallbackList = fallbackList.filter(a => !isPuntoPro(a));
   } else if (courier === 'marvisur') {
     try {
       const res = await fetch('/api/marvisur/agencias');

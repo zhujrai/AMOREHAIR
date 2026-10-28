@@ -176,8 +176,23 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
   const [activeTab, setActiveTab] = useState<'search' | 'gps'>('search');
   const [searchTerm, setSearchTerm] = useState('');
   
+  const isShalom = courierName.toLowerCase().includes('shalom');
+  const isMarvisur = courierName.toLowerCase().includes('marvisur');
+  const isOlva = courierName.toLowerCase().includes('olva');
+
+  // Los PUNTOS PRO solo son para enviar, no para recibir/recojo de clientes
+  const isPuntoPro = (a: Agency) => {
+    const tipo = String(a.tipo || '').toUpperCase();
+    const name = String(a.name || '').toLowerCase();
+    return tipo === 'PUNTO PRO' || name.includes('punto pro');
+  };
+
+  const sanitizeList = (list: Agency[]) => {
+    return isShalom ? list.filter(a => !isPuntoPro(a)) : list;
+  };
+
   // Estado local sincronizado con la API en vivo si no se encuentra
-  const [localAgencies, setLocalAgencies] = useState<Agency[]>(agencies);
+  const [localAgencies, setLocalAgencies] = useState<Agency[]>(() => sanitizeList(agencies));
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
   const [onlineSyncNotice, setOnlineSyncNotice] = useState<string | null>(null);
 
@@ -186,18 +201,15 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  const isShalom = courierName === 'Shalom';
-  const isMarvisur = courierName.toLowerCase().includes('marvisur');
-  const isOlva = courierName.toLowerCase().includes('olva');
-
   // Sincronizar cambios de agencies de props
   useEffect(() => {
     setLocalAgencies((prev) => {
       const existingIds = new Set(prev.map(a => a.id));
-      const toAdd = agencies.filter(a => !existingIds.has(a.id));
+      const source = sanitizeList(agencies);
+      const toAdd = source.filter(a => !existingIds.has(a.id));
       return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
     });
-  }, [agencies]);
+  }, [agencies, isShalom]);
 
   // Consulta en línea automática a la API de Shalom / Marvisur / Olva si busca un término
   useEffect(() => {
@@ -216,7 +228,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-            const apiAgencies: Agency[] = json.data;
+            const apiAgencies: Agency[] = sanitizeList(json.data);
             setLocalAgencies((prev) => {
               const existingIds = new Set(prev.map(a => a.id));
               const existingNames = new Set(prev.map(a => normalize(a.name)));
@@ -495,7 +507,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
           </button>
         </div>
 
-        {/* SELECTOR DE MODALIDAD: [ 📍 5 Más Cercanas GPS ] vs [ 🔍 Buscador Inteligente ] */}
+        {/* SELECTOR DE MODALIDAD: [ 📍 Busca las más cercanas (GPS) ] vs [ 🔍 Búsqueda por texto ] */}
         <div className="p-3 sm:p-4 bg-zinc-50 dark:bg-[#19191F] border-b border-zinc-200/80 dark:border-zinc-800/80 flex gap-2">
           <button
             id="tab-agency-search-btn"
@@ -510,7 +522,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
             }`}
           >
             <Search className="w-4 h-4 text-zinc-400" />
-            <span>Buscador Tipo Google</span>
+            <span>Búsqueda por texto</span>
           </button>
 
           <button
@@ -533,7 +545,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
             }`}
           >
             <Navigation className="w-4 h-4" />
-            <span>5 Más Cercanas (GPS)</span>
+            <span>Busca las más cercanas (GPS)</span>
           </button>
         </div>
 
@@ -571,7 +583,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
 
               {/* Tips de búsqueda rápida & Feedback de Sincronización Online */}
               <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 px-1">
-                <span>Prioriza: <b>1. Nombre</b> &gt; <b>2. Dirección</b> &gt; <b>3. Referencia</b></span>
+                <span className="font-medium">Escribe el nombre del local o tu distrito</span>
                 <div className="flex items-center gap-1.5 font-semibold">
                   {isSearchingOnline && (
                     <span className="text-[10px] text-amber-500 flex items-center gap-1">
@@ -597,7 +609,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                   <MapPin className="w-8 h-8 mx-auto mb-2 opacity-40 text-zinc-400" />
                   <p className="text-sm font-bold text-zinc-900 dark:text-zinc-200">No encontramos coincidencias</p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
-                    Intenta buscando por nombre del local (ej. &ldquo;Pro&rdquo; o &ldquo;Unger&rdquo;) o por el nombre de tu distrito o avenida.
+                    Intenta buscando por nombre del local o por el nombre de tu distrito o avenida.
                   </p>
                 </div>
               ) : (
@@ -660,21 +672,11 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                           </div>
                         )}
 
-                        {/* Horario y Teléfono */}
-                        {(agency.schedule || agency.phone) && (
-                          <div className="flex items-center gap-3 pt-1 text-[11px] text-zinc-500 dark:text-zinc-400 flex-wrap">
-                            {agency.schedule && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-zinc-400" />
-                                <span>{agency.schedule}</span>
-                              </div>
-                            )}
-                            {agency.phone && (
-                              <div className="flex items-center gap-1">
-                                <Phone className="w-3 h-3 text-zinc-400" />
-                                <span>{agency.phone}</span>
-                              </div>
-                            )}
+                        {/* Teléfono */}
+                        {agency.phone && (
+                          <div className="flex items-center gap-1 pt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                            <Phone className="w-3 h-3 text-zinc-400" />
+                            <span>{agency.phone}</span>
                           </div>
                         )}
                       </div>
@@ -825,14 +827,6 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 p-1.5 rounded-lg mt-1">
                               <span className="font-bold">Ref:</span> {agency.reference}
                             </p>
-                          )}
-
-                          {/* Horario */}
-                          {agency.schedule && (
-                            <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 pt-1">
-                              <Clock className="w-3 h-3 text-zinc-400" />
-                              <span>{agency.schedule}</span>
-                            </div>
                           )}
                         </div>
 

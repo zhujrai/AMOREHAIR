@@ -21,7 +21,7 @@ import { ClientShippingForm } from './components/ClientShippingForm';
 import { SuccessSummaryModal } from './components/SuccessSummaryModal';
 import { AdminKanban } from './components/AdminKanban';
 import { AdminLogin } from './components/AdminLogin';
-import { Lock, Sparkles, ShieldCheck, Bell } from 'lucide-react';
+import { Lock, Sparkles, ShieldCheck, Bell, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { 
   fetchServerOrders, 
   saveServerOrder, 
@@ -34,6 +34,7 @@ import {
   fetchServerStoreSettings, 
   saveServerStoreSettings,
   fetchAgenciesWithPriority,
+  checkDatabaseStatus,
   supabase
 } from './utils/dbApi';
 import { playNewOrderSound } from './utils/audioNotification';
@@ -43,7 +44,7 @@ const STORAGE_KEY_THEME = 'logiperu_theme_v1';
 const STORAGE_KEY_CUSTOMERS = 'logiperu_customers_v1';
 const STORAGE_KEY_ADMIN_AUTH = 'logiperu_admin_auth_v1';
 const STORAGE_KEY_SHIPPING_CONFIG = 'logiperu_shipping_config_v1';
-const STORAGE_KEY_SHALOM_AGENCIES = 'logiperu_shalom_agencies_v1';
+const STORAGE_KEY_SHALOM_AGENCIES = 'logiperu_shalom_agencies_v2';
 const STORAGE_KEY_OLVA_AGENCIES = 'logiperu_olva_agencies_v1';
 const STORAGE_KEY_MARVISUR_AGENCIES = 'logiperu_marvisur_agencies_v1';
 const STORAGE_KEY_STORE_SETTINGS = 'logiperu_store_settings_v1';
@@ -191,13 +192,22 @@ export default function App() {
     return { shalom: true, olva: true, delivery_lima: true, tienda: true };
   });
 
-  // Shalom Agencies list with full catalog and API synchronization
+  // Shalom Agencies list with full catalog (excluding Punto PRO) and API synchronization
   const [shalomAgencies, setShalomAgencies] = useState<Agency[]>(() => {
+    const isPuntoPro = (a: Agency) => {
+      const tipo = String(a.tipo || '').toUpperCase();
+      const name = String(a.name || '').toLowerCase();
+      return tipo === 'PUNTO PRO' || name.includes('punto pro');
+    };
+
     const saved = localStorage.getItem(STORAGE_KEY_SHALOM_AGENCIES);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= SHALOM_AGENCIES.length) return parsed;
+        if (Array.isArray(parsed)) {
+          const clean = parsed.filter(a => !isPuntoPro(a));
+          if (clean.length > 0) return clean;
+        }
       } catch {
         return SHALOM_AGENCIES;
       }
@@ -233,6 +243,38 @@ export default function App() {
     return MARVISUR_AGENCIES;
   });
 
+  // Database connection status state
+  const [isDbConnected, setIsDbConnected] = useState<boolean>(true);
+  const [isCheckingDb, setIsCheckingDb] = useState<boolean>(false);
+  const [dbErrorMessage, setDbErrorMessage] = useState<string>('');
+  const lastConnectionStateRef = useRef<boolean>(true);
+
+  // Helper to check DB connection status
+  const verifyDbConnection = async (silent = false) => {
+    if (!silent) setIsCheckingDb(true);
+    try {
+      const status = await checkDatabaseStatus();
+      if (status.connected) {
+        setIsDbConnected(true);
+        setDbErrorMessage('');
+        if (!lastConnectionStateRef.current) {
+          showToast('✅ Conexión con la base de datos restablecida');
+        }
+        lastConnectionStateRef.current = true;
+      } else {
+        setIsDbConnected(false);
+        setDbErrorMessage(status.message);
+        lastConnectionStateRef.current = false;
+      }
+    } catch (err: any) {
+      setIsDbConnected(false);
+      setDbErrorMessage(err?.message || 'Error de conexión con la base de datos');
+      lastConnectionStateRef.current = false;
+    } finally {
+      if (!silent) setIsCheckingDb(false);
+    }
+  };
+
   // Helper to process fetched orders and alert if new ones arrive
   const handleIncomingOrders = (incoming: Order[]) => {
     if (!Array.isArray(incoming) || incoming.length === 0) return;
@@ -256,10 +298,31 @@ export default function App() {
 
   // Sincronización de agencias priorizando Base de Datos Supabase -> API
   useEffect(() => {
+    // 1. Verificación inicial de base de datos
+    verifyDbConnection(true);
+
+    const handleOnline = () => {
+      verifyDbConnection(false);
+    };
+    const handleOffline = () => {
+      setIsDbConnected(false);
+      setDbErrorMessage('Sin conexión a internet (dispositivo sin red).');
+      lastConnectionStateRef.current = false;
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Heartbeat de chequeo de base de datos cada 30 segundos
+    const dbHeartbeat = setInterval(() => {
+      verifyDbConnection(true);
+    }, 30000);
+
     fetchAgenciesWithPriority('shalom').then(({ data }) => {
       if (Array.isArray(data) && data.length > 0) {
-        setShalomAgencies(data);
-        localStorage.setItem(STORAGE_KEY_SHALOM_AGENCIES, JSON.stringify(data));
+        const clean = data.filter(a => a.tipo !== 'PUNTO PRO' && !a.name.toLowerCase().includes('punto pro'));
+        setShalomAgencies(clean);
+        localStorage.setItem(STORAGE_KEY_SHALOM_AGENCIES, JSON.stringify(clean));
       }
     }).catch(() => {});
 
@@ -283,8 +346,12 @@ export default function App() {
         serverOrders.forEach(o => knownOrderIdsRef.current.add(o.id));
         setOrders(serverOrders);
         localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(serverOrders));
+        setIsDbConnected(true);
+        lastConnectionStateRef.current = true;
       }
-    }).catch(() => {});
+    }).catch(() => {
+      verifyDbConnection(true);
+    });
 
     fetchServerShippingConfig().then((cfg) => {
       if (cfg) setShippingConfig(cfg);
@@ -295,32 +362,48 @@ export default function App() {
     }).catch(() => {});
 
     // Suscripción a cambios en tiempo real de Supabase
+    let channel: any = null;
     try {
-      const channel = supabase
+      channel = supabase
         .channel('realtime_orders_app')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
           fetchServerOrders().then((latest) => {
             if (Array.isArray(latest)) {
               handleIncomingOrders(latest);
+              setIsDbConnected(true);
+              lastConnectionStateRef.current = true;
             }
           });
         })
         .subscribe();
-
-      // Polling de respaldo cada 10 segundos para garantizar detección inmediata en cualquier red
-      const pollInterval = setInterval(() => {
-        fetchServerOrders().then((latest) => {
-          if (Array.isArray(latest)) {
-            handleIncomingOrders(latest);
-          }
-        }).catch(() => {});
-      }, 10000);
-
-      return () => {
-        supabase.removeChannel(channel);
-        clearInterval(pollInterval);
-      };
     } catch {}
+
+    // Polling de respaldo cada 10 segundos para garantizar detección inmediata en cualquier red
+    const pollInterval = setInterval(() => {
+      fetchServerOrders().then((latest) => {
+        if (Array.isArray(latest)) {
+          handleIncomingOrders(latest);
+          if (!lastConnectionStateRef.current) {
+            setIsDbConnected(true);
+            lastConnectionStateRef.current = true;
+          }
+        }
+      }).catch(() => {
+        verifyDbConnection(true);
+      });
+    }, 10000);
+
+    return () => {
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {}
+      }
+      clearInterval(pollInterval);
+      clearInterval(dbHeartbeat);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Store Settings (Remitente) with localStorage persistence
@@ -589,7 +672,7 @@ export default function App() {
     <div className={`min-h-screen transition-colors duration-200 flex flex-col font-inter ${
       isDark 
         ? 'bg-[#111113] text-[#FFFFFF]' 
-        : 'bg-[#FAFAFA] text-[#101010]'
+        : 'bg-[#FAF8F5] text-[#29272B]'
     }`}>
       
       {/* Toast Notification */}
@@ -598,6 +681,46 @@ export default function App() {
           <div className="px-4 py-3 rounded-2xl bg-[#1C1C1E] text-white border border-blue-500/30 shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold">
             <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0" />
             <span>{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Alerta Destacada de Desconexión de Base de Datos */}
+      {!isDbConnected && (
+        <div 
+          id="db-connection-alert-banner"
+          role="alert"
+          aria-live="assertive"
+          className="w-full bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white px-3 sm:px-5 py-2.5 shadow-lg border-b border-red-500/40 sticky top-0 z-50 animate-in slide-in-from-top duration-300 backdrop-blur-md"
+        >
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 text-left w-full sm:w-auto">
+              <div className="p-1.5 rounded-lg bg-black/20 text-white flex-shrink-0 animate-pulse">
+                <WifiOff className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-xs uppercase tracking-wider bg-black/20 px-2 py-0.5 rounded-md">
+                    Sin Conexión a la Base de Datos
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-red-100 font-medium mt-0.5 leading-snug">
+                  {dbErrorMessage || 'No se puede establecer comunicación con Supabase Cloud. Los cambios y nuevos pedidos se guardarán provisionalmente en este dispositivo hasta restablecer la conexión.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={() => verifyDbConnection(false)}
+                disabled={isCheckingDb}
+                className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-white text-red-700 hover:bg-red-50 font-black text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 active:scale-95"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isCheckingDb ? 'animate-spin' : ''}`} />
+                <span>{isCheckingDb ? 'Comprobando...' : 'Reintentar conexión'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -634,6 +757,7 @@ export default function App() {
             isDark={isDark}
             setIsDark={setIsDark}
             onNavigateToAdmin={() => navigateToView('admin')}
+            isDbConnected={isDbConnected}
           />
         ) : !isAdminAuthenticated ? (
           <AdminLogin
@@ -697,10 +821,10 @@ export default function App() {
       <footer className={`border-t py-4 sm:py-5 transition-colors duration-200 mt-auto ${
         isDark 
           ? 'bg-[#111113]/80 border-white/5 text-zinc-500' 
-          : 'bg-white/80 border-zinc-200 text-zinc-500'
+          : 'bg-white/80 border-[#E5E0E3] text-[#625D63]'
       }`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="font-mono-meta text-[11px] uppercase tracking-[0.12em] text-zinc-400 font-medium">
+          <div className="font-mono-meta text-[11px] uppercase tracking-[0.12em] text-[#625D63] font-medium">
             © 2026 AMORE SALON HAIR STYLE
           </div>
 

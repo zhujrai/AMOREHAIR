@@ -24,8 +24,9 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const dates = getNext4DispatchDates(cutoffHour);
+  const dates = getNext4DispatchDates(cutoffHour, shippingType);
   const isTienda = shippingType === 'tienda';
+  const isMotorizado = shippingType === 'delivery_lima';
   const modalTitle = isTienda ? 'Fecha de Entrega' : 'Fecha de Envío';
   const modalDesc = isTienda 
     ? 'Selecciona la fecha en la que retirarás tu pedido en tienda'
@@ -42,14 +43,14 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
       >
         <div className="w-12 h-1.5 bg-zinc-400/40 rounded-full mx-auto mb-4 sm:hidden" />
 
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between pb-3.5 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-black text-base sm:text-lg text-black dark:text-white">{modalTitle}</h3>
-              <p className="text-xs text-zinc-900 dark:text-zinc-300 font-bold">
+              <p className="text-xs text-zinc-600 dark:text-zinc-300 font-semibold">
                 {modalDesc}
               </p>
             </div>
@@ -70,9 +71,11 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
             : 'bg-amber-50 border-amber-300 text-amber-950'
         }`}>
           <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
-          <span className="font-bold">
+          <span className="font-semibold">
             {isTienda ? (
               <span>Tu pedido estará listo para retiro a partir de la fecha seleccionada en nuestro horario habitual.</span>
+            ) : isMotorizado ? (
+              <span>Despacho motorizado hoy disponible para pedidos antes de las <strong className="font-black text-black dark:text-white">10:00 AM</strong>. Después de las 10:00 AM aplica a partir de mañana. <span className="underline font-bold">Motorizado no opera domingos</span>.</span>
             ) : (
               <span>Los pedidos registrados antes de las <strong className="font-black text-black dark:text-white">{cutoffHour}:00 hrs</strong> se procesan y despachan el mismo día programado.</span>
             )}

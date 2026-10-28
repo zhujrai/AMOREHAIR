@@ -3,10 +3,20 @@ import { SHALOM_AGENCIES, OLVA_AGENCIES } from '../data/agencies';
 import { MARVISUR_AGENCIES } from '../data/marvisurAgencies';
 import { saveAgenciesToDatabase } from './dbApi';
 
-export const STORAGE_KEY_SHALOM_AGENCIES = 'logiperu_shalom_agencies_v1';
+export const STORAGE_KEY_SHALOM_AGENCIES = 'logiperu_shalom_agencies_v2';
 export const STORAGE_KEY_MARVISUR_AGENCIES = 'logiperu_marvisur_agencies_v1';
 export const STORAGE_KEY_OLVA_AGENCIES = 'logiperu_olva_agencies_v1';
 export const STORAGE_KEY_LAST_SYNC = 'logiperu_agencies_last_sync_v1';
+
+/**
+ * Retorna true si la agencia es un "PUNTO PRO" (solo para envíos, no para recojo de clientes)
+ */
+export function isPuntoProAgency(agency: { tipo?: string; name?: string; address?: string }): boolean {
+  if (!agency) return false;
+  const tipo = (agency.tipo || '').toUpperCase();
+  const name = (agency.name || '').toLowerCase();
+  return tipo === 'PUNTO PRO' || name.includes('punto pro');
+}
 
 export interface SyncResult {
   success: boolean;
@@ -120,8 +130,9 @@ export async function fetchShalomAgencies(query: string = ''): Promise<{ data: A
     if (res.ok) {
       const json = await res.json();
       if (json && Array.isArray(json.data) && json.data.length > 0) {
+        const filtered = json.data.filter((a: any) => !isPuntoProAgency(a));
         return {
-          data: json.data,
+          data: filtered,
           source: json.source || 'live_api',
         };
       }
@@ -136,12 +147,13 @@ export async function fetchShalomAgencies(query: string = ''): Promise<{ data: A
     try {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return { data: parsed, source: 'contingency_fallback' };
+        const filtered = parsed.filter((a: any) => !isPuntoProAgency(a));
+        return { data: filtered, source: 'contingency_fallback' };
       }
     } catch {}
   }
 
-  return { data: SHALOM_AGENCIES, source: 'contingency_fallback' };
+  return { data: SHALOM_AGENCIES.filter((a) => !isPuntoProAgency(a)), source: 'contingency_fallback' };
 }
 
 /**

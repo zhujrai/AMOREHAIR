@@ -64,7 +64,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
       title: 'Retiro en agencia Shalom',
       description: 'Agencias a Nivel Nacional, pago por adelantado.',
       badge: 'Provincias y Lima',
-      icon: <Building2 className="w-6 h-6 text-rose-500" />,
+      icon: <Building2 className="w-5 h-5 text-rose-500" />,
       colorClasses: {
         activeBorder: 'border-rose-500 ring-2 ring-rose-500/30',
         activeBgDark: 'bg-rose-950/30',
@@ -80,7 +80,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
       title: 'Retiro en agencia Expreso Marvisur',
       description: 'Sucursales a Nivel Nacional (Perú), encomiendas y carga pesada.',
       badge: 'Expreso Nacional',
-      icon: <Truck className="w-6 h-6 text-cyan-500" />,
+      icon: <Truck className="w-5 h-5 text-cyan-500" />,
       colorClasses: {
         activeBorder: 'border-cyan-500 ring-2 ring-cyan-500/30',
         activeBgDark: 'bg-cyan-950/30',
@@ -94,9 +94,9 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
     {
       type: 'delivery_lima',
       title: 'Delivery (Lima Metropolitana)',
-      description: 'Motorizado programado (rango de 3PM a 10PM).',
+      description: 'Motorizado de 3PM a 10PM. Pedidos antes de 10AM se entregan hoy (no opera domingos).',
       badge: 'A Domicilio',
-      icon: <Bike className="w-6 h-6 text-blue-500" />,
+      icon: <Bike className="w-5 h-5 text-blue-500" />,
       colorClasses: {
         activeBorder: 'border-blue-500 ring-2 ring-blue-500/30',
         activeBgDark: 'bg-blue-950/30',
@@ -112,7 +112,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
       title: 'Retiro en agencia Olva Courier',
       description: 'Oficinas oficiales Olva con cobertura distrital y provincial garantizada.',
       badge: 'Cobertura Nacional',
-      icon: <Truck className="w-6 h-6 text-amber-500" />,
+      icon: <Truck className="w-5 h-5 text-amber-500" />,
       colorClasses: {
         activeBorder: 'border-amber-500 ring-2 ring-amber-500/30',
         activeBgDark: 'bg-amber-950/30',
@@ -128,7 +128,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
       title: 'Retiro en Salón / Tienda',
       description: 'En nuestro local comercial',
       badge: 'Gratis / Sin Costo',
-      icon: <Store className="w-6 h-6 text-emerald-500" />,
+      icon: <Store className="w-5 h-5 text-emerald-500" />,
       colorClasses: {
         activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/30',
         activeBgDark: 'bg-emerald-950/30',
@@ -228,7 +228,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                     onSelect(opt.type);
                     onClose();
                   }}
-                  className={`w-full text-left p-4 sm:p-4.5 rounded-2xl sm:rounded-3xl border transition-all duration-200 flex items-start gap-4 relative group cursor-pointer shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${
+                  className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-200 flex items-start gap-3.5 relative group cursor-pointer shadow-xs hover:shadow-md hover:scale-[1.005] active:scale-[0.99] ${
                     isSelected
                       ? `${opt.colorClasses.activeBorder} ${
                           isDark ? opt.colorClasses.activeBgDark : opt.colorClasses.activeBgLight
@@ -238,7 +238,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                         : 'border-zinc-200/90 bg-white hover:bg-zinc-50/90 hover:border-zinc-400'
                   }`}
                 >
-                  <div className={`p-3 rounded-2xl border flex-shrink-0 transition-transform group-hover:scale-105 ${
+                  <div className={`p-2.5 rounded-xl border flex-shrink-0 transition-transform group-hover:scale-105 ${
                     isDark ? opt.colorClasses.iconBgDark : opt.colorClasses.iconBgLight
                   }`}>
                     {opt.icon}
