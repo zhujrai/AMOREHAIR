@@ -743,80 +743,16 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           </div>
                         </div>
 
-                        {/* Detalle Económico Admin: Precio & Precio Transporte */}
-                        <div 
-                          className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 text-xs space-y-1.5 min-w-0" 
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            {/* 1. Precio (Monto Productos) */}
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-[#475569] dark:text-zinc-300">Precio:</span>
-                              <div className="relative">
-                                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 font-semibold text-[#475569] text-[10px]">S/</span>
-                                <input
-                                  type="number"
-                                  step="0.50"
-                                  placeholder="0.00"
-                                  value={order.subtotalAmount !== undefined ? order.subtotalAmount : ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    const num = parseFloat(val);
-                                    const sub = !isNaN(num) ? num : undefined;
-                                    const fee = order.shippingType === 'delivery_lima' ? (order.deliveryFee !== undefined ? order.deliveryFee : 15.00) : 0;
-                                    const updated = {
-                                      ...order,
-                                      subtotalAmount: sub,
-                                      totalAmount: sub !== undefined ? sub + fee : undefined,
-                                      cashOnDeliveryAmount: order.isCashOnDelivery ? sub : order.cashOnDeliveryAmount
-                                    };
-                                    if (onUpdateOrder) onUpdateOrder(updated);
-                                  }}
-                                  className="w-20 pl-5 pr-1.5 py-0.5 rounded-md text-xs font-semibold bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-700 text-[#0F172A] dark:text-white focus:outline-none focus:border-[#6366F1]"
-                                  title="Precio de los productos"
-                                />
-                              </div>
-                            </div>
-
-                            {/* 2. Precio Transporte (solo aplica a Delivery Lima) */}
-                            {order.shippingType === 'delivery_lima' && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-medium text-[#06B6D4]">P. Transp:</span>
-                                <div className="relative">
-                                  <span className="absolute left-1.5 top-1/2 -translate-y-1/2 font-semibold text-[#06B6D4] text-[10px]">S/</span>
-                                  <input
-                                    type="number"
-                                    step="0.50"
-                                    placeholder="15.00"
-                                    value={order.deliveryFee !== undefined ? order.deliveryFee : 15.00}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      const num = parseFloat(val);
-                                      const fee = !isNaN(num) ? num : 0;
-                                      const sub = order.subtotalAmount || 0;
-                                      const updated = {
-                                        ...order,
-                                        deliveryFee: !isNaN(num) ? num : undefined,
-                                        totalAmount: sub + fee
-                                      };
-                                      if (onUpdateOrder) onUpdateOrder(updated);
-                                    }}
-                                    className="w-18 pl-5 pr-1.5 py-0.5 rounded-md text-xs font-semibold bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-700 text-[#06B6D4] dark:text-sky-300 focus:outline-none focus:border-[#06B6D4]"
-                                    title="Precio transporte Delivery Lima (por defecto S/15.00)"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Resumen Total: fondo neutro suave */}
-                          {(order.subtotalAmount !== undefined || (order.shippingType === 'delivery_lima')) && (
-                            <div className="flex items-center justify-between text-xs font-semibold text-[#0F172A] dark:text-zinc-200 bg-[#F8FAFC] dark:bg-zinc-800/60 border border-[#E2E8F0] dark:border-white/10 px-2.5 py-1 rounded-md">
-                              <span className="text-[#475569] dark:text-zinc-400 font-normal">Monto Total:</span>
-                              <span className="font-bold text-[#10B981] dark:text-emerald-400">
-                                S/ {((order.subtotalAmount || 0) + (order.shippingType === 'delivery_lima' ? (order.deliveryFee !== undefined ? order.deliveryFee : 15.00) : 0)).toFixed(2)}
-                              </span>
-                            </div>
+                        {/* Precio (solo lectura - editable en detalle) */}
+                        <div className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 text-xs flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-medium text-[#475569] dark:text-zinc-400">Precio:</span>
+                          <span className="font-bold text-[#0F172A] dark:text-white">
+                            S/ {order.subtotalAmount !== undefined ? order.subtotalAmount.toFixed(2) : '�'}
+                          </span>
+                          {order.shippingType === 'delivery_lima' && (
+                            <span className="text-[10px] text-[#06B6D4] dark:text-sky-300">
+                              + S/ {(order.deliveryFee !== undefined ? order.deliveryFee : 0).toFixed(2)} transp.
+                            </span>
                           )}
                         </div>
 
@@ -877,36 +813,6 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           )}
                         </div>
 
-                        {/* Campo Rápido N° de Guía / Remito (9.5) */}
-                        {(order.status === 'en_camino' || order.shippingType === 'shalom' || order.shippingType === 'olva' || order.trackingNumber) && (
-                          <div className="mt-2.5 pt-2 border-t border-dashed border-[#E2E8F0] dark:border-white/10 space-y-1 min-w-0">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-semibold text-[#475569] dark:text-zinc-400 uppercase tracking-tight">
-                                N° Guía / Remito:
-                              </span>
-                              {order.trackingNumber && (
-                                <span className="font-mono font-medium text-[#06B6D4] dark:text-sky-400 truncate max-w-[130px]">
-                                  {order.trackingNumber}
-                                </span>
-                              )}
-                            </div>
-
-                            <input
-                              id={`tracking-input-${order.id}`}
-                              type="text"
-                              placeholder="Ej. 104-987654..."
-                              value={order.trackingNumber || ''}
-                              onChange={(e) => {
-                                if (onUpdateOrder) {
-                                  onUpdateOrder({ ...order, trackingNumber: e.target.value });
-                                }
-                              }}
-                              className="w-full min-w-0 px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#0F172A] dark:text-white placeholder-[#475569]/60 text-xs font-mono focus:outline-none focus:border-[#6366F1]"
-                              title="Ingresa el número de guía o remito de Shalom/Olva"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        )}
 
                         {/* Card Actions: Uniform buttons (9.6) */}
                         <div className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 flex items-center justify-between gap-1.5 min-w-0">
