@@ -165,6 +165,10 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
       return;
     }
 
+    if (!subtotalAmount.trim()) {
+      setError('El precio de venta es obligatorio');
+      return;
+    }
     const numSub = parseFloat(subtotalAmount);
     const numFee = parseFloat(deliveryFee);
     const numTot = parseFloat(totalAmount);
@@ -230,7 +234,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl transition-all duration-200 my-auto max-h-[90vh] flex flex-col ${
-        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-[#E2E8F0] text-[#111827]'
+        isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-[#E2E8F0] text-[#111827]'
       }`}>
         
         {/* Header */}
@@ -286,7 +290,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
                 required
               />
@@ -305,7 +309,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))}
                   className={`w-full pl-12 pr-3 py-2 rounded-xl border-2 font-mono font-bold ${
-                    isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                    isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                   }`}
                   required
                 />
@@ -321,7 +325,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={documentType}
                 onChange={(e) => setDocumentType(e.target.value as 'DNI' | 'CE')}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               >
                 <option value="DNI">DNI</option>
@@ -336,7 +340,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={documentNumber}
                 onChange={(e) => setDocumentNumber(e.target.value.trim())}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-mono font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               />
             </div>
@@ -351,7 +355,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={dispatchDate}
                 onChange={(e) => setDispatchDate(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-mono font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               />
             </div>
@@ -359,7 +363,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
           {/* 1. PRECIO (Antes de seleccionar método de despacho) */}
           <div className={`p-3.5 rounded-2xl border-2 ${
-            isDark ? 'bg-[#15151A] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0] shadow-2xs'
+            isDark ? 'bg-[#1E293B] border-[#334155]' : 'bg-[#F8FAFC] border-[#E2E8F0] shadow-2xs'
           }`}>
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -380,7 +384,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   value={subtotalAmount}
                   onChange={(e) => handleSubtotalChange(e.target.value)}
                   className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm font-black border-2 ${
-                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
+                    isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
                   }`}
                 />
               </div>
@@ -396,8 +400,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onClick={() => handleShippingTypeChange('shalom')}
                 className={`p-2.5 rounded-xl border-2 font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                   shippingType === 'shalom'
-                    ? 'bg-red-600/20 border-red-600 text-red-700 dark:text-red-500 shadow-xs'
-                    : isDark ? 'bg-[#15151A] border-[#2C2C35] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
+                    ? 'bg-[#6366F1]/20 border-[#6366F1] text-[#6366F1] dark:text-[#818CF8] shadow-xs'
+                    : isDark ? 'bg-[#1E293B] border-[#334155] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
                 }`}
               >
                 <Building2 className="w-4 h-4" />
@@ -409,8 +413,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onClick={() => handleShippingTypeChange('marvisur')}
                 className={`p-2.5 rounded-xl border-2 font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                   shippingType === 'marvisur'
-                    ? 'bg-blue-600/20 border-blue-600 text-blue-700 dark:text-blue-400 shadow-xs'
-                    : isDark ? 'bg-[#15151A] border-[#2C2C35] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
+                    ? 'bg-[#06B6D4]/20 border-[#06B6D4] text-[#06B6D4] dark:text-[#22D3EE] shadow-xs'
+                    : isDark ? 'bg-[#1E293B] border-[#334155] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
                 }`}
               >
                 <Truck className="w-4 h-4" />
@@ -422,8 +426,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onClick={() => handleShippingTypeChange('olva')}
                 className={`p-2.5 rounded-xl border-2 font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                   shippingType === 'olva'
-                    ? 'bg-amber-600/20 border-amber-600 text-amber-800 dark:text-amber-500 shadow-xs'
-                    : isDark ? 'bg-[#15151A] border-[#2C2C35] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
+                    ? 'bg-[#F59E0B]/20 border-[#F59E0B] text-[#F59E0B] dark:text-[#FBBF24] shadow-xs'
+                    : isDark ? 'bg-[#1E293B] border-[#334155] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
                 }`}
               >
                 <Truck className="w-4 h-4" />
@@ -435,8 +439,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onClick={() => handleShippingTypeChange('delivery_lima')}
                 className={`p-2.5 rounded-xl border-2 font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                   shippingType === 'delivery_lima'
-                    ? 'bg-blue-600/20 border-blue-600 text-blue-800 dark:text-blue-400 shadow-xs'
-                    : isDark ? 'bg-[#15151A] border-[#2C2C35] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
+                    ? 'bg-[#06B6D4]/20 border-[#06B6D4] text-[#06B6D4] dark:text-[#22D3EE] shadow-xs'
+                    : isDark ? 'bg-[#1E293B] border-[#334155] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
                 }`}
               >
                 <Bike className="w-4 h-4" />
@@ -448,8 +452,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 onClick={() => handleShippingTypeChange('tienda')}
                 className={`p-2.5 rounded-xl border-2 font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                   shippingType === 'tienda'
-                    ? 'bg-emerald-600/20 border-emerald-600 text-emerald-800 dark:text-emerald-400 shadow-xs'
-                    : isDark ? 'bg-[#15151A] border-[#2C2C35] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
+                    ? 'bg-[#10B981]/20 border-[#10B981] text-[#10B981] dark:text-[#34D399] shadow-xs'
+                    : isDark ? 'bg-[#1E293B] border-[#334155] text-zinc-400' : 'bg-white border-zinc-300 text-black hover:border-black'
                 }`}
               >
                 <Store className="w-4 h-4" />
@@ -468,7 +472,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={selectedShalomId}
                 onChange={(e) => setSelectedShalomId(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               >
                 {shalomAgencies.map((a) => (
@@ -489,7 +493,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={selectedMarvisurId}
                 onChange={(e) => setSelectedMarvisurId(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               >
                 {marvisurAgencies.map((a) => (
@@ -510,7 +514,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={selectedOlvaId}
                 onChange={(e) => setSelectedOlvaId(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               >
                 {olvaAgencies.map((a) => (
@@ -525,7 +529,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                 }`}
               />
             </div>
@@ -549,7 +553,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   value={deliveryDistrict}
                   onChange={(e) => setDeliveryDistrict(e.target.value)}
                   className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-black ${
-                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
+                    isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
                   }`}
                 >
                   {LIMA_DISTRICTS.map((d) => (
@@ -563,7 +567,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                   className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
+                    isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                   }`}
                   required
                 />
@@ -575,13 +579,13 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={deliveryReference}
                 onChange={(e) => setDeliveryReference(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                 }`}
               />
 
               {/* 2. PRECIO TRANSPORTE (Solo aplica a Delivery Lima, por defecto S/15.00, editable) */}
               <div className={`p-3 rounded-2xl border-2 ${
-                isDark ? 'bg-[#15151A] border-[#2C2C35]' : 'bg-white border-blue-200 shadow-2xs'
+                isDark ? 'bg-[#1E293B] border-[#334155]' : 'bg-white border-blue-200 shadow-2xs'
               } space-y-2.5`}>
                 
                 <div className="flex items-center justify-between gap-3">
@@ -603,7 +607,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                       value={deliveryFee}
                       onChange={(e) => handleDeliveryFeeChange(e.target.value)}
                       className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl text-xs font-black border-2 ${
-                        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
+                        isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
                       }`}
                     />
                   </div>
@@ -729,7 +733,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-mono font-bold ${
-                isDark ? 'bg-[#15151A] border-[#2C2C35] text-zinc-100' : 'bg-white border-zinc-300 text-black'
+                isDark ? 'bg-[#1E293B] border-[#334155] text-zinc-100' : 'bg-white border-zinc-300 text-black'
               }`}
             />
           </div>
@@ -744,7 +748,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={itemsDescription}
                 onChange={(e) => setItemsDescription(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                 }`}
               />
             </div>
@@ -757,7 +761,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
+                  isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                 }`}
               />
             </div>
