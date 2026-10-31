@@ -64,6 +64,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
   const [itemsDescription, setItemsDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (order) {
@@ -155,20 +156,28 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName.trim()) {
-      setError('Ingresa el nombre del cliente');
-      return;
-    }
+    const errs = new Set<string>();
+    if (!customerName.trim()) errs.add('customerName');
     const cleanPhone = customerPhone.replace(/\D/g, '');
-    if (cleanPhone.length !== 9) {
-      setError('El celular debe tener 9 dígitos');
+    if (cleanPhone.length !== 9) errs.add('customerPhone');
+    if (!documentNumber.trim()) errs.add('documentNumber');
+    if (!dispatchDate.trim()) errs.add('dispatchDate');
+    if (!subtotalAmount.trim()) errs.add('subtotalAmount');
+    if (shippingType === 'shalom' && !selectedShalomId) errs.add('shalomAgency');
+    if (shippingType === 'marvisur' && !selectedMarvisurId) errs.add('marvisurAgency');
+    if (shippingType === 'olva' && !selectedOlvaId && !deliveryAddress.trim()) errs.add('olvaAgency');
+    if (shippingType === 'olva' && deliveryAddress.trim() && !deliveryAddress.trim()) errs.add('deliveryAddress');
+    if (shippingType === 'delivery_lima') {
+      if (!deliveryAddress.trim()) errs.add('deliveryAddress');
+      if (!deliveryDistrict) errs.add('deliveryDistrict');
+    }
+    if (errs.size > 0) {
+      setFieldErrors(errs);
+      setError('Completa los campos obligatorios marcados en rojo');
       return;
     }
-
-    if (!subtotalAmount.trim()) {
-      setError('El precio de venta es obligatorio');
-      return;
-    }
+    setFieldErrors(new Set());
+    setError(null);
     const numSub = parseFloat(subtotalAmount);
     const numFee = parseFloat(deliveryFee);
     const numTot = parseFloat(totalAmount);
@@ -283,11 +292,12 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
             <div className="space-y-1">
               <label className="font-black text-black dark:text-zinc-300 flex items-center gap-1">
                 <User className="w-3.5 h-3.5 text-red-600" />
-                <span>Nombre Completo del Cliente</span>
+                <span>Nombre Completo del Cliente *</span>
               </label>
               <input
                 type="text"
                 value={customerName}
+                   style={fieldErrors.has('customerName') ? { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.2)' } : undefined}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-bold ${
                   isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
@@ -307,6 +317,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   type="tel"
                   maxLength={9}
                   value={customerPhone}
+                   style={fieldErrors.has('customerPhone') ? { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.2)' } : undefined}
                   onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ''))}
                   className={`w-full pl-12 pr-3 py-2 rounded-xl border-2 font-mono font-bold ${
                     isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
@@ -320,7 +331,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
           {/* Document & Dispatch Date */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
             <div className="sm:col-span-4 space-y-1">
-              <label className="font-black text-black dark:text-zinc-300">Tipo Doc.</label>
+              <label className="font-black text-black dark:text-zinc-300">Tipo Doc. *</label>
               <select
                 value={documentType}
                 onChange={(e) => setDocumentType(e.target.value as 'DNI' | 'CE')}
@@ -338,6 +349,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
               <input
                 type="text"
                 value={documentNumber}
+                   style={fieldErrors.has('documentNumber') ? { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.2)' } : undefined}
                 onChange={(e) => setDocumentNumber(e.target.value.trim())}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-mono font-bold ${
                   isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
@@ -348,11 +360,12 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
             <div className="sm:col-span-4 space-y-1">
               <label className="font-black text-black dark:text-zinc-300 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                <span>{shippingType === 'tienda' ? 'Fecha Entrega' : 'Fecha Despacho'}</span>
+                <span>{shippingType === 'tienda' ? 'Fecha Entrega' : 'Fecha Despacho'} *</span>
               </label>
               <input
                 type="date"
                 value={dispatchDate}
+                   style={fieldErrors.has('dispatchDate') ? { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.2)' } : undefined}
                 onChange={(e) => setDispatchDate(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 font-mono font-bold ${
                   isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black'
@@ -369,7 +382,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
               <div>
                 <label className="font-black text-black dark:text-zinc-100 text-xs flex items-center gap-1.5">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span title="sin incluir transporte">Precio de venta:</span>
+                  <span title="sin incluir transporte">Precio de venta: *</span>
                 </label>
                 <span className="text-[10px] font-bold text-[#475569]">
                   sin incluir transporte
@@ -382,6 +395,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   step="0.10"
                   placeholder="0.00"
                   value={subtotalAmount}
+                   style={fieldErrors.has('subtotalAmount') ? { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.2)' } : undefined}
                   onChange={(e) => handleSubtotalChange(e.target.value)}
                   className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm font-black border-2 ${
                     isDark ? 'bg-[#1E293B] border-[#334155] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
@@ -467,7 +481,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
             <div className={`p-3.5 rounded-2xl border-2 space-y-2 ${
               isDark ? 'bg-red-950/15 border-red-900/30' : 'bg-red-50 border-red-300'
             }`}>
-              <label className="font-black text-red-900 dark:text-red-500 text-xs">Agencia Shalom Seleccionada</label>
+              <label className="font-black text-red-900 dark:text-red-500 text-xs">Agencia Shalom Seleccionada *</label>
               <select
                 value={selectedShalomId}
                 onChange={(e) => setSelectedShalomId(e.target.value)}
@@ -488,7 +502,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
             <div className={`p-3.5 rounded-2xl border-2 space-y-2 ${
               isDark ? 'bg-blue-950/15 border-blue-900/30' : 'bg-blue-50 border-blue-300'
             }`}>
-              <label className="font-black text-blue-900 dark:text-blue-400 text-xs">Sucursal Marvisur Seleccionada</label>
+              <label className="font-black text-blue-900 dark:text-blue-400 text-xs">Sucursal Marvisur Seleccionada *</label>
               <select
                 value={selectedMarvisurId}
                 onChange={(e) => setSelectedMarvisurId(e.target.value)}
