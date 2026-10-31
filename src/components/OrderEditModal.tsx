@@ -229,12 +229,12 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-      <div className={`w-full max-w-2xl rounded-3xl border shadow-2xl transition-all duration-200 my-auto max-h-[90vh] flex flex-col ${
-        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-[#F3F4F6]' : 'bg-white border-zinc-200 text-[#111827]'
+      <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl transition-all duration-200 my-auto max-h-[90vh] flex flex-col ${
+        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-[#E2E8F0] text-[#111827]'
       }`}>
         
         {/* Header */}
-        <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between flex-shrink-0">
+        <div className="p-5 border-b border-[#E2E8F0] dark:border-zinc-800 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-red-600/15 text-red-500 border border-red-500/30">
               <Edit3 className="w-5 h-5" />
@@ -359,16 +359,16 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
           {/* 1. PRECIO (Antes de seleccionar método de despacho) */}
           <div className={`p-3.5 rounded-2xl border-2 ${
-            isDark ? 'bg-[#15151A] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200 shadow-2xs'
+            isDark ? 'bg-[#15151A] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0] shadow-2xs'
           }`}>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <label className="font-black text-black dark:text-zinc-100 text-xs flex items-center gap-1.5">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span>Precio:</span>
+                  <span title="sin incluir transporte">Precio de venta:</span>
                 </label>
-                <span className="text-[10px] font-bold text-zinc-500">
-                  Monto por los productos / pedido
+                <span className="text-[10px] font-bold text-[#475569]">
+                  sin incluir transporte
                 </span>
               </div>
               <div className="relative w-36 flex-shrink-0">
@@ -380,7 +380,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   value={subtotalAmount}
                   onChange={(e) => handleSubtotalChange(e.target.value)}
                   className={`w-full pl-8 pr-3 py-2 rounded-xl text-sm font-black border-2 ${
-                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black focus:border-black'
+                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
                   }`}
                 />
               </div>
@@ -503,7 +503,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
           {shippingType === 'olva' && (
             <div className={`p-3.5 rounded-2xl border-2 space-y-2.5 ${
-              isDark ? 'bg-amber-950/15 border-amber-900/30' : 'bg-amber-50 border-amber-300'
+              isDark ? 'bg-amber-950/15 border-amber-900/30' : 'bg-amber-50 border-[#FBBF24]/30'
             }`}>
               <label className="font-black text-amber-950 dark:text-amber-500 text-xs">Agencia Olva o Dirección</label>
               <select
@@ -539,7 +539,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 <span className="font-black text-blue-900 dark:text-blue-400 text-xs block">
                   Detalles de Entrega en Lima Metropolitana
                 </span>
-                <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 bg-[#ECFEFF] dark:bg-[#06B6D4]/20 px-2 py-0.5 rounded-full">
                   Horario: 3 PM a 10 PM
                 </span>
               </div>
@@ -563,7 +563,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                   className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-zinc-500'
+                    isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                   }`}
                   required
                 />
@@ -575,7 +575,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={deliveryReference}
                 onChange={(e) => setDeliveryReference(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-zinc-500'
+                  isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                 }`}
               />
 
@@ -588,9 +588,9 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   <div>
                     <label className="font-black text-black dark:text-zinc-100 text-xs flex items-center gap-1.5">
                       <Bike className="w-4 h-4 text-blue-600" />
-                      <span>Precio transporte:</span>
+                      <span title="cobro adelantado">Precio transporte:</span>
                     </label>
-                    <span className="text-[10px] font-bold text-zinc-500">
+                    <span className="text-[10px] font-bold text-[#475569]">
                       Costo de envío para Delivery Lima (por defecto S/ 15.00, editable)
                     </span>
                   </div>
@@ -603,23 +603,16 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                       value={deliveryFee}
                       onChange={(e) => handleDeliveryFeeChange(e.target.value)}
                       className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl text-xs font-black border-2 ${
-                        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black focus:border-black'
+                        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black focus:border-[#6366F1]'
                       }`}
                     />
                   </div>
                 </div>
 
-                {/* Resumen Total */}
-                <div className="flex items-center justify-between pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 text-xs">
-                  <span className="font-bold text-zinc-600 dark:text-zinc-400">Total (Precio + Transporte):</span>
-                  <span className="font-black text-sm text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-                    S/ {totalAmount || (subtotalAmount || deliveryFee ? ((parseFloat(subtotalAmount) || 0) + (parseFloat(deliveryFee) || 0)).toFixed(2) : '0.00')}
-                  </span>
-                </div>
               </div>
 
               {/* Contraentrega Toggle (Especial para Delivery Lima o Recojo) */}
-              <div className="pt-2.5 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800 space-y-2">
+              <div className="pt-2.5 border-t-2 border-dashed border-[#E2E8F0] dark:border-zinc-800 space-y-2">
                   <label className="flex items-center justify-between cursor-pointer select-none">
                     <div className="flex items-center gap-2">
                       <span className="text-sm">💵</span>
@@ -627,7 +620,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                         <span className="font-black text-xs text-black dark:text-zinc-100">
                           Modalidad: Pago Contraentrega
                         </span>
-                        <p className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400">
+                        <p className="text-[10px] font-bold text-[#475569] dark:text-zinc-400">
                           El cliente pagará al momento de recibir sus productos
                         </p>
                       </div>
@@ -642,11 +635,11 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   </label>
 
                   {isCashOnDelivery && (
-                    <div className="pt-2 pl-2 border-t-2 border-dashed border-amber-300 dark:border-amber-900/60 space-y-2.5 animate-in fade-in bg-amber-500/5 p-2 rounded-xl">
+                    <div className="pt-2 pl-2 border-t-2 border-dashed border-[#FBBF24]/30 dark:border-amber-900/60 space-y-2.5 animate-in fade-in bg-amber-500/5 p-2 rounded-xl">
                       {/* Selector de Medios de Pago Contraentrega */}
                       <div className="space-y-1">
-                        <span className="text-xs font-black text-amber-950 dark:text-amber-300 block">
-                          Modalidad de Cobro Coordinada:
+                        <span className="text-xs font-black text-[#F59E0B] dark:text-amber-300 block">
+                          Tipo de pago:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-xs">
                           <button
@@ -654,8 +647,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                             onClick={() => setPaymentMethod('motorizado')}
                             className={`p-2 rounded-xl border-2 font-black text-left flex items-center gap-1.5 transition-all cursor-pointer ${
                               paymentMethod === 'motorizado'
-                                ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-xs'
-                                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200'
+                                ? 'bg-zinc-900 text-white dark:bg-white dark:text-[#0F172A] border-zinc-900 dark:border-white shadow-xs'
+                                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-[#0F172A] dark:text-zinc-200'
                             }`}
                           >
                             <span>🛵</span>
@@ -667,8 +660,8 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                             onClick={() => setPaymentMethod('yape')}
                             className={`p-2 rounded-xl border-2 font-black text-left flex items-center gap-1.5 transition-all cursor-pointer ${
                               paymentMethod === 'yape'
-                                ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
-                                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200'
+                                ? 'bg-[#6366F1] text-white border-purple-700 shadow-xs'
+                                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-[#0F172A] dark:text-zinc-200'
                             }`}
                           >
                             <span>🟣</span>
@@ -681,7 +674,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                             className={`p-2 rounded-xl border-2 font-black text-left flex items-center gap-1.5 transition-all cursor-pointer ${
                               paymentMethod === 'transferencia'
                                 ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
-                                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200'
+                                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-[#0F172A] dark:text-zinc-200'
                             }`}
                           >
                             <span>🏦</span>
@@ -692,7 +685,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
 
                       <div className="flex items-center justify-between gap-2 pt-1">
                         <div>
-                          <span className="text-xs font-black text-amber-950 dark:text-amber-300 block">
+                          <span className="text-xs font-black text-[#F59E0B] dark:text-amber-300 block">
                             Monto a Cobrar (S/):
                           </span>
                           <span className="text-[10px] font-bold text-zinc-700 dark:text-zinc-400">
@@ -728,7 +721,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
           <div className="space-y-1 pt-1">
             <label className="font-black text-black dark:text-zinc-300 text-xs flex items-center justify-between">
               <span>N° de Guía / Remito / Clave de Retiro (Shalom / Olva)</span>
-              <span className="text-[10px] font-bold text-zinc-600">Opcional</span>
+              <span className="text-[10px] font-bold text-[#475569]">Opcional</span>
             </label>
             <input
               type="text"
@@ -751,7 +744,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={itemsDescription}
                 onChange={(e) => setItemsDescription(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-zinc-500'
+                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                 }`}
               />
             </div>
@@ -764,14 +757,14 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className={`w-full px-3 py-2 rounded-xl border-2 text-xs font-bold ${
-                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-zinc-500'
+                  isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black placeholder-[#475569]/70'
                 }`}
               />
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t-2 border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2.5">
+          <div className="pt-4 border-t-2 border-[#E2E8F0] dark:border-zinc-800 flex items-center justify-between gap-2.5">
             {onDeleteOrder && order && (
               <button
                 type="button"
@@ -779,7 +772,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   onDeleteOrder(order.id);
                   onClose();
                 }}
-                className="px-3.5 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-black text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="px-3.5 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-[#6366F1] dark:text-rose-400 font-black text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
                 title="Mover pedido a la papelera"
               >
                 <Trash2 className="w-4 h-4 stroke-[2]" />

@@ -671,14 +671,14 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-colors duration-200 flex flex-col font-inter ${
       isDark 
-        ? 'bg-[#111113] text-[#FFFFFF]' 
-        : 'bg-[#FAF8F5] text-[#29272B]'
+        ? 'bg-[#0F172A] text-[#FFFFFF]' 
+        : 'bg-[#F8FAFC] text-[#0F172A]'
     }`}>
       
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="px-4 py-3 rounded-2xl bg-[#1C1C1E] text-white border border-blue-500/30 shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold">
+          <div className="px-4 py-3 rounded-2xl bg-[#1E293B] text-white border border-blue-500/30 shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold">
             <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0" />
             <span>{toastMessage}</span>
           </div>
@@ -820,11 +820,11 @@ export default function App() {
       {/* Public Footer Strip from Design Specification */}
       <footer className={`border-t py-4 sm:py-5 transition-colors duration-200 mt-auto ${
         isDark 
-          ? 'bg-[#111113]/80 border-white/5 text-zinc-500' 
-          : 'bg-white/80 border-[#E5E0E3] text-[#625D63]'
+          ? 'bg-[#0F172A]/80 border-white/5 text-[#475569]' 
+          : 'bg-white border-[#E2E8F0] text-[#475569]'
       }`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="font-mono-meta text-[11px] uppercase tracking-[0.12em] text-[#625D63] font-medium">
+          <div className="font-mono-meta text-[11px] uppercase tracking-[0.12em] text-[#475569] font-medium">
             © 2026 AMORE SALON HAIR STYLE
           </div>
 
@@ -834,7 +834,7 @@ export default function App() {
                 id="footer-operator-login-btn"
                 type="button"
                 onClick={() => navigateToView('admin')}
-                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="text-zinc-400 hover:text-[#0F172A] dark:hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 title="Acceso Administración"
                 aria-label="Acceso Administración"
               >

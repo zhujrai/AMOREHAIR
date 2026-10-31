@@ -30,12 +30,12 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto print:static print:p-0 print:m-0 print:bg-transparent print:overflow-visible">
       
       {/* Modal Container */}
-      <div className={`w-full max-w-2xl rounded-3xl border shadow-2xl transition-all duration-200 my-auto print:border-none print:shadow-none print:bg-transparent print:w-full print:max-w-none ${
-        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-[#F3F4F6]' : 'bg-white border-zinc-300 text-zinc-900'
+      <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl transition-all duration-200 my-auto print:border-none print:shadow-none print:bg-transparent print:w-full print:max-w-none ${
+        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-[#0F172A]'
       }`}>
         
         {/* Modal Toolbar (hidden when printing) */}
-        <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20">
               <Printer className="w-5 h-5" />
@@ -44,7 +44,7 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
               <h3 className="font-black text-base sm:text-lg text-black dark:text-white">
                 Rótulo #{order.id}
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#475569] dark:text-zinc-400">
                 Selecciona el tamaño e imprime en 1 sola copia
               </p>
             </div>
@@ -81,7 +81,7 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
               onClick={() => setPaperSize('thermal')}
               className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 paperSize === 'thermal'
-                  ? 'bg-black text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                  ? 'bg-black text-white dark:bg-white dark:text-[#0F172A] shadow-xs'
                   : 'text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -92,7 +92,7 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
               onClick={() => setPaperSize('half_a4')}
               className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 paperSize === 'half_a4'
-                  ? 'bg-black text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                  ? 'bg-black text-white dark:bg-white dark:text-[#0F172A] shadow-xs'
                   : 'text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -103,7 +103,7 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
               onClick={() => setPaperSize('full_a4')}
               className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 paperSize === 'full_a4'
-                  ? 'bg-black text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                  ? 'bg-black text-white dark:bg-white dark:text-[#0F172A] shadow-xs'
                   : 'text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -124,7 +124,7 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 print:hidden">
+        <div className="p-4 border-t border-[#E2E8F0] dark:border-zinc-800 flex items-center justify-between text-xs text-[#475569] dark:text-zinc-400 print:hidden">
           <span>AMORE SALON HAIR STYLE • Vista previa de 1 sola copia exacta</span>
           <button
             onClick={onClose}

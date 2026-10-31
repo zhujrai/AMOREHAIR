@@ -452,8 +452,8 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-      <div className={`w-full max-w-4xl rounded-3xl border-2 shadow-2xl transition-all duration-200 my-auto max-h-[92vh] flex flex-col ${
-        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-[#F3F4F6]' : 'bg-white border-zinc-300 text-black'
+      <div className={`w-full max-w-4xl rounded-2xl border-2 shadow-2xl transition-all duration-200 my-auto max-h-[92vh] flex flex-col ${
+        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-black'
       }`}>
         
         {/* Hidden File Inputs for Cargar JSON Completo */}
@@ -483,7 +483,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
         />
 
         {/* Header */}
-        <div className="p-5 border-b-2 border-zinc-200 dark:border-zinc-800 flex items-center justify-between flex-shrink-0">
+        <div className="p-5 border-b-2 border-[#E2E8F0] dark:border-zinc-800 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-[#FF7060]/15 text-[#FF7060] border border-[#FF7060]/30">
               <Settings2 className="w-5 h-5" />
@@ -507,7 +507,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
           <button
             id="close-shipping-config-btn"
             onClick={onClose}
-            className="p-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -522,7 +522,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
         )}
 
         {/* Tab Navigation with Single Letter Titles */}
-        <div className="flex border-b-2 border-zinc-200 dark:border-zinc-800 px-5 pt-2.5 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-shrink-0 bg-zinc-50/50 dark:bg-[#121217]/60">
+        <div className="flex border-b-2 border-[#E2E8F0] dark:border-zinc-800 px-5 pt-2.5 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar flex-shrink-0 bg-zinc-50/50 dark:bg-[#121217]/60">
           <button
             type="button"
             id="tab-btn-methods"
@@ -531,7 +531,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             className={`pb-2.5 pt-1.5 px-3.5 sm:px-4 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer rounded-t-xl ${
               activeTab === 'methods'
                 ? 'border-[#FF7060] text-red-600 dark:text-[#FF7060] bg-white dark:bg-zinc-800/80 shadow-2xs'
-                : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
+                : 'border-transparent text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
             }`}
           >
             <Settings2 className="w-3.5 h-3.5" />
@@ -546,7 +546,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             className={`pb-2.5 pt-1.5 px-3.5 sm:px-4 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer rounded-t-xl ${
               activeTab === 'shalom'
                 ? 'border-[#FF7060] text-red-600 dark:text-[#FF7060] bg-white dark:bg-zinc-800/80 shadow-2xs'
-                : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
+                : 'border-transparent text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
             }`}
           >
             <Building2 className="w-3.5 h-3.5 text-red-500" />
@@ -554,7 +554,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
               activeTab === 'shalom'
                 ? 'bg-red-500/15 text-red-600 dark:text-red-400 font-black'
-                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                : 'bg-zinc-200 dark:bg-zinc-800 text-[#475569] dark:text-zinc-400'
             }`}>
               {shalomAgencies.length}
             </span>
@@ -568,7 +568,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             className={`pb-2.5 pt-1.5 px-3.5 sm:px-4 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer rounded-t-xl ${
               activeTab === 'marvisur'
                 ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-zinc-800/80 shadow-2xs'
-                : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
+                : 'border-transparent text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
             }`}
           >
             <Truck className="w-3.5 h-3.5 text-blue-500" />
@@ -576,7 +576,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
               activeTab === 'marvisur'
                 ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 font-black'
-                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                : 'bg-zinc-200 dark:bg-zinc-800 text-[#475569] dark:text-zinc-400'
             }`}>
               {marvisurAgencies.length}
             </span>
@@ -590,7 +590,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             className={`pb-2.5 pt-1.5 px-3.5 sm:px-4 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer rounded-t-xl ${
               activeTab === 'olva'
                 ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-white dark:bg-zinc-800/80 shadow-2xs'
-                : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
+                : 'border-transparent text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
             }`}
           >
             <Truck className="w-3.5 h-3.5 text-amber-500" />
@@ -598,7 +598,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
               activeTab === 'olva'
                 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black'
-                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                : 'bg-zinc-200 dark:bg-zinc-800 text-[#475569] dark:text-zinc-400'
             }`}>
               {olvaAgencies.length}
             </span>
@@ -612,7 +612,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             className={`pb-2.5 pt-1.5 px-3.5 sm:px-4 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer rounded-t-xl ${
               activeTab === 'import'
                 ? 'border-purple-500 text-purple-600 dark:text-purple-400 bg-white dark:bg-zinc-800/80 shadow-2xs'
-                : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
+                : 'border-transparent text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
             }`}
           >
             <FileJson className="w-3.5 h-3.5 text-purple-500" />
@@ -621,7 +621,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
         </div>
 
         {/* Contextual Active Tab Breadcrumb Bar */}
-        <div className="px-5 py-2 bg-zinc-100/70 dark:bg-[#16161C] border-b border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="px-5 py-2 bg-zinc-100/70 dark:bg-[#16161C] border-b border-[#E2E8F0] dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span className={`w-5 h-5 rounded-md flex items-center justify-center font-black text-[11px] text-white shadow-2xs ${
               activeTab === 'methods' ? 'bg-[#FF7060]' :
@@ -639,7 +639,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 {activeTab === 'olva' && `Locales Olva Courier (${olvaAgencies.length} tiendas y agentes)`}
                 {activeTab === 'import' && 'Importador Universal de Sucursales'}
               </span>
-              <span className="hidden md:inline text-zinc-500 dark:text-zinc-400 text-[11px] font-semibold">
+              <span className="hidden md:inline text-[#475569] dark:text-zinc-400 text-[11px] font-semibold">
                 {activeTab === 'methods' && '• Configuración general de canales de despacho'}
                 {activeTab === 'shalom' && '• Catálogo nacional de recojo en agencia'}
                 {activeTab === 'marvisur' && '• Cobertura sur, centro y norte del Perú'}
@@ -677,7 +677,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 <div className={`p-4 rounded-2xl border transition-all ${
                   shippingConfig.shalom
                     ? isDark ? 'bg-red-950/20 border-red-900/40' : 'bg-red-50/80 border-red-200'
-                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-zinc-200 opacity-60'
+                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-[#E2E8F0] opacity-60'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -686,7 +686,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       </div>
                       <div>
                         <h4 className="font-bold text-sm">Shalom Empresarial</h4>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-bold">Corte: 5:00 PM • {shalomAgencies.length} locales en BD</p>
+                        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">Corte: 5:00 PM • {shalomAgencies.length} locales en BD</p>
                       </div>
                     </div>
 
@@ -708,7 +708,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 <div className={`p-4 rounded-2xl border transition-all ${
                   shippingConfig.marvisur
                     ? isDark ? 'bg-blue-950/20 border-blue-900/40' : 'bg-blue-50/80 border-blue-200'
-                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-zinc-200 opacity-60'
+                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-[#E2E8F0] opacity-60'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -717,7 +717,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       </div>
                       <div>
                         <h4 className="font-bold text-sm">Expreso Marvisur</h4>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-bold">Corte: 5:00 PM • {marvisurAgencies.length} sucursales en BD</p>
+                        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">Corte: 5:00 PM • {marvisurAgencies.length} sucursales en BD</p>
                       </div>
                     </div>
 
@@ -739,7 +739,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 <div className={`p-4 rounded-2xl border transition-all ${
                   shippingConfig.olva
                     ? isDark ? 'bg-amber-950/20 border-amber-900/40' : 'bg-amber-50/80 border-amber-200'
-                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-zinc-200 opacity-60'
+                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-[#E2E8F0] opacity-60'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -748,7 +748,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       </div>
                       <div>
                         <h4 className="font-bold text-sm">Olva Courier</h4>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-bold">Corte: 4:00 PM • {olvaAgencies.length} Tiendas/Agentes</p>
+                        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">Corte: 4:00 PM • {olvaAgencies.length} Tiendas/Agentes</p>
                       </div>
                     </div>
 
@@ -770,7 +770,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 <div className={`p-4 rounded-2xl border transition-all ${
                   shippingConfig.delivery_lima
                     ? isDark ? 'bg-blue-950/20 border-blue-900/40' : 'bg-blue-50/80 border-blue-200'
-                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-zinc-200 opacity-60'
+                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-[#E2E8F0] opacity-60'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -779,7 +779,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       </div>
                       <div>
                         <h4 className="font-bold text-sm">Delivery Lima Metropolitana</h4>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-bold">Corte: 1:00 PM • Cobertura total distritos</p>
+                        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">Corte: 1:00 PM • Cobertura total distritos</p>
                       </div>
                     </div>
 
@@ -801,7 +801,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 <div className={`p-4 rounded-2xl border transition-all ${
                   shippingConfig.tienda
                     ? isDark ? 'bg-emerald-950/20 border-emerald-900/40' : 'bg-emerald-50/80 border-emerald-200'
-                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-zinc-200 opacity-60'
+                    : isDark ? 'bg-zinc-900/40 border-zinc-800 opacity-60' : 'bg-zinc-100 border-[#E2E8F0] opacity-60'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -810,7 +810,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       </div>
                       <div>
                         <h4 className="font-bold text-sm">Retiro en Salón / Tienda</h4>
-                        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-bold">Corte: 10:00 PM • Entrega en mostrador</p>
+                        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">Corte: 10:00 PM • Entrega en mostrador</p>
                       </div>
                     </div>
 
@@ -831,13 +831,13 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
 
               {/* CONTRAENTREGA TOGGLE */}
               <div className={`p-4 rounded-2xl border transition-all mt-4 ${
-                isDark ? 'bg-[#15151A] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200'
+                isDark ? 'bg-[#15151A] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
               }`}>
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-base">💵</span>
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                      <h4 className="font-bold text-sm text-[#0F172A] dark:text-zinc-100">
                         Habilitar Pago Contraentrega (Delivery Lima)
                       </h4>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -848,7 +848,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         {shippingConfig.deliveryLimaCashOnDeliveryEnabled !== false ? 'Activo en Formulario' : 'Desactivado'}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-xl">
+                    <p className="text-xs text-[#475569] dark:text-zinc-400 max-w-xl">
                       Permite que los clientes que elijan <strong>Delivery Lima</strong> puedan seleccionar la modalidad de <strong>Pago Contraentrega</strong> (Motorizado por Cobrar, Yape o Transferencia).
                     </p>
                   </div>
@@ -899,12 +899,12 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         {currentAgencies.length} locales cargados
                       </span>
                       {syncStatus.lastSync && (
-                        <span className="text-[10px] text-zinc-500 font-medium">
+                        <span className="text-[10px] text-[#475569] font-medium">
                           Últ. sync: {syncStatus.lastSync}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
+                    <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-medium mt-0.5">
                       {activeTab === 'shalom' 
                         ? 'Envíos a nivel nacional con retiro en agencia Shalom oficial (https://shalom.com.pe/agencias)'
                         : activeTab === 'marvisur'
@@ -926,7 +926,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       else if (activeTab === 'marvisur') marvisurFileInputRef.current?.click();
                       else olvaFileInputRef.current?.click();
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-[#6366F1] text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                     title={`Cargar archivo JSON completo con todas las agencias de ${activeTab.toUpperCase()}`}
                   >
                     <FileJson className="w-4 h-4" />
@@ -951,14 +951,14 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
               {/* Search and Action Bar */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
                   <input
                     type="text"
                     placeholder={`Buscar en ${activeTab === 'shalom' ? 'Shalom' : activeTab === 'marvisur' ? 'Marvisur' : 'Olva'} por departamento, provincia, distrito o dirección...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold border-2 ${
-                      isDark ? 'bg-[#0F0F12] border-[#2C2C35] text-white placeholder:text-zinc-600' : 'bg-white border-zinc-300 text-black placeholder:text-zinc-500'
+                      isDark ? 'bg-[#0F0F12] border-[#2C2C35] text-white placeholder:text-[#475569]' : 'bg-white border-zinc-300 text-black placeholder:text-[#475569]'
                     }`}
                   />
                 </div>
@@ -972,8 +972,8 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         onClick={() => setOlvaTipoFilter(t)}
                         className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
                           olvaTipoFilter === t
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-2xs'
-                            : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-[#0F172A] shadow-2xs'
+                            : 'text-[#475569] dark:text-zinc-400 hover:text-black dark:hover:text-white'
                         }`}
                       >
                         {t === 'TODOS' ? 'Todos' : t === 'TIENDA' ? '🏪 Tiendas' : '📍 Agentes'}
@@ -1018,7 +1018,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleResetAgencies(activeTab)}
-                    className={`p-2 rounded-xl border-2 text-xs text-zinc-500 hover:text-red-500 transition-colors cursor-pointer ${
+                    className={`p-2 rounded-xl border-2 text-xs text-[#475569] hover:text-red-500 transition-colors cursor-pointer ${
                       isDark ? 'bg-[#0F0F12] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-300'
                     }`}
                     title="Restablecer catálogo oficial de contingencia"
@@ -1127,7 +1127,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAddForm(false)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#475569] hover:text-black dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -1145,7 +1145,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
               {/* Agencies List */}
               <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
                 {filteredAgencies.length === 0 ? (
-                  <div className="text-center py-10 text-xs text-zinc-500 font-bold">
+                  <div className="text-center py-10 text-xs text-[#475569] font-bold">
                     No se encontraron sucursales que coincidan con "{searchTerm}".
                   </div>
                 ) : (
@@ -1153,7 +1153,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                     <div
                       key={agency.id}
                       className={`p-3 rounded-2xl border-2 flex items-center justify-between gap-3 ${
-                        isDark ? 'bg-[#0F0F12] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200'
+                        isDark ? 'bg-[#0F0F12] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
@@ -1174,13 +1174,13 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                             )}
 
                             {agency.code && (
-                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-zinc-200 dark:bg-zinc-700/40 text-zinc-800 dark:text-zinc-300">
+                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-zinc-200 dark:bg-zinc-700/40 text-[#0F172A] dark:text-zinc-300">
                                 {agency.code}
                               </span>
                             )}
 
                             {agency.ubigeo && (
-                              <span className="font-mono text-[9px] font-bold text-zinc-600 dark:text-zinc-400">
+                              <span className="font-mono text-[9px] font-bold text-[#475569] dark:text-zinc-400">
                                 Ubigeo: {agency.ubigeo}
                               </span>
                             )}
@@ -1197,7 +1197,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDeleteAgency(activeTab, agency.id)}
-                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-600 hover:bg-red-500/10 transition-colors flex-shrink-0 cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#475569] hover:text-red-600 hover:bg-red-500/10 transition-colors flex-shrink-0 cursor-pointer"
                         title="Eliminar sucursal de la base de contingencia"
                       >
                         <Trash2 className="w-4 h-4 stroke-[2]" />
@@ -1263,7 +1263,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 }`}>
                   <FileCode2 className="w-8 h-8 text-[#FF7060] mb-2" />
                   <span className="text-xs font-black text-black dark:text-white">Cargar archivo .JSON / .CSV / .TXT</span>
-                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">
+                  <span className="text-[10px] text-[#475569] dark:text-zinc-400 mt-1">
                     Detecta automáticamente estructura array <code>[...]</code>, <code>{'{ data: [...] }'}</code> o CSV.
                   </span>
                   <input
@@ -1275,7 +1275,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                 </label>
 
                 <div className={`p-4 rounded-2xl border-2 text-xs space-y-2 ${
-                  isDark ? 'bg-[#0F0F12] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200'
+                  isDark ? 'bg-[#0F0F12] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
                 }`}>
                   <div className="flex items-center justify-between">
                     <span className="font-black text-[11px]">Formatos JSON Aceptados:</span>
@@ -1288,7 +1288,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                       Descargar plantilla modelo
                     </button>
                   </div>
-                  <pre className="font-mono text-[10px] text-zinc-600 dark:text-zinc-400 bg-black/10 dark:bg-black/40 p-2.5 rounded-xl overflow-x-auto leading-relaxed border border-zinc-200 dark:border-zinc-800">
+                  <pre className="font-mono text-[10px] text-[#475569] dark:text-zinc-400 bg-black/10 dark:bg-black/40 p-2.5 rounded-xl overflow-x-auto leading-relaxed border border-[#E2E8F0] dark:border-zinc-800">
 {`[
   {
     "name": "Lima / La Victoria / Parinacochas",
@@ -1312,7 +1312,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   value={rawImportText}
                   onChange={(e) => handleRawTextChange(e.target.value)}
                   className={`w-full p-3 rounded-xl text-xs font-mono border-2 ${
-                    isDark ? 'bg-[#0F0F12] border-[#2C2C35] text-white placeholder:text-zinc-600' : 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400'
+                    isDark ? 'bg-[#0F0F12] border-[#2C2C35] text-white placeholder:text-[#475569]' : 'bg-white border-zinc-300 text-[#0F172A] placeholder:text-zinc-400'
                   }`}
                 />
               </div>
@@ -1334,7 +1334,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                     </button>
                   </div>
 
-                  <div className="border-2 rounded-2xl max-h-[180px] overflow-y-auto text-xs border-zinc-200 dark:border-zinc-800">
+                  <div className="border-2 rounded-2xl max-h-[180px] overflow-y-auto text-xs border-[#E2E8F0] dark:border-zinc-800">
                     <table className="w-full text-left">
                       <thead className={`text-[10px] font-black uppercase sticky top-0 ${
                         isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'
@@ -1351,7 +1351,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         {parsedPreview.slice(0, 20).map((a, i) => (
                           <tr key={i} className="text-[11px]">
                             <td className="p-2 font-bold">{a.name}</td>
-                            <td className="p-2 text-zinc-600 dark:text-zinc-400">{a.address}</td>
+                            <td className="p-2 text-[#475569] dark:text-zinc-400">{a.address}</td>
                             <td className="p-2">{a.department}</td>
                             <td className="p-2 font-mono text-[10px]">{a.code || '-'}</td>
                             {importTarget === 'olva' && (
@@ -1377,7 +1377,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t-2 border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 flex-shrink-0">
+        <div className="p-4 border-t-2 border-[#E2E8F0] dark:border-zinc-800 flex items-center justify-between text-xs text-[#475569] dark:text-zinc-400 flex-shrink-0">
           <span>Los cambios y sincronizaciones se aplican en tiempo real al formulario de despacho de clientes.</span>
           <button
             type="button"

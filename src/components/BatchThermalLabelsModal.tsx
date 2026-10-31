@@ -37,11 +37,11 @@ export const BatchThermalLabelsModal: React.FC<BatchThermalLabelsModalProps> = (
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto print:static print:p-0 print:m-0 print:bg-transparent print:overflow-visible">
       {/* Modal Container */}
-      <div className={`w-full max-w-4xl rounded-3xl border shadow-2xl transition-all duration-200 my-auto print:border-none print:shadow-none print:bg-transparent print:w-full print:max-w-none ${
-        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-[#F3F4F6]' : 'bg-white border-zinc-300 text-zinc-900'
+      <div className={`w-full max-w-4xl rounded-2xl border shadow-2xl transition-all duration-200 my-auto print:border-none print:shadow-none print:bg-transparent print:w-full print:max-w-none ${
+        isDark ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-[#0F172A]'
       }`}>
         {/* Modal Toolbar (hidden when printing) */}
-        <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
               <PackageCheck className="w-5 h-5" />
@@ -50,7 +50,7 @@ export const BatchThermalLabelsModal: React.FC<BatchThermalLabelsModalProps> = (
               <h3 className="font-black text-base sm:text-lg text-black dark:text-white">
                 Impresión Masiva de Rótulos ({orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'})
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#475569] dark:text-zinc-400">
                 {paperSize === 'half_a4' 
                   ? 'Mediano: 2 rótulos por hoja A4 (con línea de corte central)' 
                   : paperSize === 'thermal' 
@@ -134,7 +134,7 @@ export const BatchThermalLabelsModal: React.FC<BatchThermalLabelsModalProps> = (
                   className="print:w-full print:h-[285mm] print:flex print:flex-col print:justify-between print:page-break-after-always p-2 bg-zinc-100 dark:bg-zinc-900/50 print:bg-white rounded-2xl print:rounded-none border-2 border-dashed border-zinc-400 print:border-none"
                   style={{ breakAfter: 'page', pageBreakAfter: 'always' }}
                 >
-                  <div className="text-center text-[10px] font-mono text-zinc-500 mb-2 print:hidden">
+                  <div className="text-center text-[10px] font-mono text-[#475569] mb-2 print:hidden">
                     — Hoja A4 #{pageIndex + 1} ({pair.length} rótulos) —
                   </div>
 
@@ -152,7 +152,7 @@ export const BatchThermalLabelsModal: React.FC<BatchThermalLabelsModalProps> = (
                         {idx === 0 && pair.length > 1 && (
                           <div className="hidden print:flex items-center justify-center my-1">
                             <div className="w-full border-t-2 border-dashed border-zinc-400 relative">
-                              <span className="absolute left-1/2 -top-2.5 -translate-x-1/2 bg-white px-2 text-[9px] font-mono uppercase text-zinc-600">
+                              <span className="absolute left-1/2 -top-2.5 -translate-x-1/2 bg-white px-2 text-[9px] font-mono uppercase text-[#475569]">
                                 ✂️ LÍNEA DE CORTE CENTRAL
                               </span>
                             </div>
@@ -186,7 +186,7 @@ export const BatchThermalLabelsModal: React.FC<BatchThermalLabelsModalProps> = (
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 print:hidden">
+        <div className="p-4 border-t border-[#E2E8F0] dark:border-zinc-800 flex items-center justify-between text-xs text-[#475569] dark:text-zinc-400 print:hidden">
           <span>Total: {orders.length} pedidos seleccionados para impresión</span>
           <button
             onClick={onClose}

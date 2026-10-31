@@ -115,10 +115,10 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div 
-        className={`w-full max-w-5xl max-h-[90vh] rounded-3xl border shadow-2xl flex flex-col transition-all overflow-hidden ${
+        className={`w-full max-w-5xl max-h-[90vh] rounded-2xl border shadow-2xl flex flex-col transition-all overflow-hidden ${
           isDark 
             ? 'bg-[#18181B] border-zinc-800 text-zinc-100' 
-            : 'bg-white border-zinc-200 text-zinc-900'
+            : 'bg-white border-[#E2E8F0] text-[#0F172A]'
         }`}
       >
         {/* Header */}
@@ -128,13 +128,13 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-white flex items-center gap-2">
+              <h3 className="font-bold text-base sm:text-lg text-[#0F172A] dark:text-white flex items-center gap-2">
                 <span>Historial de Pedidos Entregados</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 font-semibold">
                   {deliveredOrders.length} {deliveredOrders.length === 1 ? 'pedido' : 'pedidos'}
                 </span>
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#475569] dark:text-zinc-400">
                 Consulta y audita todos los despachos finalizados
               </p>
             </div>
@@ -145,7 +145,7 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
               type="button"
               onClick={handleExportCSV}
               disabled={deliveredOrders.length === 0}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[#0F172A] dark:text-zinc-200 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               title="Descargar historial en archivo Excel / CSV"
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -173,8 +173,8 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs sm:text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
                 isDark 
-                  ? 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500' 
-                  : 'bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-400'
+                  ? 'bg-zinc-900/90 border-zinc-800 text-white placeholder-[#475569]/70' 
+                  : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-zinc-400'
               }`}
             />
           </div>
@@ -193,10 +193,10 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
                 onClick={() => setCourierFilter(tab.id)}
                 className={`px-3 py-1.5 rounded-full font-semibold transition-all cursor-pointer border text-xs whitespace-nowrap ${
                   courierFilter === tab.id
-                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-transparent shadow-xs'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-[#0F172A] border-transparent shadow-xs'
                     : isDark
                       ? 'bg-zinc-900/70 text-zinc-400 hover:text-white border-zinc-800'
-                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 border-zinc-200'
+                      : 'bg-zinc-100 text-[#475569] hover:bg-zinc-200 border-[#E2E8F0]'
                 }`}
               >
                 {tab.label}
@@ -208,10 +208,10 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
         {/* Table Content */}
         <div className="flex-1 overflow-y-auto overflow-x-auto">
           {deliveredOrders.length === 0 ? (
-            <div className="py-16 text-center text-zinc-500">
+            <div className="py-16 text-center text-[#475569]">
               <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-30 text-zinc-400" />
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">No se encontraron pedidos entregados</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              <p className="text-sm font-semibold text-[#0F172A] dark:text-zinc-200">No se encontraron pedidos entregados</p>
+              <p className="text-xs text-[#475569] dark:text-zinc-400 mt-1">
                 {searchTerm ? 'Prueba ajustando los filtros de búsqueda.' : 'Los pedidos completados aparecerán aquí.'}
               </p>
             </div>
@@ -219,7 +219,7 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className={`border-b text-[11px] font-bold uppercase tracking-wider ${
-                  isDark ? 'bg-zinc-900/80 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-200 text-zinc-500'
+                  isDark ? 'bg-[#1E293B] border-zinc-800 text-zinc-400' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569]'
                 }`}>
                   <th className="py-3 px-4">Pedido</th>
                   <th className="py-3 px-4">Destinatario</th>
@@ -249,16 +249,16 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
                     <tr 
                       key={order.id}
                       className={`hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors ${
-                        isDark ? 'text-zinc-200' : 'text-zinc-800'
+                        isDark ? 'text-zinc-200' : 'text-[#0F172A]'
                       }`}
                     >
-                      <td className="py-3 px-4 font-mono font-bold text-zinc-900 dark:text-white whitespace-nowrap">
+                      <td className="py-3 px-4 font-mono font-bold text-[#0F172A] dark:text-white whitespace-nowrap">
                         #{order.id}
                       </td>
 
                       <td className="py-3 px-4">
-                        <div className="font-bold text-zinc-900 dark:text-white">{order.customerName}</div>
-                        <div className="flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        <div className="font-bold text-[#0F172A] dark:text-white">{order.customerName}</div>
+                        <div className="flex items-center gap-2 text-[11px] text-[#475569] dark:text-zinc-400 mt-0.5">
                           <span>{order.documentType}: {order.documentNumber}</span>
                           <span>•</span>
                           <a
@@ -286,23 +286,23 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
                       </td>
 
                       <td className="py-3 px-4 max-w-xs">
-                        <p className="truncate font-semibold text-zinc-800 dark:text-zinc-200" title={locationStr}>
+                        <p className="truncate font-semibold text-[#0F172A] dark:text-zinc-200" title={locationStr}>
                           {locationStr}
                         </p>
                         {order.notes && (
-                          <p className="text-[11px] text-zinc-500 italic truncate mt-0.5">
+                          <p className="text-[11px] text-[#475569] italic truncate mt-0.5">
                             Nota: {order.notes}
                           </p>
                         )}
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
+                      <td className="py-3 px-4 whitespace-nowrap text-[#475569] dark:text-zinc-400">
                         {formatPeruvianDate(order.dispatchDate)}
                       </td>
 
                       <td className="py-3 px-4 font-mono whitespace-nowrap">
                         {order.trackingNumber ? (
-                          <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800 text-[11px]">
+                          <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/50 text-[#06B6D4] dark:text-sky-300 font-bold border border-blue-200 dark:border-blue-800 text-[11px]">
                             {order.trackingNumber}
                           </span>
                         ) : (
@@ -330,7 +330,7 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50">
+        <div className="p-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-[#475569] dark:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/50">
           <span>Mostrando {deliveredOrders.length} registros en total</span>
           <button
             type="button"

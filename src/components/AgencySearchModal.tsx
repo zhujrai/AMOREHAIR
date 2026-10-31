@@ -456,10 +456,10 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
       <div 
-        className={`w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl transition-all max-h-[90vh] flex flex-col ${
+        className={`w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl transition-all max-h-[90vh] flex flex-col ${
           isDark 
             ? 'bg-[#141418] text-zinc-100 border border-zinc-800' 
-            : 'bg-white text-zinc-900 border border-zinc-200'
+            : 'bg-white text-[#0F172A] border border-[#E2E8F0]'
         }`}
       >
         {/* Mobile drag handle */}
@@ -479,7 +479,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-base sm:text-lg text-zinc-900 dark:text-white">
+                <h3 className="font-black text-base sm:text-lg text-[#0F172A] dark:text-white">
                   Sucursales {courierName}
                 </h3>
                 <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
@@ -492,7 +492,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                   {agencies.length} locales
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              <p className="text-xs text-[#475569] dark:text-zinc-400 mt-0.5">
                 Elige tu agencia por GPS cercano o buscador inteligente
               </p>
             </div>
@@ -508,7 +508,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
         </div>
 
         {/* SELECTOR DE MODALIDAD: [ 📍 Busca las más cercanas (GPS) ] vs [ 🔍 Búsqueda por texto ] */}
-        <div className="p-3 sm:p-4 bg-zinc-50 dark:bg-[#19191F] border-b border-zinc-200/80 dark:border-zinc-800/80 flex gap-2">
+        <div className="p-3 sm:p-4 bg-zinc-50 dark:bg-[#19191F] border-b border-[#E2E8F0]/80 dark:border-zinc-800/80 flex gap-2">
           <button
             id="tab-agency-search-btn"
             type="button"
@@ -517,8 +517,8 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
               activeTab === 'search'
                 ? isDark
                   ? 'bg-zinc-800 text-white shadow-xs border border-zinc-700'
-                  : 'bg-white text-zinc-950 shadow-xs border border-zinc-300'
-                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                  : 'bg-white text-[#0F172A] shadow-xs border border-zinc-300'
+                : 'text-[#475569] hover:text-[#0F172A] dark:hover:text-zinc-300'
             }`}
           >
             <Search className="w-4 h-4 text-zinc-400" />
@@ -541,7 +541,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                   : isMarvisur
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'bg-amber-600 text-white shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                : 'text-[#475569] hover:text-[#0F172A] dark:hover:text-zinc-300'
             }`}
           >
             <Navigation className="w-4 h-4" />
@@ -565,8 +565,8 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={`w-full pl-10 pr-9 py-2.5 rounded-2xl text-sm font-medium focus:outline-none transition-all ${
                     isDark 
-                      ? 'bg-zinc-900 text-white placeholder-zinc-500 focus:ring-2 focus:ring-red-500 border border-zinc-800' 
-                      : 'bg-zinc-100 text-zinc-900 placeholder-zinc-400 focus:ring-2 focus:ring-black border border-zinc-200'
+                      ? 'bg-zinc-900 text-white placeholder-[#475569]/70 focus:ring-2 focus:ring-red-500 border border-zinc-800' 
+                      : 'bg-zinc-100 text-[#0F172A] placeholder-zinc-400 focus:ring-2 focus:ring-black border border-[#E2E8F0]'
                   }`}
                   autoFocus
                 />
@@ -574,7 +574,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                   <button
                     id="clear-agency-search-btn"
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-[#475569] dark:hover:text-zinc-200 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -582,7 +582,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
               </div>
 
               {/* Tips de búsqueda rápida & Feedback de Sincronización Online */}
-              <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 px-1">
+              <div className="flex items-center justify-between text-[11px] text-[#475569] dark:text-zinc-400 px-1">
                 <span className="font-medium">Escribe el nombre del local o tu distrito</span>
                 <div className="flex items-center gap-1.5 font-semibold">
                   {isSearchingOnline && (
@@ -605,10 +605,10 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
             {/* Lista de Resultados de Búsqueda */}
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5">
               {searchResults.length === 0 ? (
-                <div className="py-12 text-center text-zinc-500">
+                <div className="py-12 text-center text-[#475569]">
                   <MapPin className="w-8 h-8 mx-auto mb-2 opacity-40 text-zinc-400" />
-                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-200">No encontramos coincidencias</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
+                  <p className="text-sm font-bold text-[#0F172A] dark:text-zinc-200">No encontramos coincidencias</p>
+                  <p className="text-xs text-[#475569] dark:text-zinc-400 mt-1 max-w-sm mx-auto">
                     Intenta buscando por nombre del local o por el nombre de tu distrito o avenida.
                   </p>
                 </div>
@@ -634,14 +634,14 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                               ? 'bg-blue-500/10 border-blue-500 text-blue-950 dark:text-blue-100 ring-2 ring-blue-500/30'
                               : 'bg-amber-500/10 border-amber-500 text-amber-950 dark:text-amber-100 ring-2 ring-amber-500/30'
                           : isDark
-                            ? 'bg-zinc-900/70 border-zinc-800/80 hover:bg-zinc-800/90 text-zinc-200 hover:border-zinc-700'
-                            : 'bg-zinc-50/80 border-zinc-200/80 hover:bg-zinc-100 text-zinc-800 hover:border-zinc-300'
+                            ? 'bg-zinc-900/70 border-zinc-800/80 hover:bg-[#4F46E5] text-zinc-200 hover:border-zinc-700'
+                            : 'bg-zinc-50/80 border-[#E2E8F0]/80 hover:bg-zinc-100 text-[#0F172A] hover:border-zinc-300'
                       }`}
                     >
                       <div className="space-y-1.5 min-w-0 flex-1">
                         {/* Nombre del local y Ubicación */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-black text-sm text-zinc-900 dark:text-white leading-snug">
+                          <span className="font-black text-sm text-[#0F172A] dark:text-white leading-snug">
                             {agency.name}
                           </span>
                           {agency.tipo && (
@@ -652,13 +652,13 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                         </div>
 
                         {locationStr && (
-                          <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                          <div className="text-xs font-semibold text-[#475569] dark:text-zinc-400">
                             {locationStr}
                           </div>
                         )}
 
                         {/* Dirección puntual */}
-                        <div className="flex items-start gap-1.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium">
+                        <div className="flex items-start gap-1.5 text-xs text-[#0F172A] dark:text-zinc-200 font-medium">
                           <MapPin className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${
                             isShalom ? 'text-red-500' : isMarvisur ? 'text-blue-500' : 'text-amber-500'
                           }`} />
@@ -667,14 +667,14 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
 
                         {/* Referencia detallada si existe */}
                         {agency.reference && (
-                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 p-1.5 rounded-lg">
+                          <div className="text-[11px] text-[#475569] dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 p-1.5 rounded-lg">
                             <span className="font-bold">Ref:</span> {agency.reference}
                           </div>
                         )}
 
                         {/* Teléfono */}
                         {agency.phone && (
-                          <div className="flex items-center gap-1 pt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                          <div className="flex items-center gap-1 pt-0.5 text-[11px] text-[#475569] dark:text-zinc-400">
                             <Phone className="w-3 h-3 text-zinc-400" />
                             <span>{agency.phone}</span>
                           </div>
@@ -689,7 +689,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                             <Check className="w-4 h-4 stroke-[2.5]" />
                           </div>
                         ) : (
-                          <div className="p-1.5 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-zinc-500">
+                          <div className="p-1.5 rounded-xl bg-zinc-200/60 dark:bg-zinc-800 text-[#475569]">
                             <ChevronRight className="w-4 h-4" />
                           </div>
                         )}
@@ -709,8 +709,8 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                 <Loader2 className={`w-8 h-8 animate-spin mx-auto ${
                   isShalom ? 'text-red-500' : isMarvisur ? 'text-blue-500' : 'text-amber-500'
                 }`} />
-                <p className="font-bold text-sm text-zinc-900 dark:text-white">Detectando tu ubicación GPS...</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="font-bold text-sm text-[#0F172A] dark:text-white">Detectando tu ubicación GPS...</p>
+                <p className="text-xs text-[#475569] dark:text-zinc-400">
                   Calculando distancias a todas las sucursales de {courierName} en Perú
                 </p>
               </div>
@@ -718,7 +718,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
 
             {/* Error de Geolocalización */}
             {locationError && (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-[#FBBF24]/30 text-amber-900 dark:text-amber-200 text-xs space-y-2">
                 <div className="flex items-center gap-2 font-bold text-sm">
                   <AlertCircle className="w-4 h-4 text-amber-500" />
                   <span>No se pudo acceder a tu GPS</span>
@@ -737,7 +737,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                     id="switch-to-search-btn"
                     type="button"
                     onClick={() => setActiveTab('search')}
-                    className="px-3 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-[#0F172A] dark:text-zinc-200 font-bold text-xs cursor-pointer"
                   >
                     Usar buscador por texto
                   </button>
@@ -747,7 +747,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
 
             {/* Botón para actualizar posición GPS */}
             {userCoords && !isLocating && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 dark:text-emerald-300 text-xs">
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-[#10B981] dark:text-emerald-300 text-xs">
                 <div className="flex items-center gap-2">
                   <Compass className="w-4 h-4 text-emerald-500" />
                   <span className="font-bold">Ubicación GPS activa</span>
@@ -766,7 +766,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
             {/* Listado de las 5 Agencias más Cercanas */}
             {nearestAgencies.length > 0 && !isLocating && (
               <div className="space-y-3">
-                <div className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center justify-between">
+                <div className="text-xs font-black uppercase tracking-wider text-[#475569] dark:text-zinc-400 flex items-center justify-between">
                   <span>5 Agencias más próximas a ti:</span>
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 </div>
@@ -791,8 +791,8 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                               ? 'bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/40'
                               : 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/40'
                           : isDark
-                            ? 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
-                            : 'bg-white border-zinc-200 hover:border-zinc-300 shadow-xs'
+                            ? 'bg-[#1E293B] border-zinc-800 hover:border-zinc-700'
+                            : 'bg-white border-[#E2E8F0] hover:border-zinc-300 shadow-xs'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -802,18 +802,18 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                             <span className={`text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 ${
                               index === 0
                                 ? 'bg-emerald-500 text-white'
-                                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200'
+                                : 'bg-zinc-200 dark:bg-zinc-800 text-[#0F172A] dark:text-zinc-200'
                             }`}>
                               <Navigation className="w-3 h-3" />
                               {index === 0 ? 'Más cercana: ' : ''}{distFormatted}
                             </span>
-                            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
+                            <span className="text-xs font-bold text-[#475569] dark:text-zinc-400">
                               {agency.district}, {agency.province}
                             </span>
                           </div>
 
                           {/* Nombre del local */}
-                          <h4 className="font-black text-sm sm:text-base text-zinc-900 dark:text-white leading-snug pt-0.5">
+                          <h4 className="font-black text-sm sm:text-base text-[#0F172A] dark:text-white leading-snug pt-0.5">
                             {agency.name}
                           </h4>
 
@@ -824,7 +824,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
 
                           {/* Referencia si existe */}
                           {agency.reference && (
-                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 p-1.5 rounded-lg mt-1">
+                            <p className="text-[11px] text-[#475569] dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 p-1.5 rounded-lg mt-1">
                               <span className="font-bold">Ref:</span> {agency.reference}
                             </p>
                           )}
@@ -848,7 +848,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
                                     : 'bg-amber-600 text-white shadow-xs'
                                 : isDark
                                   ? 'bg-zinc-800 hover:bg-zinc-700 text-white'
-                                  : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900'
+                                  : 'bg-zinc-100 hover:bg-zinc-200 text-[#0F172A]'
                             }`}
                           >
                             {isSelected ? (
@@ -871,7 +871,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
         )}
 
         {/* Footer */}
-        <div className="p-3.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="p-3.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-[#475569] dark:text-zinc-400">
           <div className="flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" />
             <span>Cobertura nacional de sucursales verificadas</span>

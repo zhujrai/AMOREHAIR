@@ -106,24 +106,24 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className={`w-full max-w-lg rounded-3xl border p-5 sm:p-7 shadow-2xl transition-all max-h-[92vh] overflow-y-auto ${
+        className={`w-full max-w-lg rounded-2xl border p-5 sm:p-7 shadow-2xl transition-all max-h-[92vh] overflow-y-auto ${
           isDark 
             ? 'bg-[#18181F] border-white/10 text-white' 
-            : 'bg-white border-zinc-200 text-zinc-950 shadow-xl'
+            : 'bg-white border-[#E2E8F0] text-[#0F172A] shadow-xl'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-200/80 dark:border-white/10">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#E2E8F0]/80 dark:border-white/10">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black">
               <Share2 className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-black tracking-tight text-zinc-950 dark:text-white">
+              <h3 className="text-base sm:text-lg font-black tracking-tight text-[#0F172A] dark:text-white">
                 Compartir Formulario de Envíos
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold">
+              <p className="text-xs text-[#475569] dark:text-zinc-400 font-semibold">
                 Envía este enlace a tus clientes para que registren sus datos
               </p>
             </div>
@@ -132,7 +132,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-zinc-400 hover:text-[#0F172A] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 stroke-[2.5]" />
           </button>
@@ -148,7 +148,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
             </label>
 
             <div className={`flex items-center gap-2 p-2 sm:p-2.5 rounded-2xl border ${
-              isDark ? 'bg-zinc-900 border-white/10' : 'bg-zinc-50 border-zinc-200'
+              isDark ? 'bg-zinc-900 border-white/10' : 'bg-[#F8FAFC] border-[#E2E8F0]'
             }`}>
               <input
                 type="text"
@@ -192,8 +192,8 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
                 copiedFullMessage
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-950 dark:text-emerald-200'
                   : isDark
-                    ? 'bg-zinc-900/90 hover:bg-zinc-800/90 border-white/10 text-white'
-                    : 'bg-zinc-50 hover:bg-zinc-100/90 border-zinc-200 text-zinc-950'
+                    ? 'bg-zinc-900/90 hover:bg-[#4F46E5] border-white/10 text-white'
+                    : 'bg-zinc-50 hover:bg-zinc-100/90 border-[#E2E8F0] text-[#0F172A]'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -203,7 +203,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
                 </span>
                 {copiedFullMessage && <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />}
               </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+              <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-medium">
                 Incluye saludo, nombre de la marca e instrucciones claras.
               </p>
             </button>
@@ -214,8 +214,8 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
               onClick={handleNativeShare}
               className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-2xs hover:scale-[1.01] active:scale-[0.99] ${
                 isDark
-                  ? 'bg-zinc-900/90 hover:bg-zinc-800/90 border-white/10 text-white'
-                  : 'bg-zinc-50 hover:bg-zinc-100/90 border-zinc-200 text-zinc-950'
+                  ? 'bg-zinc-900/90 hover:bg-[#4F46E5] border-white/10 text-white'
+                  : 'bg-zinc-50 hover:bg-zinc-100/90 border-[#E2E8F0] text-[#0F172A]'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -225,7 +225,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
                 </span>
                 <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
               </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+              <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-medium">
                 Abre el menú de compartir nativo de tu teléfono o navegador.
               </p>
             </button>
@@ -252,8 +252,8 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
                 onChange={(e) => setCustomPhone(e.target.value.replace(/\D/g, ''))}
                 className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                   isDark 
-                    ? 'bg-zinc-900 border-white/10 text-white placeholder-zinc-500' 
-                    : 'bg-white border-zinc-200 text-zinc-950 placeholder-zinc-400'
+                    ? 'bg-zinc-900 border-white/10 text-white placeholder-[#475569]/70' 
+                    : 'bg-white border-[#E2E8F0] text-[#0F172A] placeholder-zinc-400'
                 }`}
               />
 
@@ -270,7 +270,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
 
           {/* QR Code section for in-store scanning */}
           <div className={`p-4 rounded-2xl border flex items-center gap-4 ${
-            isDark ? 'bg-zinc-900/60 border-white/10' : 'bg-zinc-50 border-zinc-200'
+            isDark ? 'bg-zinc-900/60 border-white/10' : 'bg-[#F8FAFC] border-[#E2E8F0]'
           }`}>
             <div className="w-16 h-16 rounded-xl bg-white p-1 flex-shrink-0 shadow-xs flex items-center justify-center">
               <img
@@ -280,11 +280,11 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 font-black text-xs text-zinc-950 dark:text-white">
+              <div className="flex items-center gap-1.5 font-black text-xs text-[#0F172A] dark:text-white">
                 <QrCode className="w-3.5 h-3.5 text-purple-500" />
                 <span>Código QR para Escaneo</span>
               </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+              <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-medium mt-0.5">
                 Los clientes pueden escanear este código directamente desde su celular para abrir el formulario al instante.
               </p>
             </div>
@@ -293,11 +293,11 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="pt-4 mt-4 border-t border-zinc-200/80 dark:border-white/10 flex justify-end">
+        <div className="pt-4 mt-4 border-t border-[#E2E8F0]/80 dark:border-white/10 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-black text-xs cursor-pointer transition-all"
+            className="px-5 py-2 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-[#0F172A] font-black text-xs cursor-pointer transition-all"
           >
             Entendido
           </button>

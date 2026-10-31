@@ -64,13 +64,13 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
       title: 'Retiro en agencia Shalom',
       description: 'Agencias a Nivel Nacional, pago por adelantado.',
       badge: 'Provincias y Lima',
-      icon: <Building2 className="w-5 h-5 text-rose-500" />,
+      icon: <Building2 className="w-5 h-5 text-[#6366F1]" />,
       colorClasses: {
         activeBorder: 'border-rose-500 ring-2 ring-rose-500/30',
         activeBgDark: 'bg-rose-950/30',
         activeBgLight: 'bg-rose-50/90',
         iconBgDark: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
-        iconBgLight: 'bg-rose-100/80 border-rose-200 text-rose-600',
+        iconBgLight: 'bg-rose-100/80 border-rose-200 text-[#6366F1]',
         badgeDark: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
         badgeLight: 'bg-rose-100 text-rose-700 border-rose-200',
       },
@@ -117,10 +117,10 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
         activeBorder: 'border-amber-500 ring-2 ring-amber-500/30',
         activeBgDark: 'bg-amber-950/30',
         activeBgLight: 'bg-amber-50/90',
-        iconBgDark: 'bg-amber-500/15 border-amber-500/30 text-amber-400',
+        iconBgDark: 'bg-amber-500/15 border-[#FBBF24]/30 text-amber-400',
         iconBgLight: 'bg-amber-100/80 border-amber-200 text-amber-600',
-        badgeDark: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        badgeLight: 'bg-amber-100 text-amber-700 border-amber-200',
+        badgeDark: 'bg-amber-500/20 text-amber-300 border-[#FBBF24]/30',
+        badgeLight: 'bg-amber-100 text-[#F59E0B] border-amber-200',
       },
     },
     {
@@ -156,15 +156,15 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
       }}
     >
       <div 
-        className={`w-full h-full sm:h-auto sm:max-w-xl flex flex-col justify-between sm:justify-start rounded-none sm:rounded-[28px] border-0 sm:border p-6 sm:p-8 shadow-2xl transition-all duration-200 max-h-screen sm:max-h-[92vh] overflow-y-auto overscroll-contain touch-pan-y ${
+        className={`w-full h-full sm:h-auto sm:max-w-xl flex flex-col justify-between sm:justify-start rounded-none sm:rounded-2xl border-0 sm:border p-6 sm:p-8 shadow-2xl transition-all duration-200 max-h-screen sm:max-h-[92vh] overflow-y-auto overscroll-contain touch-pan-y ${
           isDark 
-            ? 'bg-[#16161B]/95 sm:border-white/10 text-[#F3F4F6]' 
-            : 'bg-white/95 sm:border-zinc-200/90 text-black'
+            ? 'bg-[#16161B]/95 sm:border-white/10 text-white' 
+            : 'bg-white/95 sm:border-[#E2E8F0]/90 text-black'
         }`}
       >
         <div>
           {/* Top Brand Bar inside Modal */}
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-200/70 dark:border-white/10">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#E2E8F0]/70 dark:border-white/10">
             <div className="flex items-center gap-2.5">
               {brandLogo ? (
                 <img
@@ -174,7 +174,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <span className="font-black text-xs uppercase tracking-wider text-zinc-900 dark:text-white">
+                <span className="font-black text-xs uppercase tracking-wider text-[#0F172A] dark:text-white">
                   {storeSettings?.storeName || 'AMORE SALON'}
                 </span>
               )}
@@ -188,7 +188,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                   className={`p-2 rounded-xl border transition-colors cursor-pointer shadow-2xs ${
                     isDark 
                       ? 'border-white/10 bg-zinc-900 text-amber-400 hover:bg-zinc-800' 
-                      : 'border-zinc-200 bg-zinc-100 text-zinc-800 hover:bg-zinc-200'
+                      : 'border-[#E2E8F0] bg-zinc-100 text-[#0F172A] hover:bg-zinc-200'
                   }`}
                   title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
                 >
@@ -200,7 +200,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                 id="close-shipping-modal-btn"
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl text-zinc-500 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="p-2 rounded-xl text-[#475569] hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 title="Cerrar y volver al formulario"
               >
                 <X className="w-5 h-5 stroke-[2.5]" />
@@ -235,7 +235,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                         }`
                       : isDark
                         ? 'border-white/10 bg-[#1F1F26]/70 hover:bg-[#252530] hover:border-white/20'
-                        : 'border-zinc-200/90 bg-white hover:bg-zinc-50/90 hover:border-zinc-400'
+                        : 'border-[#E2E8F0]/90 bg-white hover:bg-zinc-50/90 hover:border-zinc-400'
                   }`}
                 >
                   <div className={`p-2.5 rounded-xl border flex-shrink-0 transition-transform group-hover:scale-105 ${
@@ -266,7 +266,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
                         <Check className="w-4 h-4 stroke-[3]" />
                       </div>
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400 group-hover:bg-rose-600 group-hover:text-white transition-all">
+                      <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[#475569] dark:text-zinc-400 group-hover:bg-rose-600 group-hover:text-white transition-all">
                         <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                       </div>
                     )}

@@ -118,14 +118,14 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
       <div 
-        className={`w-full max-w-2xl rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[90vh] ${
-          isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-zinc-950'
+        className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[90vh] ${
+          isDark ? 'bg-[#15151A] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-[#0F172A]'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className={`p-4 sm:p-5 flex items-center justify-between border-b ${
-          isDark ? 'bg-[#1A1A1F] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200'
+          isDark ? 'bg-[#1A1A1F] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
         }`}>
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
@@ -138,7 +138,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
                   Cloud PostgreSQL
                 </span>
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              <p className="text-xs text-[#475569] dark:text-zinc-400 font-medium">
                 Sincronización en tiempo real y persistencia en producción
               </p>
             </div>
@@ -147,7 +147,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-zinc-400 hover:text-[#0F172A] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -160,7 +160,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
           <div className={`p-4 rounded-2xl border flex items-start gap-3.5 ${
             status?.connected
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-200'
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200'
+              : 'bg-amber-500/10 border-[#FBBF24]/30 text-amber-950 dark:text-amber-200'
           }`}>
             {status?.connected ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -189,36 +189,36 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
           {/* Connection Details Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className={`p-3.5 rounded-2xl border ${
-              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-[#F8FAFC] border-[#E2E8F0]'
             }`}>
-              <span className="text-[11px] text-zinc-500 font-bold block uppercase tracking-wider">Host Supabase</span>
-              <span className="font-mono font-black text-xs text-zinc-900 dark:text-zinc-100 block mt-0.5 truncate">
+              <span className="text-[11px] text-[#475569] font-bold block uppercase tracking-wider">Host Supabase</span>
+              <span className="font-mono font-black text-xs text-[#0F172A] dark:text-zinc-100 block mt-0.5 truncate">
                 db.nltbacpanvmvtrzhjdxz.supabase.co
               </span>
             </div>
 
             <div className={`p-3.5 rounded-2xl border ${
-              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-[#F8FAFC] border-[#E2E8F0]'
             }`}>
-              <span className="text-[11px] text-zinc-500 font-bold block uppercase tracking-wider">URL del Proyecto</span>
-              <span className="font-mono font-black text-xs text-zinc-900 dark:text-zinc-100 block mt-0.5 truncate">
+              <span className="text-[11px] text-[#475569] font-bold block uppercase tracking-wider">URL del Proyecto</span>
+              <span className="font-mono font-black text-xs text-[#0F172A] dark:text-zinc-100 block mt-0.5 truncate">
                 https://nltbacpanvmvtrzhjdxz.supabase.co
               </span>
             </div>
 
             <div className={`p-3.5 rounded-2xl border ${
-              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-[#F8FAFC] border-[#E2E8F0]'
             }`}>
-              <span className="text-[11px] text-zinc-500 font-bold block uppercase tracking-wider">Pedidos en Supabase</span>
+              <span className="text-[11px] text-[#475569] font-bold block uppercase tracking-wider">Pedidos en Supabase</span>
               <span className="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400 block mt-0.5">
                 {status?.orderCount ?? orders.length} pedidos registrados
               </span>
             </div>
 
             <div className={`p-3.5 rounded-2xl border ${
-              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+              isDark ? 'bg-[#1A1A1F]/50 border-zinc-800' : 'bg-[#F8FAFC] border-[#E2E8F0]'
             }`}>
-              <span className="text-[11px] text-zinc-500 font-bold block uppercase tracking-wider">URL Producción (Vercel)</span>
+              <span className="text-[11px] text-[#475569] font-bold block uppercase tracking-wider">URL Producción (Vercel)</span>
               <a 
                 href="https://amore-roan-three.vercel.app/" 
                 target="_blank" 
@@ -234,18 +234,18 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
           {/* Conditional Sync Section (Only offers sync when there is unsynced data) */}
           <div className={`p-4 rounded-2xl border space-y-2.5 ${
             hasUnsynced 
-              ? 'bg-amber-500/10 border-amber-500/30' 
-              : isDark ? 'bg-[#1A1A1F] border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+              ? 'bg-amber-500/10 border-[#FBBF24]/30' 
+              : isDark ? 'bg-[#1A1A1F] border-zinc-800' : 'bg-[#F8FAFC] border-[#E2E8F0]'
           }`}>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <h4 className="font-black text-xs sm:text-sm text-zinc-900 dark:text-white flex items-center gap-1.5">
+                <h4 className="font-black text-xs sm:text-sm text-[#0F172A] dark:text-white flex items-center gap-1.5">
                   <Layers className={`w-4 h-4 ${hasUnsynced ? 'text-amber-500' : 'text-emerald-500'}`} />
                   {hasUnsynced 
                     ? `Hay ${unsyncedOrders.length} pedido(s) pendiente(s) de sincronizar`
                     : `Todos los pedidos (${orders.length}) están sincronizados con la nube`}
                 </h4>
-                <p className="text-[11px] text-zinc-500 font-medium">
+                <p className="text-[11px] text-[#475569] font-medium">
                   {hasUnsynced
                     ? 'Existen registros en memoria o sesión local que aún no se encuentran guardados en Supabase.'
                     : 'La base de datos en la nube está completamente al día. Cero pérdidas de información.'}
@@ -266,7 +266,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
             </div>
 
             {syncResult && (
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-900 dark:text-emerald-300 text-xs font-bold">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[#10B981] dark:text-emerald-300 text-xs font-bold">
                 {syncResult}
               </div>
             )}
@@ -275,7 +275,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
           {/* SQL Editor Code Block */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-black text-xs text-zinc-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span className="font-black text-xs text-[#0F172A] dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                 <Database className="w-3.5 h-3.5 text-blue-500" />
                 Script SQL de Tablas (Para Supabase SQL Editor)
               </span>
@@ -301,7 +301,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
 
         {/* Footer */}
         <div className={`p-4 sm:p-5 border-t flex items-center justify-between gap-3 ${
-          isDark ? 'bg-[#1A1A1F] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200'
+          isDark ? 'bg-[#1A1A1F] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
         }`}>
           <a
             href="https://supabase.com/dashboard/project/nltbacpanvmvtrzhjdxz/editor"
@@ -316,7 +316,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-black text-xs shadow-xs hover:bg-black dark:hover:bg-zinc-200 transition-colors cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-[#6366F1] dark:bg-white text-white dark:text-[#0F172A] font-black text-xs shadow-xs hover:bg-black dark:hover:bg-zinc-200 transition-colors cursor-pointer"
           >
             Entendido
           </button>

@@ -56,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     } transition-colors duration-200 border-b ${
       isDark 
         ? 'border-white/10 bg-[#161419]/95 text-white' 
-        : 'border-[#E5E0E3] bg-white/95 text-[#29272B]'
+        : 'border-[#E2E8F0] bg-white/95 text-[#0F172A]'
     } backdrop-blur-md shadow-2xs`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
@@ -79,25 +79,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#713B50]/10 text-[#713B50] flex items-center justify-center font-black">
+                  <div className="w-8 h-8 rounded-xl bg-[#6366F1]/10 text-[#6366F1] flex items-center justify-center font-black">
                     <Truck className="w-4 h-4 stroke-[2.5]" />
                   </div>
-                  <span className="font-black text-sm tracking-tight uppercase text-[#29272B] dark:text-white">AMORE SALON</span>
+                  <span className="font-black text-sm tracking-tight uppercase text-[#0F172A] dark:text-white">AMORE SALON</span>
                 </div>
               )}
             </div>
 
-            <div className={`hidden sm:flex items-center gap-2 pl-3 border-l ${isDark ? 'border-white/10' : 'border-[#E5E0E3]'}`}>
-              <span className="font-mono-meta text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#625D63] dark:text-zinc-300 font-extrabold">
+            <div className={`hidden sm:flex items-center gap-2 pl-3 border-l ${isDark ? 'border-white/10' : 'border-[#E2E8F0]'}`}>
+              <span className="font-mono-meta text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#475569] dark:text-zinc-300 font-extrabold">
                 {currentView === 'admin' ? 'TABLERO DE DESPACHOS' : 'FORMULARIO DE ENVÍOS'}
               </span>
               {currentView === 'admin' && isAdminAuthenticated && (
-                <span className="text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-[#F7EAF0] text-[#713B50] dark:bg-[#713B50]/30 dark:text-rose-200 border border-[#713B50]/20">
+                <span className="text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#6366F1] dark:bg-[#6366F1]/30 dark:text-rose-200 border border-[#6366F1]/20">
                   {totalOrdersCount ?? pendingCount} pedidos
                 </span>
               )}
               {currentView === 'cliente' && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 text-[#625D63] dark:text-zinc-400 font-mono">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 font-mono">
                   /pedidos
                 </span>
               )}
@@ -116,12 +116,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={onNavigateToClient}
                   className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'border-white/10 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200'
-                      : 'border-[#E5E0E3] bg-white hover:bg-[#FAF8F5] text-[#29272B]'
+                      ? 'border-white/10 bg-[#1E293B] hover:bg-zinc-800 text-zinc-200'
+                      : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A]'
                   }`}
                   title="Ver Formulario de Clientes (/pedidos)"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-[#713B50]" />
+                  <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-[#6366F1]" />
                   <span>Form pedidos</span>
                 </button>
 
@@ -131,31 +131,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setShowLogoModal(true)}
                   className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'border-white/10 bg-zinc-900/80 hover:bg-zinc-800 text-white'
-                      : 'border-[#E5E0E3] bg-white hover:bg-[#FAF8F5] text-[#29272B]'
+                      ? 'border-white/10 bg-[#1E293B] hover:bg-zinc-800 text-white'
+                      : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A]'
                   }`}
                   title="Configurar logo de la empresa y datos del remitente"
                 >
-                  <Camera className="w-3.5 h-3.5 text-[#713B50]" />
+                  <Camera className="w-3.5 h-3.5 text-[#6366F1]" />
                   <span>Logo</span>
                 </button>
 
                 <div className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs ${
                   isDark
                     ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-300'
-                    : 'border-[#E8F3ED] bg-[#E8F3ED] text-[#39745F]'
+                    : 'border-[#ECFDF5] bg-[#ECFDF5] text-[#10B981]'
                 }`}>
-                  <div className="w-2 h-2 rounded-full bg-[#39745F]" />
+                  <div className="w-2 h-2 rounded-full bg-[#10B981]" />
                   <span className="font-mono text-[11px] font-bold truncate max-w-[140px] sm:max-w-[200px]" title={adminUser?.email || 'Administrador'}>
                     {adminUser?.email ? adminUser.email.split('@')[0] : 'ADMIN'}
                   </span>
                   {adminUser?.role === 'superadmin' && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#FBF1DD] text-[#B47B28] border border-[#C69A55]/30">
+                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#FFFBEB] text-[#F59E0B] border border-[#FBBF24]/30">
                       SUPER
                     </span>
                   )}
                   {pendingCount > 0 && (
-                    <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#713B50] text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
+                    <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#6366F1] text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
                       {pendingCount}
                     </span>
                   )}
@@ -166,8 +166,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={onLogout}
                   className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'bg-zinc-900/80 hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
-                      : 'bg-white hover:bg-rose-50 text-[#625D63] hover:text-rose-700 border-[#E5E0E3] hover:border-rose-300'
+                      ? 'bg-[#1E293B] hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
+                      : 'bg-white hover:bg-rose-50 text-[#475569] hover:text-rose-700 border-[#E2E8F0] hover:border-rose-300'
                   }`}
                   title={`Cerrar Sesión (${adminUser?.email || 'Admin'})`}
                 >
@@ -184,8 +184,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onNavigateToAdmin}
                 className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
                   isDark
-                    ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white'
-                    : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900'
+                    ? 'border-white/10 bg-[#6366F1] hover:bg-[#4F46E5] text-zinc-300 hover:text-white'
+                    : 'border-[#E2E8F0] bg-white hover:bg-zinc-50 text-zinc-700 hover:text-[#0F172A]'
                 }`}
                 title="Acceso al Tablero Administrativo"
               >
@@ -200,8 +200,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onNavigateToClient}
                 className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
                   isDark
-                    ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-white'
-                    : 'border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900'
+                    ? 'border-white/10 bg-[#6366F1] hover:bg-[#4F46E5] text-white'
+                    : 'border-[#E2E8F0] bg-white hover:bg-zinc-50 text-[#0F172A]'
                 }`}
                 title="Ir al Formulario de Envíos (/pedidos)"
               >
@@ -218,7 +218,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
                 isDark
                   ? 'bg-zinc-900/90 hover:bg-zinc-800 border-white/10 text-white hover:border-blue-500/40'
-                  : 'bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-900 hover:border-blue-500/40'
+                  : 'bg-white hover:bg-zinc-100 border-[#E2E8F0] text-[#0F172A] hover:border-blue-500/40'
               }`}
               title="Compartir / Copiar enlace del formulario de envíos"
               aria-label="Compartir formulario"
@@ -233,13 +233,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setIsDark(!isDark)}
               className={`p-2 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs ${
                 isDark
-                  ? 'border-white/10 bg-zinc-900 hover:bg-zinc-800 text-amber-400'
-                  : 'border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-800'
+                  ? 'border-white/10 bg-[#6366F1] hover:bg-[#4F46E5] text-amber-400'
+                  : 'border-[#E2E8F0] bg-white hover:bg-zinc-100 text-[#0F172A]'
               }`}
               title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
               aria-label="Cambiar tema"
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-800" />}
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#0F172A]" />}
             </button>
           </div>
 

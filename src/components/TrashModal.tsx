@@ -59,7 +59,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
   const getShippingIcon = (type?: string) => {
     switch (type) {
       case 'shalom':
-        return <Building2 className="w-4 h-4 text-rose-500" />;
+        return <Building2 className="w-4 h-4 text-[#6366F1]" />;
       case 'olva':
         return <Truck className="w-4 h-4 text-amber-500" />;
       case 'delivery_lima':
@@ -82,34 +82,34 @@ export const TrashModal: React.FC<TrashModalProps> = ({
       case 'entregados':
         return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Entregados</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-500/20">Desconocido</span>;
+        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-500/10 text-[#475569] dark:text-zinc-400 border border-zinc-500/20">Desconocido</span>;
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div 
-        className={`w-full max-w-3xl rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto ${
-          isDark ? 'bg-[#16161B] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-zinc-950'
+        className={`w-full max-w-3xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto ${
+          isDark ? 'bg-[#16161B] border-[#2C2C35] text-white' : 'bg-white border-zinc-300 text-[#0F172A]'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className={`p-4 sm:p-5 flex items-center justify-between border-b ${
-          isDark ? 'bg-[#1A1A22] border-[#2C2C35]' : 'bg-zinc-50 border-zinc-200'
+          isDark ? 'bg-[#1A1A22] border-[#2C2C35]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
         }`}>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
+            <div className="p-2.5 rounded-2xl bg-rose-500/10 text-[#6366F1] border border-[#818CF8]/30">
               <Trash2 className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
                 Papelera de Pedidos
-                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-rose-500/20 text-[#6366F1] dark:text-rose-400 border border-rose-500/30">
                   {trashOrders.length} {trashOrders.length === 1 ? 'pedido' : 'pedidos'}
                 </span>
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#475569] dark:text-zinc-400">
                 Rescata pedidos eliminados por error o bórralos definitivamente
               </p>
             </div>
@@ -121,7 +121,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                 id="empty-trash-btn"
                 type="button"
                 onClick={() => setConfirmEmpty(true)}
-                className="px-3 py-1.5 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-rose-600 dark:text-rose-400 border border-rose-600/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-[#6366F1] dark:text-rose-400 border border-rose-600/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Vaciar Papelera</span>
@@ -168,7 +168,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
 
         {/* Search bar */}
         {trashOrders.length > 0 && (
-          <div className="p-3 sm:p-4 border-b border-zinc-200 dark:border-zinc-800/80">
+          <div className="p-3 sm:p-4 border-b border-[#E2E8F0] dark:border-zinc-800/80">
             <div className="relative">
               <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -178,8 +178,8 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-9 pr-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border focus:outline-none focus:ring-1 focus:ring-rose-500 ${
                   isDark 
-                    ? 'bg-[#111115] border-white/10 text-white placeholder-zinc-500' 
-                    : 'bg-zinc-50 border-zinc-200 text-black placeholder-zinc-500'
+                    ? 'bg-[#111115] border-white/10 text-white placeholder-[#475569]/70' 
+                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-black placeholder-[#475569]/70'
                 }`}
               />
             </div>
@@ -190,20 +190,20 @@ export const TrashModal: React.FC<TrashModalProps> = ({
         <div className="p-4 overflow-y-auto space-y-3 flex-1 max-h-[55vh]">
           {trashOrders.length === 0 ? (
             <div className="text-center py-12 px-4 space-y-3">
-              <div className="w-14 h-14 rounded-3xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-400 dark:text-zinc-500 flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-400 dark:text-[#475569] flex items-center justify-center mx-auto">
                 <Trash2 className="w-7 h-7" />
               </div>
               <div>
-                <h4 className="text-base font-black text-zinc-800 dark:text-zinc-200">
+                <h4 className="text-base font-black text-[#0F172A] dark:text-zinc-200">
                   La papelera está vacía
                 </h4>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
+                <p className="text-xs text-[#475569] dark:text-zinc-400 mt-1 max-w-sm mx-auto">
                   Cuando elimines un pedido del panel Kanban, se moverá aquí temporalmente antes de ser borrado para que puedas recuperarlo en cualquier momento.
                 </p>
               </div>
             </div>
           ) : filteredTrash.length === 0 ? (
-            <div className="text-center py-10 text-zinc-500 text-xs font-bold">
+            <div className="text-center py-10 text-[#475569] text-xs font-bold">
               No se encontraron pedidos en la papelera que coincidan con "{searchTerm}".
             </div>
           ) : (
@@ -213,7 +213,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                 className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
                   isDark 
                     ? 'bg-[#1C1C24] border-zinc-800 hover:border-zinc-700' 
-                    : 'bg-zinc-50 border-zinc-200 hover:border-zinc-300'
+                    : 'bg-[#F8FAFC] border-[#E2E8F0] hover:border-zinc-300'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -221,7 +221,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                   {/* Left: Info */}
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
+                      <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 text-[#0F172A] dark:text-zinc-100">
                         #{order.id}
                       </span>
                       {getShippingIcon(order.shippingType)}
@@ -229,22 +229,22 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                         {order.shippingType === 'shalom' ? 'Shalom' : order.shippingType === 'olva' ? 'Olva' : order.shippingType === 'delivery_lima' ? 'Delivery Lima' : 'Retiro en Tienda'}
                       </span>
                       <span className="text-zinc-400">•</span>
-                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      <span className="text-[11px] text-[#475569] dark:text-zinc-400">
                         Estado previo:
                       </span>
                       {getStatusBadge(order.previousStatus || order.status)}
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <h4 className="text-sm sm:text-base font-black text-zinc-950 dark:text-white truncate">
+                      <h4 className="text-sm sm:text-base font-black text-[#0F172A] dark:text-white truncate">
                         {order.customerName}
                       </h4>
-                      <span className="text-xs font-mono font-bold text-zinc-500 dark:text-zinc-400">
+                      <span className="text-xs font-mono font-bold text-[#475569] dark:text-zinc-400">
                         {order.documentType}: {order.documentNumber}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400 flex-wrap">
+                    <div className="flex items-center gap-3 text-xs text-[#475569] dark:text-zinc-400 flex-wrap">
                       <span className="flex items-center gap-1 font-mono">
                         <Phone className="w-3.5 h-3.5 text-zinc-400" />
                         {order.customerPhone}
@@ -259,7 +259,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                       {order.totalAmount !== undefined && (
                         <>
                           <span>•</span>
-                          <span className="font-black text-zinc-900 dark:text-white font-mono">
+                          <span className="font-black text-[#0F172A] dark:text-white font-mono">
                             Total: S/ {Number(order.totalAmount).toFixed(2)}
                           </span>
                         </>
@@ -268,7 +268,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-2 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E2E8F0] dark:border-zinc-800">
                     
                     {/* Restore button */}
                     <button
@@ -308,7 +308,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                         id={`hard-delete-order-${order.id}-btn`}
                         type="button"
                         onClick={() => setConfirmDeleteId(order.id)}
-                        className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="p-2 rounded-xl text-zinc-400 hover:text-[#6366F1] hover:bg-rose-500/10 transition-colors cursor-pointer"
                         title="Eliminar definitivamente"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -324,13 +324,13 @@ export const TrashModal: React.FC<TrashModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className={`p-4 border-t flex items-center justify-between text-xs text-zinc-500 ${
-          isDark ? 'bg-[#141419] border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+        <div className={`p-4 border-t flex items-center justify-between text-xs text-[#475569] ${
+          isDark ? 'bg-[#141419] border-zinc-800' : 'bg-[#F8FAFC] border-[#E2E8F0]'
         }`}>
           <span>Los pedidos rescatados regresan a su columna previa en el Kanban.</span>
           <button
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-[#0F172A] dark:text-zinc-200 font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
           >
             Cerrar
           </button>

@@ -69,60 +69,60 @@ export function getOrderShippingCardStyle(shippingType: ShippingType, isDark: bo
     case 'shalom':
       return {
         cardClasses: isDark 
-          ? 'bg-[#1D1B20] border-white/10 hover:border-[#713B50]/60' 
-          : 'bg-white border-[#E5E0E3] hover:border-[#713B50]/40',
+          ? 'bg-[#1D1B20] border-white/10 hover:border-[#6366F1]/60' 
+          : 'bg-white border-[#E2E8F0] hover:border-[#6366F1]/40',
         badgeClasses: isDark
-          ? 'bg-[#713B50]/30 text-rose-300 border-[#713B50]/40'
-          : 'bg-[#F7EAF0] text-[#713B50] border-[#713B50]/20',
-        headerAccent: 'text-[#713B50] dark:text-rose-300',
+          ? 'bg-[#6366F1]/30 text-rose-300 border-[#6366F1]/40'
+          : 'bg-[#EEF2FF] text-[#6366F1] border-[#6366F1]/20',
+        headerAccent: 'text-[#6366F1] dark:text-rose-300',
       };
     case 'marvisur':
       return {
         cardClasses: isDark 
-          ? 'bg-[#1D1B20] border-white/10 hover:border-[#376C80]/60' 
-          : 'bg-white border-[#E5E0E3] hover:border-[#376C80]/40',
+          ? 'bg-[#1D1B20] border-white/10 hover:border-[#06B6D4]/60' 
+          : 'bg-white border-[#E2E8F0] hover:border-[#06B6D4]/40',
         badgeClasses: isDark
-          ? 'bg-[#376C80]/30 text-sky-300 border-[#376C80]/40'
-          : 'bg-[#E8F1F5] text-[#376C80] border-[#376C80]/20',
-        headerAccent: 'text-[#376C80] dark:text-sky-300',
+          ? 'bg-[#06B6D4]/30 text-sky-300 border-[#06B6D4]/40'
+          : 'bg-[#ECFEFF] text-[#06B6D4] border-[#06B6D4]/20',
+        headerAccent: 'text-[#06B6D4] dark:text-sky-300',
       };
     case 'olva':
       return {
         cardClasses: isDark 
-          ? 'bg-[#1D1B20] border-white/10 hover:border-[#C69A55]/60' 
-          : 'bg-white border-[#E5E0E3] hover:border-[#C69A55]/40',
+          ? 'bg-[#1D1B20] border-white/10 hover:border-[#FBBF24]/60' 
+          : 'bg-white border-[#E2E8F0] hover:border-[#FBBF24]/40',
         badgeClasses: isDark
-          ? 'bg-[#C69A55]/30 text-amber-200 border-[#C69A55]/40'
-          : 'bg-[#FBF1DD] text-[#B47B28] border-[#C69A55]/30',
-        headerAccent: 'text-[#B47B28] dark:text-amber-300',
+          ? 'bg-[#FBBF24]/30 text-amber-200 border-[#FBBF24]/40'
+          : 'bg-[#FFFBEB] text-[#F59E0B] border-[#FBBF24]/30',
+        headerAccent: 'text-[#F59E0B] dark:text-amber-300',
       };
     case 'delivery_lima':
       return {
         cardClasses: isDark 
-          ? 'bg-[#1D1B20] border-white/10 hover:border-[#376C80]/60' 
-          : 'bg-white border-[#E5E0E3] hover:border-[#376C80]/40',
+          ? 'bg-[#1D1B20] border-white/10 hover:border-[#06B6D4]/60' 
+          : 'bg-white border-[#E2E8F0] hover:border-[#06B6D4]/40',
         badgeClasses: isDark
-          ? 'bg-[#376C80]/30 text-sky-300 border-[#376C80]/40'
-          : 'bg-[#E8F1F5] text-[#376C80] border-[#376C80]/20',
-        headerAccent: 'text-[#376C80] dark:text-sky-300',
+          ? 'bg-[#06B6D4]/30 text-sky-300 border-[#06B6D4]/40'
+          : 'bg-[#ECFEFF] text-[#06B6D4] border-[#06B6D4]/20',
+        headerAccent: 'text-[#06B6D4] dark:text-sky-300',
       };
     case 'tienda':
       return {
         cardClasses: isDark 
-          ? 'bg-[#1D1B20] border-white/10 hover:border-[#477568]/60' 
-          : 'bg-white border-[#E5E0E3] hover:border-[#477568]/40',
+          ? 'bg-[#1D1B20] border-white/10 hover:border-[#059669]/60' 
+          : 'bg-white border-[#E2E8F0] hover:border-[#059669]/40',
         badgeClasses: isDark
-          ? 'bg-[#477568]/30 text-emerald-300 border-[#477568]/40'
-          : 'bg-[#E8F3ED] text-[#39745F] border-[#477568]/30',
-        headerAccent: 'text-[#39745F] dark:text-emerald-300',
+          ? 'bg-[#059669]/30 text-emerald-300 border-[#059669]/40'
+          : 'bg-[#ECFDF5] text-[#10B981] border-[#059669]/30',
+        headerAccent: 'text-[#10B981] dark:text-emerald-300',
       };
     default:
       return {
         cardClasses: isDark 
           ? 'bg-[#1D1B20] border-white/10 hover:border-zinc-500' 
-          : 'bg-white border-[#E5E0E3] hover:border-[#713B50]/30',
+          : 'bg-white border-[#E2E8F0] hover:border-[#6366F1]/30',
         badgeClasses: 'bg-zinc-100 text-zinc-900 border-zinc-200',
-        headerAccent: 'text-[#29272B] dark:text-zinc-200',
+        headerAccent: 'text-[#0F172A] dark:text-zinc-200',
       };
   }
 }
@@ -137,8 +137,8 @@ export function getOrderPaymentCardStyle(order: Order, isDark: boolean): {
   paymentIcon: string;
 } {
   const baseCard = isDark 
-    ? 'bg-[#1D1B20] border-white/10 hover:border-[#713B50]/50' 
-    : 'bg-white border-[#E5E0E3] hover:border-[#713B50]/30';
+    ? 'bg-[#1D1B20] border-white/10 hover:border-[#6366F1]/50' 
+    : 'bg-white border-[#E2E8F0] hover:border-[#6366F1]/30';
 
   // Retiro en Tienda
   if (order.shippingType === 'tienda') {
@@ -146,8 +146,8 @@ export function getOrderPaymentCardStyle(order: Order, isDark: boolean): {
       cardClasses: baseCard,
       paymentLabel: 'Pago en Tienda',
       paymentBadgeClass: isDark
-        ? 'bg-[#477568]/30 text-emerald-300 border-[#477568]/40'
-        : 'bg-[#E8F3ED] text-[#39745F] border-[#477568]/30',
+        ? 'bg-[#059669]/30 text-emerald-300 border-[#059669]/40'
+        : 'bg-[#ECFDF5] text-[#10B981] border-[#059669]/30',
       paymentIcon: '🏬',
     };
   }
@@ -184,7 +184,7 @@ export function getOrderPaymentCardStyle(order: Order, isDark: boolean): {
       paymentLabel: `Contraentrega Efectivo (${amount > 0 ? `S/ ${amount.toFixed(2)}` : 'Por Cobrar'})`,
       paymentBadgeClass: isDark
         ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
-        : 'bg-[#FAF8F5] text-[#29272B] border-[#E5E0E3]',
+        : 'bg-[#F8FAFC] text-[#0F172A] border-[#E2E8F0]',
       paymentIcon: '🛵',
     };
   }
@@ -194,8 +194,8 @@ export function getOrderPaymentCardStyle(order: Order, isDark: boolean): {
     cardClasses: baseCard,
     paymentLabel: 'Pago Confirmado',
     paymentBadgeClass: isDark
-      ? 'bg-[#477568]/30 text-emerald-300 border-[#477568]/40'
-      : 'bg-[#E8F3ED] text-[#39745F] border-[#477568]/30',
+      ? 'bg-[#059669]/30 text-emerald-300 border-[#059669]/40'
+      : 'bg-[#ECFDF5] text-[#10B981] border-[#059669]/30',
     paymentIcon: '💳',
   };
 }
@@ -214,56 +214,56 @@ export function getShippingTypeBadge(type: ShippingType): {
     case 'shalom':
       return {
         label: 'SHALOM',
-        bgDark: 'bg-[#713B50]/30',
-        bgLight: 'bg-[#F7EAF0]',
+        bgDark: 'bg-[#6366F1]/30',
+        bgLight: 'bg-[#EEF2FF]',
         textDark: 'text-rose-300',
-        textLight: 'text-[#713B50]',
-        borderDark: 'border-[#713B50]/40',
-        borderLight: 'border-[#713B50]/20',
+        textLight: 'text-[#6366F1]',
+        borderDark: 'border-[#6366F1]/40',
+        borderLight: 'border-[#6366F1]/20',
         iconName: 'Building2',
       };
     case 'marvisur':
       return {
         label: 'MARVISUR',
-        bgDark: 'bg-[#376C80]/30',
-        bgLight: 'bg-[#E8F1F5]',
+        bgDark: 'bg-[#06B6D4]/30',
+        bgLight: 'bg-[#ECFEFF]',
         textDark: 'text-sky-300',
-        textLight: 'text-[#376C80]',
-        borderDark: 'border-[#376C80]/40',
-        borderLight: 'border-[#376C80]/20',
+        textLight: 'text-[#06B6D4]',
+        borderDark: 'border-[#06B6D4]/40',
+        borderLight: 'border-[#06B6D4]/20',
         iconName: 'Truck',
       };
     case 'olva':
       return {
         label: 'OLVA COURIER',
-        bgDark: 'bg-[#C69A55]/30',
-        bgLight: 'bg-[#FBF1DD]',
+        bgDark: 'bg-[#FBBF24]/30',
+        bgLight: 'bg-[#FFFBEB]',
         textDark: 'text-amber-200',
-        textLight: 'text-[#B47B28]',
-        borderDark: 'border-[#C69A55]/40',
-        borderLight: 'border-[#C69A55]/30',
+        textLight: 'text-[#F59E0B]',
+        borderDark: 'border-[#FBBF24]/40',
+        borderLight: 'border-[#FBBF24]/30',
         iconName: 'Truck',
       };
     case 'delivery_lima':
       return {
         label: 'DELIVERY LIMA',
-        bgDark: 'bg-[#376C80]/30',
-        bgLight: 'bg-[#E8F1F5]',
+        bgDark: 'bg-[#06B6D4]/30',
+        bgLight: 'bg-[#ECFEFF]',
         textDark: 'text-sky-300',
-        textLight: 'text-[#376C80]',
-        borderDark: 'border-[#376C80]/40',
-        borderLight: 'border-[#376C80]/20',
+        textLight: 'text-[#06B6D4]',
+        borderDark: 'border-[#06B6D4]/40',
+        borderLight: 'border-[#06B6D4]/20',
         iconName: 'Bike',
       };
     case 'tienda':
       return {
         label: 'TIENDA',
-        bgDark: 'bg-[#477568]/30',
-        bgLight: 'bg-[#E8F3ED]',
+        bgDark: 'bg-[#059669]/30',
+        bgLight: 'bg-[#ECFDF5]',
         textDark: 'text-emerald-300',
-        textLight: 'text-[#39745F]',
-        borderDark: 'border-[#477568]/40',
-        borderLight: 'border-[#477568]/30',
+        textLight: 'text-[#10B981]',
+        borderDark: 'border-[#059669]/40',
+        borderLight: 'border-[#059669]/30',
         iconName: 'Store',
       };
     default:
@@ -488,7 +488,7 @@ export function buildWhatsAppMessage(order: Order, store: StoreSettings): string
   const shortDate = formatShortPeruvianDate(order.dispatchDate);
 
   const lines = [
-    `📦 NUEVO ENVÍO (${shippingHeaderType})`,
+    `📦 REGISTRÉ NUEVO ENVÍO (${shippingHeaderType})`,
     '',
     `👤 ${order.customerName}`,
     `📱 ${order.customerPhone}`,

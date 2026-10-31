@@ -20,16 +20,16 @@
 
 :root {
   color-scheme: light;
-  color: #29272B;
-  background-color: #FAF8F5;
+  color: #0F172A;
+  background-color: #F8FAFC;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 :root.dark {
   color-scheme: dark;
-  color: #FFFFFF;
-  background-color: #0E0E12;
+  color: #F1F5F9;
+  background-color: #0F172A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

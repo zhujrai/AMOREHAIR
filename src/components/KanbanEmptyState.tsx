@@ -15,13 +15,13 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
 }) => {
   if (isSearching) {
     return (
-      <div className={`py-12 px-4 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all ${
+      <div className={`py-12 px-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all ${
         isDark ? 'border-white/10 bg-white/[0.02]' : 'border-zinc-300 bg-white/40'
       }`}>
-        <p className="text-xs font-black text-zinc-900 dark:text-zinc-200">
+        <p className="text-xs font-black text-[#0F172A] dark:text-zinc-200">
           Sin coincidencias
         </p>
-        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1 font-semibold">
+        <p className="text-[11px] text-[#475569] dark:text-zinc-400 mt-1 font-semibold">
           Prueba con otro término de búsqueda o filtro
         </p>
       </div>
@@ -29,7 +29,7 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
   }
 
   return (
-    <div className={`py-8 px-4 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all relative overflow-hidden group ${
+    <div className={`py-8 px-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all relative overflow-hidden group ${
       isDark 
         ? 'border-white/10 bg-[#141419]/40 hover:border-white/20' 
         : 'border-zinc-300/80 bg-white/40 hover:border-zinc-400'
@@ -210,9 +210,9 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
       <div className="relative z-10 flex flex-col items-center gap-1.5">
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide border shadow-xs transition-transform group-hover:scale-105 ${
           status === 'nuevos'
-            ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+            ? 'bg-rose-500/15 text-[#6366F1] dark:text-rose-400 border-rose-500/30'
             : status === 'empacados'
-            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
+            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-[#FBBF24]/30'
             : status === 'en_camino'
             ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30'
             : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
@@ -220,7 +220,7 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
           <MoveDown className="w-3.5 h-3.5 animate-bounce stroke-[2.5]" />
           <span>Arrastra una tarjeta aquí</span>
         </span>
-        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-bold">
+        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">
           {status === 'nuevos' && 'Nuevos pedidos registrados'}
           {status === 'empacados' && 'Listos para rotular y empaque'}
           {status === 'en_camino' && 'En tránsito o agencia courier'}

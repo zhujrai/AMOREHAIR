@@ -191,10 +191,10 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
   return (
     <div className="min-h-[82vh] flex items-center justify-center px-4 py-8">
       <div 
-        className={`w-full max-w-md rounded-3xl border shadow-xl p-6 sm:p-8 transition-all ${
+        className={`w-full max-w-md rounded-2xl border shadow-xl p-6 sm:p-8 transition-all ${
           isDark 
             ? 'bg-[#18181B] border-white/10 text-zinc-100' 
-            : 'bg-white border-zinc-200 text-zinc-900'
+            : 'bg-white border-[#E2E8F0] text-[#0F172A]'
         }`}
       >
         {/* Back Link */}
@@ -220,13 +220,13 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
               />
             </div>
           ) : (
-            <div className="w-20 h-20 rounded-3xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center mx-auto shadow-md mb-2">
+            <div className="w-20 h-20 rounded-2xl bg-[#6366F1] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center mx-auto shadow-md mb-2">
               <Lock className="w-9 h-9" />
             </div>
           )}
 
           <div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+            <p className="text-xs text-[#475569] dark:text-zinc-400 mt-1">
               Ingresa con tu usuario y contraseña de operador
             </p>
           </div>
@@ -234,7 +234,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
         {/* Lockout Warning */}
         {isLocked && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs flex items-center gap-2.5">
+          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-[#FBBF24]/30 text-amber-900 dark:text-amber-300 text-xs flex items-center gap-2.5">
             <Timer className="w-4 h-4 flex-shrink-0 animate-pulse text-amber-600 dark:text-amber-400" />
             <span>Acceso bloqueado por seguridad. Espera <strong>{lockoutSeconds}s</strong>.</span>
           </div>
@@ -262,7 +262,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
               htmlFor="admin-email-input" 
               className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5"
             >
-              <Mail className="w-3.5 h-3.5 text-zinc-500" />
+              <Mail className="w-3.5 h-3.5 text-[#475569]" />
               <span>Usuario / Correo Electrónico</span>
             </label>
             <div className="relative">
@@ -278,8 +278,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
                 required
                 className={`w-full px-4 py-3 rounded-2xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 transition-all ${
                   isDark 
-                    ? 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500' 
-                    : 'bg-zinc-50/80 border-zinc-300 text-zinc-900 placeholder-zinc-400'
+                    ? 'bg-zinc-900/90 border-zinc-800 text-white placeholder-[#475569]/70' 
+                    : 'bg-zinc-50/80 border-zinc-300 text-[#0F172A] placeholder-zinc-400'
                 } disabled:opacity-50`}
               />
             </div>
@@ -292,7 +292,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
                 htmlFor="admin-password-input" 
                 className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5"
               >
-                <KeyRound className="w-3.5 h-3.5 text-zinc-500" />
+                <KeyRound className="w-3.5 h-3.5 text-[#475569]" />
                 <span>Contraseña</span>
               </label>
               {remainingAttempts !== null && remainingAttempts < 5 && !isLocked && (
@@ -315,8 +315,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
                 required
                 className={`w-full pl-4 pr-11 py-3 rounded-2xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 transition-all ${
                   isDark 
-                    ? 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500' 
-                    : 'bg-zinc-50/80 border-zinc-300 text-zinc-900 placeholder-zinc-400'
+                    ? 'bg-zinc-900/90 border-zinc-800 text-white placeholder-[#475569]/70' 
+                    : 'bg-zinc-50/80 border-zinc-300 text-[#0F172A] placeholder-zinc-400'
                 } disabled:opacity-50`}
               />
               <button
@@ -334,13 +334,13 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
           {/* Remember Session Checkbox */}
           <div className="flex items-center pt-1">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-zinc-600 dark:text-zinc-400">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#475569] dark:text-zinc-400">
               <input
                 type="checkbox"
                 id="remember-admin-session"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded text-zinc-900 focus:ring-zinc-800 border-zinc-300 dark:border-zinc-700 accent-zinc-900 dark:accent-white"
+                className="w-4 h-4 rounded text-[#0F172A] focus:ring-zinc-800 border-zinc-300 dark:border-zinc-700 accent-zinc-900 dark:accent-white"
               />
               <span>Recordar sesión en este equipo</span>
             </label>
@@ -351,7 +351,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             id="admin-login-submit-btn"
             type="submit"
             disabled={isLoading || isLocked || !email.trim() || !password.trim()}
-            className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm text-white bg-zinc-900 hover:bg-black dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+            className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm text-white bg-zinc-900 hover:bg-[#6366F1] dark:bg-white dark:text-[#0F172A] dark:hover:bg-zinc-100 shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -365,8 +365,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
         </form>
 
         {/* Client Form Direct Link Banner */}
-        <div className="mt-6 pt-5 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col items-center gap-2 text-center">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-6 pt-5 border-t border-[#E2E8F0]/80 dark:border-zinc-800 flex flex-col items-center gap-2 text-center">
+          <p className="text-xs text-[#475569] dark:text-zinc-400">
             ¿Eres cliente o necesitas registrar un nuevo pedido?
           </p>
           <button

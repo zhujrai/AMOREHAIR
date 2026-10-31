@@ -489,7 +489,7 @@ export async function fetchServerShippingConfig(): Promise<ShippingMethodsConfig
       .from('shipping_config')
       .select('config')
       .eq('id', 'current')
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       const res = await fetch('/api/shipping-config');
@@ -529,7 +529,7 @@ export async function fetchServerStoreSettings(): Promise<StoreSettings | null> 
       .from('store_settings')
       .select('settings')
       .eq('id', 'current')
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       const res = await fetch('/api/store-settings');
