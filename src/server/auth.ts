@@ -1,7 +1,11 @@
 import crypto from 'crypto';
 
 // Secret key for signing session tokens (fallback to fixed random if not in env)
-const JWT_SECRET = process.env.ADMIN_SESSION_SECRET || 'amore_salon_logistics_secure_secret_2026';
+// Secreto para firmar tokens de sesión. Sin variable de entorno se genera uno aleatorio por proceso
+// (los tokens dejan de valer al reiniciar). Nunca dejar un secreto fijo en el código.
+const JWT_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+// Contraseña inicial de las cuentas sembradas: SOLO desde entorno. Sin ella se usa una aleatoria inservible.
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || crypto.randomBytes(24).toString('hex');
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 60 * 1000; // 1 minute lockout
 
@@ -19,28 +23,28 @@ export const INITIAL_AUTHORIZED_USERS = [
     email: 'zhujrai@gmail.com',
     name: 'Zhujrai',
     role: 'superadmin',
-    defaultPassword: 'Itzelita'
+    defaultPassword: DEFAULT_ADMIN_PASSWORD
   },
   {
     id: 'usr-zhujrai-2',
     email: 'zhujrai278@gmail.com',
     name: 'Zhujrai 278',
     role: 'admin',
-    defaultPassword: 'Itzelita'
+    defaultPassword: DEFAULT_ADMIN_PASSWORD
   },
   {
     id: 'usr-lizlindaura',
     email: 'lizlindaura@gmail.com',
     name: 'Liz Lindaura',
     role: 'admin',
-    defaultPassword: 'Itzelita'
+    defaultPassword: DEFAULT_ADMIN_PASSWORD
   },
   {
     id: 'usr-albsal',
     email: 'albsal611@gmail.com',
     name: 'Alberto Salinas',
     role: 'admin',
-    defaultPassword: 'Itzelita'
+    defaultPassword: DEFAULT_ADMIN_PASSWORD
   }
 ];
 
@@ -185,7 +189,7 @@ export async function authenticateUser(
     }
   }
 
-  // Direct check against initial authorized credentials (e.g. Itzelita)
+  // Direct check against initial authorized credentials (contraseña inicial desde entorno)
   const defaultFound = INITIAL_AUTHORIZED_USERS.find(u => u.email.toLowerCase() === normalizedEmail);
   if (defaultFound && cleanPassword === defaultFound.defaultPassword) {
     return {
@@ -276,5 +280,5 @@ export function validateAdminSessionToken(token?: string): { valid: boolean; use
  */
 export function verifyAdminPin(inputPin: string): boolean {
   if (typeof inputPin !== 'string') return false;
-  return inputPin.trim() === 'Itzelita';
+  return inputPin.trim() === DEFAULT_ADMIN_PASSWORD;
 }
