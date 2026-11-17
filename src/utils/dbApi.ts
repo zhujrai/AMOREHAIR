@@ -340,6 +340,7 @@ export async function fetchServerOrders(): Promise<Order[]> {
         previousStatus: (r.previous_status || r.raw_data?.previousStatus || 'nuevos') as any,
         sourceRef: r.raw_data?.sourceRef || undefined,
         consultaId: r.raw_data?.consultaId || undefined,
+        amountPaid: typeof r.raw_data?.amountPaid === 'number' ? r.raw_data.amountPaid : undefined,
       };
     });
   } catch (err) {

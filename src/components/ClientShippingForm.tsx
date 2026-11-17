@@ -431,7 +431,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               <div className="w-10 h-10 rounded-2xl bg-red-500/15 text-red-600 flex items-center justify-center font-black shadow-sm">
                 <Truck className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="font-black text-base sm:text-lg tracking-tight uppercase text-[#0F172A] dark:text-white">AMORE SALON</span>
+              <span className="font-black text-base sm:text-lg tracking-tight uppercase text-[#1F1613] dark:text-white">AMORE SALON</span>
             </div>
           )}
         </div>
@@ -444,8 +444,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             onClick={() => setShowShareModal(true)}
             className={`p-2 sm:p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs backdrop-blur-md ${
               isDark
-                ? 'bg-zinc-900/80 hover:bg-[#4F46E5] border-white/10 text-white hover:border-blue-500/40'
-                : 'bg-white/80 hover:bg-white border-[#E2E8F0] text-[#0F172A] hover:border-blue-500/40'
+                ? 'bg-zinc-900/80 hover:bg-[#8E4F3E] border-white/10 text-white hover:border-blue-500/40'
+                : 'bg-white/80 hover:bg-white border-[#EADCD3] text-[#1F1613] hover:border-blue-500/40'
             }`}
             title="Compartir enlace del formulario"
             aria-label="Compartir formulario"
@@ -460,13 +460,13 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               onClick={() => setIsDark(!isDark)}
               className={`p-2 sm:p-2.5 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs backdrop-blur-md ${
                 isDark
-                  ? 'border-white/10 bg-zinc-900/80 hover:bg-[#4F46E5] text-amber-400'
-                  : 'border-[#E2E8F0] bg-white/80 hover:bg-white text-[#0F172A]'
+                  ? 'border-white/10 bg-zinc-900/80 hover:bg-[#8E4F3E] text-amber-400'
+                  : 'border-[#EADCD3] bg-white/80 hover:bg-white text-[#1F1613]'
               }`}
               title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
               aria-label="Cambiar tema"
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#0F172A]" />}
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#1F1613]" />}
             </button>
           )}
         </div>
@@ -475,10 +475,10 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
       {/* Title above form */}
       <div className="mb-2.5 sm:mb-3 px-1 sm:px-2 flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#0F172A] dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#1F1613] dark:text-white">
             Formulario de envío
           </h1>
-          <p className="text-xs font-medium text-[#475569] dark:text-zinc-400 mt-0.5">
+          <p className="text-xs font-medium text-[#6B5A55] dark:text-zinc-400 mt-0.5">
             Completa tus datos para coordinar el despacho de tu pedido
           </p>
         </div>
@@ -489,21 +489,21 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
         <div className="mb-3 sm:mb-4 flex items-center justify-center animate-in fade-in slide-in-from-top-1 duration-200">
           <div className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xs ${
             isDark 
-              ? 'bg-[#FFFBEB] text-[#F59E0B] border border-[#FBBF24]/30' 
-              : 'bg-[#FFFBEB] text-[#F59E0B] border border-[#FBBF24]/30'
+              ? 'bg-[#FBF1DC] text-[#CFA24A] border border-[#DFBF8B]/30' 
+              : 'bg-[#FBF1DC] text-[#CFA24A] border border-[#DFBF8B]/30'
           }`}>
             <span className="text-amber-500">⚡</span>
             <span>
               Corte {courierCutoffName}: <strong className="font-extrabold">{currentCutoffDisplay}</strong>
             </span>
-            <span className="text-zinc-400 dark:text-[#475569]">•</span>
+            <span className="text-zinc-400 dark:text-[#6B5A55]">•</span>
             <span>
               {shippingType === 'delivery_lima' ? (
                 <span>Despacho de 3 a 10 PM</span>
               ) : timeRemaining.passed ? (
                 <span>Despacho en siguiente ciclo</span>
               ) : (
-                <span>Quedan <strong className="font-extrabold text-[#6366F1] dark:text-rose-400">{timeRemaining.hours}h {timeRemaining.minutes}m</strong> para hoy</span>
+                <span>Quedan <strong className="font-extrabold text-[#A8634F] dark:text-rose-400">{timeRemaining.hours}h {timeRemaining.minutes}m</strong> para hoy</span>
               )}
             </span>
           </div>
@@ -513,8 +513,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
       {/* MAIN FORM CONTAINER WITH MACOS GLASSMORPHISM & FLUID MOBILE ADAPTATION */}
       <div className={`rounded-2xl sm:rounded-2xl p-3.5 sm:p-7  transition-all shadow-2xs  ${
         isDark 
-          ? 'bg-[#1E293B] border border-white/10 text-white shadow-2xs' 
-          : 'bg-white border border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+          ? 'bg-[#2A1E1A] border border-white/10 text-white shadow-2xs' 
+          : 'bg-white border border-[#EADCD3] text-[#1F1613] shadow-2xs'
       }`}>
         
         <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4.5">
@@ -524,10 +524,10 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             <div className="space-y-1.5">
               <label className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
-                  Modalidad de Envío <span className="text-[#6366F1] font-bold">*</span>
+                  Modalidad de Envío <span className="text-[#A8634F] font-bold">*</span>
                 </span>
                 {shippingType && (
-                  <span className="text-[11px] font-bold text-[#6366F1] dark:text-rose-400">
+                  <span className="text-[11px] font-bold text-[#A8634F] dark:text-rose-400">
                     Paso 1 completado
                   </span>
                 )}
@@ -545,20 +545,20 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     errors.shippingType
                       ? 'border-2 border-red-500 bg-red-500/10'
                       : isDark 
-                        ? 'bg-[#818CF8]/20 hover:bg-[#818CF8]/35 border border-[#818CF8]/30 text-white' 
-                        : 'bg-[#EEF2FF] hover:bg-rose-100/90 border border-[#818CF8]/30 text-black shadow-xs'
+                        ? 'bg-[#DFBF8B]/20 hover:bg-[#DFBF8B]/35 border border-[#DFBF8B]/30 text-white' 
+                        : 'bg-[#F6E8E1] hover:bg-rose-100/90 border border-[#DFBF8B]/30 text-black shadow-xs'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#6366F1] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#A8634F] dark:bg-white text-white dark:text-[#1F1613] flex items-center justify-center flex-shrink-0 shadow-sm">
                       <Truck className="w-5 h-5 stroke-[2.2]" />
                     </div>
-                    <span className="font-extrabold text-sm sm:text-base text-[#0F172A] dark:text-zinc-100">
+                    <span className="font-extrabold text-sm sm:text-base text-[#1F1613] dark:text-zinc-100">
                       Modalidad de Envío
                     </span>
                   </div>
 
-                  <span className="text-xs font-black px-4 py-2 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-[#6366F1] hover:bg-[#4F46E5] dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0F172A]">
+                  <span className="text-xs font-black px-4 py-2 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-[#A8634F] hover:bg-[#8E4F3E] dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#1F1613]">
                     Elegir
                   </span>
                 </div>
@@ -573,12 +573,12 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     errors.shippingType
                       ? 'border-2 border-red-500 bg-red-500/10'
                       : isDark 
-                        ? 'bg-[#1E293B] hover:bg-[#201E24] border border-[#6366F1]/30 text-white shadow-xs' 
-                        : 'bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+                        ? 'bg-[#2A1E1A] hover:bg-[#201E24] border border-[#A8634F]/30 text-white shadow-xs' 
+                        : 'bg-white hover:bg-[#FBF4F0] border border-[#EADCD3] text-[#1F1613] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-11 h-11 rounded-2xl bg-[#6366F1] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="w-11 h-11 rounded-2xl bg-[#A8634F] dark:bg-white text-white dark:text-[#1F1613] flex items-center justify-center flex-shrink-0 shadow-sm">
                       {shippingType === 'shalom' && <Building2 className="w-5 h-5 stroke-[2.2]" />}
                       {shippingType === 'marvisur' && <Truck className="w-5 h-5 stroke-[2.2] text-blue-200 dark:text-blue-600" />}
                       {shippingType === 'olva' && <Truck className="w-5 h-5 stroke-[2.2]" />}
@@ -587,10 +587,10 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     </div>
 
                     <div className="min-w-0">
-                      <div className="font-extrabold text-sm sm:text-base text-[#0F172A] dark:text-white truncate">
+                      <div className="font-extrabold text-sm sm:text-base text-[#1F1613] dark:text-white truncate">
                         {getShippingTypeLabel(shippingType)}
                       </div>
-                      <div className="text-xs text-[#475569] dark:text-zinc-300 font-bold mt-0.5 truncate">
+                      <div className="text-xs text-[#6B5A55] dark:text-zinc-300 font-bold mt-0.5 truncate">
                         {shippingType === 'shalom' && (
                           selectedShalomAgency 
                             ? `${selectedShalomAgency.department} / ${selectedShalomAgency.province} / ${selectedShalomAgency.name}`
@@ -612,7 +612,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-[#6366F1] hover:bg-[#4F46E5] text-white ml-2">
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex-shrink-0 transition-colors bg-[#A8634F] hover:bg-[#8E4F3E] text-white ml-2">
                     Cambiar
                   </span>
                 </div>
@@ -630,16 +630,16 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             {shippingType === 'shalom' && (
               <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
                 isDark 
-                  ? 'bg-[#1E293B] border border-[#E2E8F0]/15' 
-                  : 'bg-[#F8FAFC] border border-[#E2E8F0] shadow-2xs'
+                  ? 'bg-[#2A1E1A] border border-[#EADCD3]/15' 
+                  : 'bg-[#FBF4F0] border border-[#EADCD3] shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#0F172A] dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-[#6366F1] dark:text-[#FBBF24]" />
-                    Agencia Shalom <span className="text-[#6366F1] dark:text-[#FBBF24] font-bold">*</span>
+                  <span className="text-[#1F1613] dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-[#A8634F] dark:text-[#DFBF8B]" />
+                    Agencia Shalom <span className="text-[#A8634F] dark:text-[#DFBF8B] font-bold">*</span>
                   </span>
                   {!selectedShalomAgency ? (
-                    <span className="text-[11px] font-bold text-[#6366F1] dark:text-[#FBBF24] bg-[#6366F1]/10 dark:bg-[#FBBF24]/20 px-2.5 py-0.5 rounded-full animate-pulse">
+                    <span className="text-[11px] font-bold text-[#A8634F] dark:text-[#DFBF8B] bg-[#A8634F]/10 dark:bg-[#DFBF8B]/20 px-2.5 py-0.5 rounded-full animate-pulse">
                       👉 Siguiente paso: Elige tu agencia
                     </span>
                   ) : (
@@ -660,34 +660,34 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     errors.agency
                       ? 'border-2 border-red-500 bg-red-500/10'
                       : !selectedShalomAgency
-                        ? 'border-2 border-[#6366F1] ring-4 ring-[#6366F1]/20 bg-white dark:bg-[#201D22] shadow-md animate-pulse'
+                        ? 'border-2 border-[#A8634F] ring-4 ring-[#A8634F]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
                         : isDark 
                           ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
-                          : 'bg-white hover:bg-zinc-50 border border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+                          : 'bg-white hover:bg-zinc-50 border border-[#EADCD3] text-[#1F1613] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {selectedShalomAgency ? (
                         <>
-                          <div className="font-extrabold text-xs sm:text-sm text-[#0F172A] dark:text-white truncate flex items-center gap-1.5">
+                          <div className="font-extrabold text-xs sm:text-sm text-[#1F1613] dark:text-white truncate flex items-center gap-1.5">
                             <span>{selectedShalomAgency.name}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#6366F1]/10 text-[#6366F1] dark:text-[#FBBF24] font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#A8634F]/10 text-[#A8634F] dark:text-[#DFBF8B] font-bold">
                               {selectedShalomAgency.district || selectedShalomAgency.province}
                             </span>
                           </div>
-                          <p className="text-xs text-[#475569] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
+                          <p className="text-xs text-[#6B5A55] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
                             {selectedShalomAgency.address}
                           </p>
                         </>
                       ) : (
-                        <div className="text-xs sm:text-sm font-bold text-[#6366F1] dark:text-[#FBBF24] flex items-center gap-1.5">
+                        <div className="text-xs sm:text-sm font-bold text-[#A8634F] dark:text-[#DFBF8B] flex items-center gap-1.5">
                           <Search className="w-4 h-4" />
                           <span>Toca aquí para elegir tu sucursal o agencia Shalom</span>
                         </div>
                       )}
                     </div>
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white shadow-xs flex-shrink-0 transition-colors">
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#A8634F] hover:bg-[#8E4F3E] text-white shadow-xs flex-shrink-0 transition-colors">
                       {selectedShalomAgency ? 'Cambiar' : 'Elegir'}
                     </span>
                   </div>
@@ -706,16 +706,16 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             {shippingType === 'marvisur' && (
               <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
                 isDark 
-                  ? 'bg-[#1E293B] border border-[#E2E8F0]/15' 
-                  : 'bg-[#F8FAFC] border border-[#E2E8F0] shadow-2xs'
+                  ? 'bg-[#2A1E1A] border border-[#EADCD3]/15' 
+                  : 'bg-[#FBF4F0] border border-[#EADCD3] shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#0F172A] dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
-                    <Truck className="w-4 h-4 text-[#06B6D4]" />
-                    Sucursal Expreso Marvisur <span className="text-[#06B6D4] font-bold">*</span>
+                  <span className="text-[#1F1613] dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-[#4E8F96]" />
+                    Sucursal Expreso Marvisur <span className="text-[#4E8F96] font-bold">*</span>
                   </span>
                   {!selectedMarvisurAgency ? (
-                    <span className="text-[11px] font-bold text-[#06B6D4] dark:text-sky-400 bg-[#06B6D4]/10 px-2.5 py-0.5 rounded-full animate-pulse">
+                    <span className="text-[11px] font-bold text-[#4E8F96] dark:text-sky-400 bg-[#4E8F96]/10 px-2.5 py-0.5 rounded-full animate-pulse">
                       👉 Siguiente paso: Elige tu sucursal
                     </span>
                   ) : (
@@ -736,34 +736,34 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     errors.agency
                       ? 'border-2 border-red-500 bg-red-500/10'
                       : !selectedMarvisurAgency
-                        ? 'border-2 border-[#06B6D4] ring-4 ring-[#06B6D4]/20 bg-white dark:bg-[#201D22] shadow-md animate-pulse'
+                        ? 'border-2 border-[#4E8F96] ring-4 ring-[#4E8F96]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
                         : isDark 
                           ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
-                          : 'bg-white hover:bg-zinc-50 border border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+                          : 'bg-white hover:bg-zinc-50 border border-[#EADCD3] text-[#1F1613] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {selectedMarvisurAgency ? (
                         <>
-                          <div className="font-extrabold text-xs sm:text-sm text-[#0F172A] dark:text-white truncate flex items-center gap-1.5">
+                          <div className="font-extrabold text-xs sm:text-sm text-[#1F1613] dark:text-white truncate flex items-center gap-1.5">
                             <span>{selectedMarvisurAgency.name}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#06B6D4]/10 text-[#06B6D4] dark:text-blue-400 font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#4E8F96]/10 text-[#4E8F96] dark:text-blue-400 font-bold">
                               {selectedMarvisurAgency.department}
                             </span>
                           </div>
-                          <p className="text-xs text-[#475569] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
+                          <p className="text-xs text-[#6B5A55] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">
                             {selectedMarvisurAgency.address}
                           </p>
                         </>
                       ) : (
-                        <div className="text-xs sm:text-sm font-bold text-[#06B6D4] dark:text-sky-300 flex items-center gap-1.5">
+                        <div className="text-xs sm:text-sm font-bold text-[#4E8F96] dark:text-sky-300 flex items-center gap-1.5">
                           <Search className="w-4 h-4" />
                           <span>Toca aquí para elegir tu sucursal Marvisur</span>
                         </div>
                       )}
                     </div>
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#06B6D4] hover:bg-[#0891B2] text-white shadow-xs flex-shrink-0 transition-colors">
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#4E8F96] hover:bg-[#3C7479] text-white shadow-xs flex-shrink-0 transition-colors">
                       {selectedMarvisurAgency ? 'Cambiar' : 'Elegir'}
                     </span>
                   </div>
@@ -782,17 +782,17 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             {shippingType === 'olva' && (
               <div className={`p-4 rounded-2xl space-y-2.5 transition-all animate-in fade-in duration-200 ${
                 isDark 
-                  ? 'bg-[#1E293B] border border-[#E2E8F0]/15' 
-                  : 'bg-[#F8FAFC] border border-[#E2E8F0] shadow-2xs'
+                  ? 'bg-[#2A1E1A] border border-[#EADCD3]/15' 
+                  : 'bg-[#FBF4F0] border border-[#EADCD3] shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#0F172A] dark:text-zinc-100 font-extrabold text-xs">Modalidad Olva Courier</span>
+                  <span className="text-[#1F1613] dark:text-zinc-100 font-extrabold text-xs">Modalidad Olva Courier</span>
                   <div className="flex gap-1 text-xs">
                     <button
                       type="button"
                       onClick={() => setOlvaDeliveryMode('agencia')}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
-                        olvaDeliveryMode === 'agencia' ? 'bg-[#6366F1] text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-[#0F172A] dark:text-zinc-200'
+                        olvaDeliveryMode === 'agencia' ? 'bg-[#A8634F] text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-[#1F1613] dark:text-zinc-200'
                       }`}
                     >
                       En Agencia
@@ -801,7 +801,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                       type="button"
                       onClick={() => setOlvaDeliveryMode('domicilio')}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
-                        olvaDeliveryMode === 'domicilio' ? 'bg-[#6366F1] text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-[#0F172A] dark:text-zinc-200'
+                        olvaDeliveryMode === 'domicilio' ? 'bg-[#A8634F] text-white shadow-xs' : 'bg-zinc-200 dark:bg-white/10 text-[#1F1613] dark:text-zinc-200'
                       }`}
                     >
                       A Domicilio
@@ -822,27 +822,27 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                         errors.agency
                           ? 'border-2 border-red-500 bg-red-500/10'
                           : !selectedOlvaAgency
-                            ? 'border-2 border-[#FBBF24] ring-4 ring-[#FBBF24]/20 bg-white dark:bg-[#201D22] shadow-md animate-pulse'
+                            ? 'border-2 border-[#DFBF8B] ring-4 ring-[#DFBF8B]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
                             : isDark 
                               ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
-                              : 'bg-white hover:bg-zinc-50 border border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+                              : 'bg-white hover:bg-zinc-50 border border-[#EADCD3] text-[#1F1613] shadow-2xs'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           {selectedOlvaAgency ? (
                             <>
-                              <div className="font-extrabold text-xs sm:text-sm text-[#0F172A] dark:text-white truncate">{selectedOlvaAgency.name}</div>
-                              <p className="text-xs text-[#475569] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">{selectedOlvaAgency.address}</p>
+                              <div className="font-extrabold text-xs sm:text-sm text-[#1F1613] dark:text-white truncate">{selectedOlvaAgency.name}</div>
+                              <p className="text-xs text-[#6B5A55] dark:text-zinc-300 font-medium mt-0.5 line-clamp-2">{selectedOlvaAgency.address}</p>
                             </>
                           ) : (
-                            <div className="text-xs sm:text-sm font-bold text-[#F59E0B] dark:text-amber-300 flex items-center gap-1.5">
+                            <div className="text-xs sm:text-sm font-bold text-[#CFA24A] dark:text-amber-300 flex items-center gap-1.5">
                               <Search className="w-4 h-4" />
                               <span>Toca aquí para elegir tu sucursal o agencia Olva</span>
                             </div>
                           )}
                         </div>
-                        <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white shadow-xs flex-shrink-0 transition-colors">
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#A8634F] hover:bg-[#8E4F3E] text-white shadow-xs flex-shrink-0 transition-colors">
                           {selectedOlvaAgency ? 'Cambiar' : 'Elegir'}
                         </span>
                       </div>
@@ -862,7 +862,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
-                      isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black placeholder-[#475569]/70 border border-[#E2E8F0] shadow-2xs'
+                      isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black placeholder-[#6B5A55]/70 border border-[#EADCD3] shadow-2xs'
                     }`}
                   />
                 )}
@@ -874,13 +874,13 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               <div className={`p-4 rounded-2xl space-y-3 transition-all animate-in fade-in duration-200 ${
                 isDark 
                   ? 'bg-[#202029]/80 border border-blue-500/20' 
-                  : 'bg-[#ECFEFF]/50 border border-[#06B6D4]/30 shadow-2xs'
+                  : 'bg-[#E6F1F1]/50 border border-[#4E8F96]/30 shadow-2xs'
               }`}>
                 <div className="flex items-center justify-between">
                   <span className="text-black dark:text-zinc-100 font-extrabold text-xs block">
                     Datos de Entrega (Lima Metropolitana)
                   </span>
-                  <span className="text-[11px] font-extrabold text-[#06B6D4] dark:text-sky-300 bg-[#ECFEFF] dark:bg-[#06B6D4]/20 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-extrabold text-[#4E8F96] dark:text-sky-300 bg-[#E6F1F1] dark:bg-[#4E8F96]/20 px-2.5 py-0.5 rounded-full">
                     🛵 Entrega de 3:00 PM a 10:00 PM
                   </span>
                 </div>
@@ -889,7 +889,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   value={deliveryDistrict}
                   onChange={(e) => setDeliveryDistrict(e.target.value)}
                   className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
-                    isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black border border-[#E2E8F0] shadow-2xs'
+                    isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black border border-[#EADCD3] shadow-2xs'
                   }`}
                 >
                   {LIMA_DISTRICTS.map((d) => (
@@ -907,7 +907,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                       ? 'border-2 border-red-500 ring-2 ring-red-500/20' 
                       : isDark 
                         ? 'bg-zinc-900 text-white border border-white/10' 
-                        : 'bg-white text-black placeholder-[#475569]/70 border border-[#E2E8F0] shadow-2xs'
+                        : 'bg-white text-black placeholder-[#6B5A55]/70 border border-[#EADCD3] shadow-2xs'
                   }`}
                 />
 
@@ -917,19 +917,19 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   value={deliveryReference}
                   onChange={(e) => setDeliveryReference(e.target.value)}
                   className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
-                    isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black placeholder-[#475569]/70 border border-[#E2E8F0] shadow-2xs'
+                    isDark ? 'bg-zinc-900 text-white border border-white/10' : 'bg-white text-black placeholder-[#6B5A55]/70 border border-[#EADCD3] shadow-2xs'
                   }`}
                 />
 
                 {/* OPCIÓN DE PAGO CONTRAENTREGA */}
                 {shippingConfig.deliveryLimaCashOnDeliveryEnabled !== false && (
-                  <div className={`mt-3 pt-3 ${isDark ? 'border-t border-zinc-800' : 'border-t border-[#E2E8F0]'} space-y-2.5`}>
+                  <div className={`mt-3 pt-3 ${isDark ? 'border-t border-zinc-800' : 'border-t border-[#EADCD3]'} space-y-2.5`}>
                     <label 
                       id="client-cod-toggle"
                       className={`flex items-start gap-3 cursor-pointer select-none p-3.5 rounded-2xl transition-all ${
                         isCashOnDelivery
-                          ? isDark ? 'bg-[#F59E0B]/20 text-amber-200 border border-[#FBBF24]/30' : 'bg-[#FFFBEB] text-[#F59E0B] border border-[#FBBF24]/30 shadow-2xs'
-                          : isDark ? 'bg-zinc-900 border border-white/5' : 'bg-white border border-[#E2E8F0] shadow-2xs'
+                          ? isDark ? 'bg-[#CFA24A]/20 text-amber-200 border border-[#DFBF8B]/30' : 'bg-[#FBF1DC] text-[#CFA24A] border border-[#DFBF8B]/30 shadow-2xs'
+                          : isDark ? 'bg-zinc-900 border border-white/5' : 'bg-white border border-[#EADCD3] shadow-2xs'
                       }`}
                     >
                       <input
@@ -942,7 +942,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                         <span className="text-xs font-extrabold text-black dark:text-white flex items-center gap-1.5">
                           💵 Solicitar Pago Contraentrega (Lima)
                         </span>
-                        <p className="text-xs text-[#475569] dark:text-zinc-300 font-medium mt-0.5">
+                        <p className="text-xs text-[#6B5A55] dark:text-zinc-300 font-medium mt-0.5">
                           Pagas el valor de tus productos al recibir con el motorizado (Efectivo o Yape / Plin).
                         </p>
                       </div>
@@ -951,11 +951,11 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     {isCashOnDelivery && (
                       <div className={`p-3.5 rounded-2xl ${
                         isDark 
-                          ? 'bg-[#F59E0B]/25 text-amber-100 border border-[#FBBF24]/30' 
-                          : 'bg-[#FFFBEB] text-[#F59E0B] border border-amber-200'
+                          ? 'bg-[#CFA24A]/25 text-amber-100 border border-[#DFBF8B]/30' 
+                          : 'bg-[#FBF1DC] text-[#CFA24A] border border-amber-200'
                       } text-xs space-y-1.5 animate-in fade-in`}>
-                        <div className="flex items-center gap-1.5 font-extrabold text-[#F59E0B] dark:text-amber-300">
-                          <Info className="w-4 h-4 text-[#F59E0B] flex-shrink-0 stroke-[2.5]" />
+                        <div className="flex items-center gap-1.5 font-extrabold text-[#CFA24A] dark:text-amber-300">
+                          <Info className="w-4 h-4 text-[#CFA24A] flex-shrink-0 stroke-[2.5]" />
                           <span>Abono previo de transporte requerido</span>
                         </div>
                         <p className="text-xs leading-relaxed text-amber-950 dark:text-zinc-100 font-medium">
@@ -988,13 +988,13 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           {isKnownCustomer && (
             <div 
               id="known-customer-banner"
-              className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-[#FBBF24]/30 text-amber-950 dark:text-amber-200 text-xs font-bold animate-in fade-in"
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-[#DFBF8B]/30 text-amber-950 dark:text-amber-200 text-xs font-bold animate-in fade-in"
             >
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 fill-amber-400 flex-shrink-0" />
                 <span>¡Cliente frecuente reconocido: <strong>{recognizedName || customerName}</strong>!</span>
               </div>
-              <span className="text-[10px] text-[#F59E0B] dark:text-amber-300 font-semibold hidden sm:inline">
+              <span className="text-[10px] text-[#CFA24A] dark:text-amber-300 font-semibold hidden sm:inline">
                 Datos completados
               </span>
             </div>
@@ -1004,9 +1004,9 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label htmlFor="doc-number-input" className="text-black dark:text-zinc-100 font-extrabold text-xs block">
-                Tu Documento <span className="text-[#6366F1] font-bold">*</span>
+                Tu Documento <span className="text-[#A8634F] font-bold">*</span>
               </label>
-              <span className="text-[10px] text-[#475569] dark:text-zinc-400 font-semibold">
+              <span className="text-[10px] text-[#6B5A55] dark:text-zinc-400 font-semibold">
                 {documentNumber.length}/{documentType === 'DNI' ? '8' : '12'} dígitos
               </span>
             </div>
@@ -1019,8 +1019,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   onChange={(e) => setDocumentType(e.target.value as 'DNI' | 'CE')}
                   className={`w-full px-2.5 py-2.5 rounded-xl text-xs font-extrabold border transition-colors cursor-pointer ${
                     isDark 
-                      ? 'bg-[#0F172A] border-white/10 text-white focus:bg-[#0F172A] focus:border-white' 
-                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-black focus:bg-white focus:border-[#6366F1]'
+                      ? 'bg-[#1F1613] border-white/10 text-white focus:bg-[#1F1613] focus:border-white' 
+                      : 'bg-[#FBF4F0] border-[#EADCD3] text-black focus:bg-white focus:border-[#A8634F]'
                   }`}
                 >
                   <option value="DNI">DNI</option>
@@ -1040,8 +1040,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     errors.documentNumber 
                       ? 'border-red-500 ring-2 ring-red-500/30' 
                       : isDark
-                        ? 'bg-[#0F172A] border-white/10 text-white placeholder-[#475569]/70 focus:bg-[#0F172A] focus:border-white focus:ring-2 focus:ring-white/20'
-                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-black placeholder-[#475569]/70 focus:bg-white focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20'
+                        ? 'bg-[#1F1613] border-white/10 text-white placeholder-[#6B5A55]/70 focus:bg-[#1F1613] focus:border-white focus:ring-2 focus:ring-white/20'
+                        : 'bg-[#FBF4F0] border-[#EADCD3] text-black placeholder-[#6B5A55]/70 focus:bg-white focus:border-[#A8634F] focus:ring-2 focus:ring-[#A8634F]/20'
                   }`}
                 />
 
@@ -1061,7 +1061,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           {/* 3. DESTINATARIO: NOMBRE COMPLETO */}
           <div className="space-y-1">
             <label htmlFor="customer-name-input" className="text-black dark:text-zinc-100 font-extrabold text-xs block">
-              Tu nombre completo <span className="text-[#6366F1] font-bold">*</span>
+              Tu nombre completo <span className="text-[#A8634F] font-bold">*</span>
             </label>
 
             <input
@@ -1077,8 +1077,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                 errors.customerName 
                   ? 'border-red-500 ring-2 ring-red-500/30' 
                   : isDark
-                    ? 'bg-[#0F172A] border-white/10 text-white placeholder-[#475569]/70 focus:bg-[#0F172A] focus:border-white focus:ring-2 focus:ring-white/20'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-black placeholder-[#475569]/70 focus:bg-white focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20'
+                    ? 'bg-[#1F1613] border-white/10 text-white placeholder-[#6B5A55]/70 focus:bg-[#1F1613] focus:border-white focus:ring-2 focus:ring-white/20'
+                    : 'bg-[#FBF4F0] border-[#EADCD3] text-black placeholder-[#6B5A55]/70 focus:bg-white focus:border-[#A8634F] focus:ring-2 focus:ring-[#A8634F]/20'
               }`}
             />
 
@@ -1092,13 +1092,13 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
             <div className="flex items-center justify-between">
               <label htmlFor="phone-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center gap-1.5">
                 <span>Número Celular / WhatsApp</span>
-                <span className="text-[#6366F1] font-bold">*</span>
+                <span className="text-[#A8634F] font-bold">*</span>
               </label>
             </div>
 
             <div className="flex gap-2">
               <span className={`px-3 py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center select-none ${
-                isDark ? 'bg-white/10 border-white/10 text-white' : 'bg-zinc-100 border-[#E2E8F0] text-black'
+                isDark ? 'bg-white/10 border-white/10 text-white' : 'bg-zinc-100 border-[#EADCD3] text-black'
               }`}>
                 🇵🇪 +51
               </span>
@@ -1115,8 +1115,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                     errors.phone 
                       ? 'border-red-500 ring-2 ring-red-500/30' 
                       : isDark
-                        ? 'bg-[#0F172A] border-white/10 text-white placeholder-[#475569]/70 focus:bg-[#0F172A] focus:border-white focus:ring-2 focus:ring-white/20'
-                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-black placeholder-[#475569]/70 focus:bg-white focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20'
+                        ? 'bg-[#1F1613] border-white/10 text-white placeholder-[#6B5A55]/70 focus:bg-[#1F1613] focus:border-white focus:ring-2 focus:ring-white/20'
+                        : 'bg-[#FBF4F0] border-[#EADCD3] text-black placeholder-[#6B5A55]/70 focus:bg-white focus:border-[#A8634F] focus:ring-2 focus:ring-[#A8634F]/20'
                   }`}
                 />
 
@@ -1139,7 +1139,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           {/* 5. FECHA DE ENVÍO */}
           <div className="space-y-1">
             <label className="text-black dark:text-zinc-100 font-extrabold text-xs block">
-              Fecha de envío <span className="text-[#6366F1] font-bold">*</span>
+              Fecha de envío <span className="text-[#A8634F] font-bold">*</span>
             </label>
 
             <div
@@ -1147,8 +1147,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               onClick={() => setShowDateModal(true)}
               className={`p-2.5 sm:p-3 rounded-xl flex items-center justify-between cursor-pointer transition-all ${
                 isDark 
-                  ? 'bg-[#818CF8]/20 hover:bg-[#818CF8]/35 border border-[#818CF8]/30 text-white' 
-                  : 'bg-[#EEF2FF] hover:bg-rose-100/90 border border-[#818CF8]/30 text-black shadow-xs'
+                  ? 'bg-[#DFBF8B]/20 hover:bg-[#DFBF8B]/35 border border-[#DFBF8B]/30 text-white' 
+                  : 'bg-[#F6E8E1] hover:bg-rose-100/90 border border-[#DFBF8B]/30 text-black shadow-xs'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -1170,7 +1170,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           <div className="space-y-1 pt-0.5">
             <label htmlFor="order-notes-input" className="text-black dark:text-zinc-100 font-extrabold text-xs flex items-center justify-between">
               <span>Comentario</span>
-              <span className="text-[10px] font-semibold text-[#475569] dark:text-zinc-400">Opcional</span>
+              <span className="text-[10px] font-semibold text-[#6B5A55] dark:text-zinc-400">Opcional</span>
             </label>
             <input
               id="order-notes-input"
@@ -1180,8 +1180,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               className={`w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
                 isDark 
-                  ? 'bg-[#0F172A] border-white/10 text-white placeholder-[#475569]/70 focus:bg-[#0F172A] focus:border-white' 
-                  : 'bg-[#F8FAFC] border-[#E2E8F0] text-black placeholder-[#475569]/70 focus:bg-white focus:border-[#6366F1]'
+                  ? 'bg-[#1F1613] border-white/10 text-white placeholder-[#6B5A55]/70 focus:bg-[#1F1613] focus:border-white' 
+                  : 'bg-[#FBF4F0] border-[#EADCD3] text-black placeholder-[#6B5A55]/70 focus:bg-white focus:border-[#A8634F]'
               }`}
             />
           </div>
@@ -1190,12 +1190,12 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           {!isDbConnected && (
             <div 
               id="client-db-offline-alert"
-              className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-[#FBBF24]/30 text-amber-950 dark:text-amber-200 text-xs flex items-start gap-2.5 animate-in fade-in"
+              className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-[#DFBF8B]/30 text-amber-950 dark:text-amber-200 text-xs flex items-start gap-2.5 animate-in fade-in"
             >
               <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 stroke-[2.2] flex-shrink-0 mt-0.5" />
               <div className="space-y-0.5">
                 <span className="font-extrabold block">Modo sin conexión con la base de datos</span>
-                <p className="text-[11px] text-[#475569] dark:text-zinc-300 font-medium leading-relaxed">
+                <p className="text-[11px] text-[#6B5A55] dark:text-zinc-300 font-medium leading-relaxed">
                   Puedes completar y registrar tu pedido con normalidad. Se guardará de forma segura en este dispositivo y se sincronizará con la central automáticamente cuando vuelva la conexión.
                 </p>
               </div>
@@ -1206,10 +1206,10 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
           <button
             id="submit-shipping-form-btn"
             type="submit"
-            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-[#0F172A] font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.008] active:scale-[0.992] flex items-center justify-center gap-2 cursor-pointer mt-5 backdrop-blur-md"
+            className="w-full py-4 px-6 rounded-2xl bg-black hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-[#1F1613] font-black text-sm tracking-widest uppercase transition-all shadow-lg shadow-black/20 hover:scale-[1.008] active:scale-[0.992] flex items-center justify-center gap-2 cursor-pointer mt-5 backdrop-blur-md"
           >
-            <span className="text-white dark:text-[#0F172A] font-black tracking-wider">REGISTRAR</span>
-            <span className="text-lg leading-none text-white dark:text-[#0F172A] font-black">→</span>
+            <span className="text-white dark:text-[#1F1613] font-black tracking-wider">REGISTRAR</span>
+            <span className="text-lg leading-none text-white dark:text-[#1F1613] font-black">→</span>
           </button>
 
         </form>

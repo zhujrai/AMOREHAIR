@@ -98,17 +98,17 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
       <div 
         className={`w-full max-w-md rounded-2xl border p-5 sm:p-7 shadow-2xl transition-all duration-200 max-h-[96vh] overflow-y-auto ${
           isDark 
-            ? 'bg-[#1E293B] border-white/10 text-white' 
-            : 'bg-white border-[#E2E8F0] text-[#0F172A]'
+            ? 'bg-[#2A1E1A] border-white/10 text-white' 
+            : 'bg-white border-[#EADCD3] text-[#1F1613]'
         }`}
       >
         {/* Top Mini Header with Box Icon */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] dark:bg-white/10 text-[#0F172A] dark:text-zinc-200 flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-[#FBF4F0] dark:bg-white/10 text-[#1F1613] dark:text-zinc-200 flex items-center justify-center shadow-xs">
               <Package className="w-5 h-5 stroke-[2.2]" />
             </div>
-            <span className="font-mono-meta text-[11px] font-black tracking-[0.16em] uppercase text-[#475569] dark:text-zinc-400">
+            <span className="font-mono-meta text-[11px] font-black tracking-[0.16em] uppercase text-[#6B5A55] dark:text-zinc-400">
               FORMULARIO DE ENVÍO
             </span>
           </div>
@@ -128,11 +128,11 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
             <Check className="w-10 h-10 sm:w-12 sm:h-12 stroke-[3.5]" />
           </div>
 
-          <h2 className="text-2xl sm:text-[28px] font-black tracking-tight text-[#0F172A] dark:text-white mt-4">
+          <h2 className="text-2xl sm:text-[28px] font-black tracking-tight text-[#1F1613] dark:text-white mt-4">
             ¡Registro Exitoso!
           </h2>
 
-          <p className="text-xs sm:text-sm text-[#475569] dark:text-zinc-300 font-medium max-w-xs mx-auto leading-relaxed mt-2">
+          <p className="text-xs sm:text-sm text-[#6B5A55] dark:text-zinc-300 font-medium max-w-xs mx-auto leading-relaxed mt-2">
             Tu envío ha sido programado correctamente. Verifica los datos, continuaremos la coordinación por Whatsapp.
           </p>
         </div>
@@ -140,11 +140,11 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
         {/* Resumen Card styled exactly like the screenshot without client-inaccessible items */}
         <div className={`mt-4 p-4 sm:p-5 rounded-2xl border transition-all text-left space-y-3 ${
           isDark 
-            ? 'bg-[#0F172A] border-white/10 text-zinc-200' 
-            : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+            ? 'bg-[#1F1613] border-white/10 text-zinc-200' 
+            : 'bg-[#FBF4F0] border-[#EADCD3] text-[#1F1613] shadow-2xs'
         }`}>
           <div className="flex items-center justify-between pb-2 border-b border-[#EDF2F7] dark:border-zinc-800">
-            <span className="text-[11px] uppercase tracking-widest font-black text-[#475569] dark:text-zinc-400">
+            <span className="text-[11px] uppercase tracking-widest font-black text-[#6B5A55] dark:text-zinc-400">
               RESUMEN
             </span>
             <span className="font-mono text-[11px] font-black px-2 py-0.5 rounded bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50">
@@ -187,7 +187,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
               </div>
             )}
 
-            <div className="pt-1 space-y-2 border-t border-dashed border-[#E2E8F0] dark:border-zinc-800">
+            <div className="pt-1 space-y-2 border-t border-dashed border-[#EADCD3] dark:border-zinc-800">
               <div className="flex items-center gap-2 text-black dark:text-zinc-100 font-bold">
                 <span className="text-base flex-shrink-0">🚚</span>
                 <span>{courierName}</span>
@@ -200,7 +200,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
             </div>
 
             {order.isCashOnDelivery && order.shippingType === 'delivery_lima' && (
-              <div className="flex items-center gap-2 pt-1 border-t border-[#E2E8F0] dark:border-zinc-800 text-amber-900 dark:text-amber-300 font-bold">
+              <div className="flex items-center gap-2 pt-1 border-t border-[#EADCD3] dark:border-zinc-800 text-amber-900 dark:text-amber-300 font-bold">
                 <span className="text-base flex-shrink-0">💵</span>
                 <span>Pago Contraentrega {order.cashOnDeliveryAmount ? `(S/ ${order.cashOnDeliveryAmount.toFixed(2)})` : ''}</span>
               </div>
@@ -234,7 +234,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
               copied
                 ? 'bg-emerald-500/20 border-emerald-500 text-emerald-800 dark:text-emerald-300'
                 : isDark
-                  ? 'bg-[#0F172A] border-white/10 text-white hover:bg-[#202026]'
+                  ? 'bg-[#1F1613] border-white/10 text-white hover:bg-[#202026]'
                   : 'bg-white border-zinc-300 text-black hover:bg-zinc-100'
             }`}
           >

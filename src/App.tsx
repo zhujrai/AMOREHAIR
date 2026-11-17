@@ -143,6 +143,28 @@ export default function App() {
       .catch(() => {});
   }, [isAdminAuthenticated]);
 
+  // Contador de cotizaciones nuevas del catálogo (solo con sesión de administrador)
+  const [cotizacionesNuevas, setCotizacionesNuevas] = useState(0);
+  useEffect(() => {
+    if (!isAdminAuthenticated) {
+      setCotizacionesNuevas(0);
+      return;
+    }
+    let activo = true;
+    const contar = async () => {
+      try {
+        const { count } = await supabase.from('consultas').select('*', { count: 'exact', head: true }).eq('estado', 'nueva');
+        if (activo) setCotizacionesNuevas(count ?? 0);
+      } catch {}
+    };
+    contar();
+    const intervalo = window.setInterval(contar, 30000);
+    return () => {
+      activo = false;
+      window.clearInterval(intervalo);
+    };
+  }, [isAdminAuthenticated]);
+
   // Cierre automático por inactividad o por superar la duración máxima de la sesión
   useEffect(() => {
     if (!isAdminAuthenticated) return;
@@ -670,14 +692,14 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-colors duration-200 flex flex-col font-inter ${
       isDark 
-        ? 'bg-[#0F172A] text-[#FFFFFF]' 
-        : 'bg-[#F8FAFC] text-[#0F172A]'
+        ? 'bg-[#1F1613] text-[#FFFFFF]' 
+        : 'bg-[#FBF4F0] text-[#1F1613]'
     }`}>
       
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="px-4 py-3 rounded-2xl bg-[#1E293B] text-white border border-blue-500/30 shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold">
+          <div className="px-4 py-3 rounded-2xl bg-[#2A1E1A] text-white border border-blue-500/30 shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold">
             <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0" />
             <span>{toastMessage}</span>
           </div>
@@ -738,6 +760,7 @@ export default function App() {
           pendingCount={pendingCount}
           totalOrdersCount={activeOrdersCount}
           storeSettings={storeSettings}
+          cotizacionesNuevas={cotizacionesNuevas}
           onUpdateStoreSettings={handleUpdateStoreSettings}
         />
       )}
@@ -833,11 +856,11 @@ export default function App() {
       {/* Public Footer Strip from Design Specification */}
       <footer className={`border-t py-4 sm:py-5 transition-colors duration-200 mt-auto ${
         isDark 
-          ? 'bg-[#0F172A]/80 border-white/5 text-[#475569]' 
-          : 'bg-white border-[#E2E8F0] text-[#475569]'
+          ? 'bg-[#1F1613]/80 border-white/5 text-[#6B5A55]' 
+          : 'bg-white border-[#EADCD3] text-[#6B5A55]'
       }`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="font-mono-meta text-[11px] uppercase tracking-[0.12em] text-[#475569] font-medium">
+          <div className="font-mono-meta text-[11px] uppercase tracking-[0.12em] text-[#6B5A55] font-medium">
             © 2026 AMORE SALON HAIR STYLE
           </div>
 
@@ -847,7 +870,7 @@ export default function App() {
                 id="footer-operator-login-btn"
                 type="button"
                 onClick={() => navigateToView('admin')}
-                className="text-zinc-400 hover:text-[#0F172A] dark:hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="text-zinc-400 hover:text-[#1F1613] dark:hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 title="Acceso Administración"
                 aria-label="Acceso Administración"
               >

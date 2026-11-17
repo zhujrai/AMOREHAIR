@@ -2,6 +2,120 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+@theme {
+  /* Paleta de marca Amore: neutros cálidos, cobre/dorado como acento (ver docs/paleta.md) */
+  --color-zinc-50: #FBF7F4;
+  --color-zinc-100: #F4ECE7;
+  --color-zinc-200: #E9DDD5;
+  --color-zinc-300: #D6C5BB;
+  --color-zinc-400: #A8958C;
+  --color-zinc-500: #85736B;
+  --color-zinc-600: #655550;
+  --color-zinc-700: #4A3C37;
+  --color-zinc-800: #2F2420;
+  --color-zinc-900: #211815;
+  --color-zinc-950: #150F0D;
+  --color-slate-50: #FBF7F4;
+  --color-slate-100: #F4ECE7;
+  --color-slate-200: #E9DDD5;
+  --color-slate-300: #D6C5BB;
+  --color-slate-400: #A8958C;
+  --color-slate-500: #85736B;
+  --color-slate-600: #655550;
+  --color-slate-700: #4A3C37;
+  --color-slate-800: #2F2420;
+  --color-slate-900: #211815;
+  --color-slate-950: #150F0D;
+  --color-gray-50: #FBF7F4;
+  --color-gray-100: #F4ECE7;
+  --color-gray-200: #E9DDD5;
+  --color-gray-300: #D6C5BB;
+  --color-gray-400: #A8958C;
+  --color-gray-500: #85736B;
+  --color-gray-600: #655550;
+  --color-gray-700: #4A3C37;
+  --color-gray-800: #2F2420;
+  --color-gray-900: #211815;
+  --color-gray-950: #150F0D;
+  --color-neutral-50: #FBF7F4;
+  --color-neutral-100: #F4ECE7;
+  --color-neutral-200: #E9DDD5;
+  --color-neutral-300: #D6C5BB;
+  --color-neutral-400: #A8958C;
+  --color-neutral-500: #85736B;
+  --color-neutral-600: #655550;
+  --color-neutral-700: #4A3C37;
+  --color-neutral-800: #2F2420;
+  --color-neutral-900: #211815;
+  --color-neutral-950: #150F0D;
+  --color-indigo-50: #F9EEE9;
+  --color-indigo-100: #F3DDD3;
+  --color-indigo-200: #E8C3B3;
+  --color-indigo-300: #D9A28D;
+  --color-indigo-400: #C68173;
+  --color-indigo-500: #A8634F;
+  --color-indigo-600: #8E4F3E;
+  --color-indigo-700: #733F32;
+  --color-indigo-800: #5A3228;
+  --color-indigo-900: #43251E;
+  --color-indigo-950: #2B1812;
+  --color-violet-50: #F9EEE9;
+  --color-violet-100: #F3DDD3;
+  --color-violet-200: #E8C3B3;
+  --color-violet-300: #D9A28D;
+  --color-violet-400: #C68173;
+  --color-violet-500: #A8634F;
+  --color-violet-600: #8E4F3E;
+  --color-violet-700: #733F32;
+  --color-violet-800: #5A3228;
+  --color-violet-900: #43251E;
+  --color-violet-950: #2B1812;
+  --color-purple-50: #F9EEE9;
+  --color-purple-100: #F3DDD3;
+  --color-purple-200: #E8C3B3;
+  --color-purple-300: #D9A28D;
+  --color-purple-400: #C68173;
+  --color-purple-500: #A8634F;
+  --color-purple-600: #8E4F3E;
+  --color-purple-700: #733F32;
+  --color-purple-800: #5A3228;
+  --color-purple-900: #43251E;
+  --color-purple-950: #2B1812;
+  --color-blue-50: #EAF4F4;
+  --color-blue-100: #D5E8E9;
+  --color-blue-200: #B5D6D8;
+  --color-blue-300: #9CCBCE;
+  --color-blue-400: #6FB0B3;
+  --color-blue-500: #4E8F96;
+  --color-blue-600: #3C7479;
+  --color-blue-700: #2F5C60;
+  --color-blue-800: #24484B;
+  --color-blue-900: #1B3F42;
+  --color-blue-950: #10282A;
+  --color-sky-50: #EAF4F4;
+  --color-sky-100: #D5E8E9;
+  --color-sky-200: #B5D6D8;
+  --color-sky-300: #9CCBCE;
+  --color-sky-400: #6FB0B3;
+  --color-sky-500: #4E8F96;
+  --color-sky-600: #3C7479;
+  --color-sky-700: #2F5C60;
+  --color-sky-800: #24484B;
+  --color-sky-900: #1B3F42;
+  --color-sky-950: #10282A;
+  --color-cyan-50: #EAF4F4;
+  --color-cyan-100: #D5E8E9;
+  --color-cyan-200: #B5D6D8;
+  --color-cyan-300: #9CCBCE;
+  --color-cyan-400: #6FB0B3;
+  --color-cyan-500: #4E8F96;
+  --color-cyan-600: #3C7479;
+  --color-cyan-700: #2F5C60;
+  --color-cyan-800: #24484B;
+  --color-cyan-900: #1B3F42;
+  --color-cyan-950: #10282A;
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -20,16 +134,16 @@
 
 :root {
   color-scheme: light;
-  color: #0F172A;
-  background-color: #F8FAFC;
+  color: #1F1613;
+  background-color: #FBF4F0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 :root.dark {
   color-scheme: dark;
-  color: #F1F5F9;
-  background-color: #0F172A;
+  color: #F4EBE5;
+  background-color: #1F1613;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -114,3 +228,16 @@ html.dark .label-mono {
     box-shadow: none !important;
   }
 }
+
+/* Resalte de la tarjeta recién cerrada en el tablero */
+@keyframes amoreResalte {
+  0% { box-shadow: 0 0 0 0 rgba(223, 191, 139, 0); }
+  18% { box-shadow: 0 0 0 7px rgba(223, 191, 139, 0.6), 0 0 30px rgba(223, 191, 139, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(223, 191, 139, 0); }
+}
+.amore-resaltada {
+  outline: 2px solid #DFBF8B;
+  outline-offset: 2px;
+  animation: amoreResalte 2.8s ease-out 1;
+}
+@media (prefers-reduced-motion: reduce) { .amore-resaltada { animation: none; } }

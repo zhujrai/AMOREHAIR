@@ -33,7 +33,7 @@ export const NuevaClave: React.FC<NuevaClaveProps> = ({ onListo, isDark }) => {
   };
 
   const campo = `w-full px-4 py-3 rounded-2xl text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 ${
-    isDark ? 'bg-zinc-900/90 border-zinc-800 text-white' : 'bg-zinc-50/80 border-zinc-300 text-[#0F172A]'
+    isDark ? 'bg-zinc-900/90 border-zinc-800 text-white' : 'bg-zinc-50/80 border-zinc-300 text-[#1F1613]'
   }`;
 
   return (
@@ -42,13 +42,13 @@ export const NuevaClave: React.FC<NuevaClaveProps> = ({ onListo, isDark }) => {
         onSubmit={enviar}
         autoComplete="on"
         className={`w-full max-w-md rounded-2xl border shadow-xl p-6 sm:p-8 space-y-4 ${
-          isDark ? 'bg-[#18181B] border-white/10 text-zinc-100' : 'bg-white border-[#E2E8F0] text-[#0F172A]'
+          isDark ? 'bg-[#1B1412] border-white/10 text-zinc-100' : 'bg-white border-[#EADCD3] text-[#1F1613]'
         }`}
       >
         <div className="text-center space-y-1">
-          <KeyRound className="w-8 h-8 mx-auto text-[#6366F1]" />
+          <KeyRound className="w-8 h-8 mx-auto text-[#A8634F]" />
           <h1 className="text-lg font-black">Crea tu nueva contraseña</h1>
-          <p className="text-xs text-[#475569] dark:text-zinc-400">Mínimo 8 caracteres.</p>
+          <p className="text-xs text-[#6B5A55] dark:text-zinc-400">Mínimo 8 caracteres.</p>
         </div>
 
         {error && (
@@ -96,7 +96,7 @@ export const NuevaClave: React.FC<NuevaClaveProps> = ({ onListo, isDark }) => {
           type="submit"
           id="guardar-nueva-clave-btn"
           disabled={cargando || clave.length < 8 || repetir.length < 8}
-          className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm text-white bg-zinc-900 hover:bg-[#6366F1] dark:bg-white dark:text-[#0F172A] dark:hover:bg-zinc-100 shadow-md cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm text-white bg-zinc-900 hover:bg-[#A8634F] dark:bg-white dark:text-[#1F1613] dark:hover:bg-zinc-100 shadow-md cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {cargando ? 'Guardando…' : 'Guardar contraseña'}
         </button>

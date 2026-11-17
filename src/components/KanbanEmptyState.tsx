@@ -18,10 +18,10 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
       <div className={`py-12 px-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all ${
         isDark ? 'border-white/10 bg-white/[0.02]' : 'border-zinc-300 bg-white/40'
       }`}>
-        <p className="text-xs font-black text-[#0F172A] dark:text-zinc-200">
+        <p className="text-xs font-black text-[#1F1613] dark:text-zinc-200">
           Sin coincidencias
         </p>
-        <p className="text-[11px] text-[#475569] dark:text-zinc-400 mt-1 font-semibold">
+        <p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 mt-1 font-semibold">
           Prueba con otro término de búsqueda o filtro
         </p>
       </div>
@@ -89,43 +89,43 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
           <svg viewBox="0 0 140 120" className="w-full h-full drop-shadow-sm">
             {/* Glowing lines */}
             <g opacity="0.85">
-              <line x1="15" y1="35" x2="30" y2="35" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
-              <line x1="110" y1="25" x2="125" y2="25" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
-              <circle cx="22" cy="22" r="2.5" fill="#F59E0B" />
-              <circle cx="115" cy="40" r="2" fill="#FBBF24" />
+              <line x1="15" y1="35" x2="30" y2="35" stroke="#DFBF8B" strokeWidth="2" strokeLinecap="round" />
+              <line x1="110" y1="25" x2="125" y2="25" stroke="#DFBF8B" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="22" cy="22" r="2.5" fill="#CFA24A" />
+              <circle cx="115" cy="40" r="2" fill="#DFBF8B" />
             </g>
 
             {/* Parcel Box */}
             <g transform="translate(42, 45)">
-              <rect x="0" y="8" width="56" height="42" rx="7" fill={isDark ? '#2B2215' : '#FEF3C7'} stroke="#D97706" strokeWidth="2.2" />
+              <rect x="0" y="8" width="56" height="42" rx="7" fill={isDark ? '#2B2215' : '#FEF3C7'} stroke="#A8761F" strokeWidth="2.2" />
               {/* Flaps */}
-              <polygon points="0,8 14,0 42,0 56,8" fill={isDark ? '#3D2F19' : '#FDE68A'} stroke="#D97706" strokeWidth="2" />
+              <polygon points="0,8 14,0 42,0 56,8" fill={isDark ? '#3D2F19' : '#FDE68A'} stroke="#A8761F" strokeWidth="2" />
               {/* Sealing Tape Glowing */}
-              <line x1="28" y1="0" x2="28" y2="50" stroke="#F59E0B" strokeWidth="7" strokeOpacity="0.3" />
+              <line x1="28" y1="0" x2="28" y2="50" stroke="#CFA24A" strokeWidth="7" strokeOpacity="0.3" />
               <line x1="28" y1="0" x2="28" y2="50" stroke="#B45309" strokeWidth="3" strokeDasharray="3 3" />
               {/* Label */}
-              <rect x="8" y="20" width="14" height="18" rx="2" fill="#FFF" stroke="#D97706" strokeWidth="1.2" />
-              <line x1="11" y1="24" x2="19" y2="24" stroke="#D97706" strokeWidth="1" />
-              <line x1="11" y1="28" x2="17" y2="28" stroke="#D97706" strokeWidth="1" />
+              <rect x="8" y="20" width="14" height="18" rx="2" fill="#FFF" stroke="#A8761F" strokeWidth="1.2" />
+              <line x1="11" y1="24" x2="19" y2="24" stroke="#A8761F" strokeWidth="1" />
+              <line x1="11" y1="28" x2="17" y2="28" stroke="#A8761F" strokeWidth="1" />
             </g>
 
             {/* Minimalist Character taping the box */}
             <g transform="translate(68, 14)">
               {/* Head */}
-              <circle cx="20" cy="14" r="10" fill={isDark ? '#4D3613' : '#FDE68A'} stroke="#D97706" strokeWidth="2" />
+              <circle cx="20" cy="14" r="10" fill={isDark ? '#4D3613' : '#FDE68A'} stroke="#A8761F" strokeWidth="2" />
               <circle cx="23" cy="13" r="1.8" fill="#78350F" />
               <path d="M18 17 Q22 20 25 17" stroke="#78350F" strokeWidth="1.5" fill="none" strokeLinecap="round" />
               {/* Cap */}
-              <path d="M10 12 C10 6 26 4 30 10 L34 12 Z" fill="#D97706" />
+              <path d="M10 12 C10 6 26 4 30 10 L34 12 Z" fill="#A8761F" />
               {/* Body */}
-              <path d="M10 38 C10 26 30 26 30 38 Z" fill={isDark ? '#38250A' : '#FEF3C7'} stroke="#D97706" strokeWidth="2" />
+              <path d="M10 38 C10 26 30 26 30 38 Z" fill={isDark ? '#38250A' : '#FEF3C7'} stroke="#A8761F" strokeWidth="2" />
               {/* Arms applying tape roll */}
-              <path d="M14 28 L-4 36" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="-4" cy="36" r="4.5" fill="#F59E0B" stroke="#B45309" strokeWidth="1.5" />
+              <path d="M14 28 L-4 36" stroke="#A8761F" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="-4" cy="36" r="4.5" fill="#CFA24A" stroke="#B45309" strokeWidth="1.5" />
             </g>
 
             {/* Sparkle */}
-            <path d="M30 18 L32 23 L37 25 L32 27 L30 32 L28 27 L23 25 L28 23 Z" fill="#F59E0B" />
+            <path d="M30 18 L32 23 L37 25 L32 27 L30 32 L28 27 L23 25 L28 23 Z" fill="#CFA24A" />
           </svg>
         )}
 
@@ -133,27 +133,27 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
           <svg viewBox="0 0 140 120" className="w-full h-full drop-shadow-sm">
             {/* Glowing Map Route Lines */}
             <g opacity="0.85">
-              <path d="M15 85 Q45 65 70 80 T125 55" fill="none" stroke="#60A5FA" strokeWidth="2.5" strokeDasharray="3 4" strokeLinecap="round" />
-              <circle cx="18" cy="85" r="3.5" fill="#3B82F6" />
+              <path d="M15 85 Q45 65 70 80 T125 55" fill="none" stroke="#7FB8BD" strokeWidth="2.5" strokeDasharray="3 4" strokeLinecap="round" />
+              <circle cx="18" cy="85" r="3.5" fill="#4E8F96" />
               <line x1="20" y1="30" x2="35" y2="30" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round" />
-              <circle cx="120" cy="25" r="2.5" fill="#3B82F6" />
+              <circle cx="120" cy="25" r="2.5" fill="#4E8F96" />
             </g>
 
             {/* Moving Delivery Vehicle */}
             <g transform="translate(38, 38)">
               {/* Van Body */}
-              <rect x="0" y="8" width="46" height="28" rx="5" fill={isDark ? '#192C45' : '#DBEAFE'} stroke="#2563EB" strokeWidth="2.2" />
-              <path d="M46 16 L58 16 L64 25 L64 36 L46 36 Z" fill={isDark ? '#203A5C' : '#BFDBFE'} stroke="#2563EB" strokeWidth="2.2" />
+              <rect x="0" y="8" width="46" height="28" rx="5" fill={isDark ? '#192C45' : '#DBEAFE'} stroke="#3C7479" strokeWidth="2.2" />
+              <path d="M46 16 L58 16 L64 25 L64 36 L46 36 Z" fill={isDark ? '#203A5C' : '#BFDBFE'} stroke="#3C7479" strokeWidth="2.2" />
               {/* Window */}
-              <polygon points="48,18 56,18 60,25 48,25" fill="#FFF" stroke="#2563EB" strokeWidth="1.5" />
+              <polygon points="48,18 56,18 60,25 48,25" fill="#FFF" stroke="#3C7479" strokeWidth="1.5" />
               {/* Wheels */}
-              <circle cx="14" cy="37" r="7" fill={isDark ? '#0F172A' : '#1E293B'} stroke="#2563EB" strokeWidth="2" />
-              <circle cx="14" cy="37" r="2.5" fill="#60A5FA" />
-              <circle cx="50" cy="37" r="7" fill={isDark ? '#0F172A' : '#1E293B'} stroke="#2563EB" strokeWidth="2" />
-              <circle cx="50" cy="37" r="2.5" fill="#60A5FA" />
+              <circle cx="14" cy="37" r="7" fill={isDark ? '#1F1613' : '#2A1E1A'} stroke="#3C7479" strokeWidth="2" />
+              <circle cx="14" cy="37" r="2.5" fill="#7FB8BD" />
+              <circle cx="50" cy="37" r="7" fill={isDark ? '#1F1613' : '#2A1E1A'} stroke="#3C7479" strokeWidth="2" />
+              <circle cx="50" cy="37" r="2.5" fill="#7FB8BD" />
               {/* Speed Lines */}
-              <line x1="-12" y1="18" x2="-4" y2="18" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" />
-              <line x1="-16" y1="25" x2="-6" y2="25" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" />
+              <line x1="-12" y1="18" x2="-4" y2="18" stroke="#4E8F96" strokeWidth="2" strokeLinecap="round" />
+              <line x1="-16" y1="25" x2="-6" y2="25" stroke="#7FB8BD" strokeWidth="2" strokeLinecap="round" />
             </g>
 
             {/* GPS Beacon Pin */}
@@ -163,7 +163,7 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
             </g>
 
             {/* Sparkle */}
-            <path d="M85 18 L87 23 L92 25 L87 27 L85 32 L83 27 L78 25 L83 23 Z" fill="#3B82F6" />
+            <path d="M85 18 L87 23 L92 25 L87 27 L85 32 L83 27 L78 25 L83 23 Z" fill="#4E8F96" />
           </svg>
         )}
 
@@ -210,9 +210,9 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
       <div className="relative z-10 flex flex-col items-center gap-1.5">
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide border shadow-xs transition-transform group-hover:scale-105 ${
           status === 'nuevos'
-            ? 'bg-rose-500/15 text-[#6366F1] dark:text-rose-400 border-rose-500/30'
+            ? 'bg-rose-500/15 text-[#A8634F] dark:text-rose-400 border-rose-500/30'
             : status === 'empacados'
-            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-[#FBBF24]/30'
+            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-[#DFBF8B]/30'
             : status === 'en_camino'
             ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30'
             : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
@@ -220,7 +220,7 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
           <MoveDown className="w-3.5 h-3.5 animate-bounce stroke-[2.5]" />
           <span>Arrastra una tarjeta aquí</span>
         </span>
-        <p className="text-[11px] text-[#475569] dark:text-zinc-400 font-bold">
+        <p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 font-bold">
           {status === 'nuevos' && 'Nuevos pedidos registrados'}
           {status === 'empacados' && 'Listos para rotular y empaque'}
           {status === 'en_camino' && 'En tránsito o agencia courier'}

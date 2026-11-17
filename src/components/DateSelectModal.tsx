@@ -37,20 +37,20 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
       <div 
         className={`w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border p-5 sm:p-6 shadow-2xl transition-all duration-200 ${
           isDark 
-            ? 'bg-[#1A1A1F] border-[#2C2C35] text-white' 
-            : 'bg-white border-[#E2E8F0] text-black'
+            ? 'bg-[#1B1412] border-[#2A1F1B] text-white' 
+            : 'bg-white border-[#EADCD3] text-black'
         }`}
       >
         <div className="w-12 h-1.5 bg-zinc-400/40 rounded-full mx-auto mb-4 sm:hidden" />
 
-        <div className="flex items-center justify-between pb-3.5 border-b border-[#E2E8F0] dark:border-zinc-800">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[#EADCD3] dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-black text-base sm:text-lg text-black dark:text-white">{modalTitle}</h3>
-              <p className="text-xs text-[#475569] dark:text-zinc-300 font-semibold">
+              <p className="text-xs text-[#6B5A55] dark:text-zinc-300 font-semibold">
                 {modalDesc}
               </p>
             </div>
@@ -68,9 +68,9 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
         <div className={`mt-3 p-3 rounded-2xl border flex items-start gap-2.5 text-xs ${
           isDark 
             ? 'bg-amber-950/20 border-amber-800/40 text-amber-300' 
-            : 'bg-amber-50 border-[#FBBF24]/30 text-amber-950'
+            : 'bg-amber-50 border-[#DFBF8B]/30 text-amber-950'
         }`}>
-          <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#F59E0B] dark:text-amber-400" />
+          <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#CFA24A] dark:text-amber-400" />
           <span className="font-semibold">
             {isTienda ? (
               <span>Tu pedido estará listo para retiro a partir de la fecha seleccionada en nuestro horario habitual.</span>
@@ -99,8 +99,8 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
                   isSelected
                     ? 'border-red-600 bg-red-50 dark:bg-red-950/30 ring-2 ring-red-500/20 text-red-700 font-black'
                     : isDark
-                      ? 'border-[#2C2C35] bg-[#0F0F12] hover:bg-[#25252d] text-zinc-200 hover:border-zinc-600'
-                      : 'border-[#E2E8F0] bg-white hover:bg-zinc-50 text-black hover:border-zinc-900'
+                      ? 'border-[#2A1F1B] bg-[#140E0D] hover:bg-[#25252d] text-zinc-200 hover:border-zinc-600'
+                      : 'border-[#EADCD3] bg-white hover:bg-zinc-50 text-black hover:border-zinc-900'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -109,7 +109,7 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
                       ? 'bg-red-600 text-white border-red-600 shadow'
                       : isDark
                         ? 'bg-zinc-800 border-zinc-700 text-zinc-200'
-                        : 'bg-zinc-100 border-[#E2E8F0] text-black'
+                        : 'bg-zinc-100 border-[#EADCD3] text-black'
                   }`}>
                     <span className="text-[10px] uppercase font-black opacity-90">
                       {item.displayDay.split(' ')[1] || 'DÍA'}
@@ -125,12 +125,12 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
                         {item.displayWeekday}
                       </span>
                       {item.badge && (
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300 dark:bg-red-500/20 dark:text-[#FF7060] dark:border-red-500/30">
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300 dark:bg-red-500/20 dark:text-[#C68173] dark:border-red-500/30">
                           {item.badge}
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-[#0F172A] dark:text-zinc-300 font-bold">
+                    <span className="text-xs text-[#1F1613] dark:text-zinc-300 font-bold">
                       Despacho seguro
                     </span>
                   </div>
@@ -150,7 +150,7 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
           })}
         </div>
 
-        <div className="mt-5 pt-3 border-t border-[#E2E8F0] dark:border-zinc-800 text-center">
+        <div className="mt-5 pt-3 border-t border-[#EADCD3] dark:border-zinc-800 text-center">
           <button
             id="cancel-date-btn"
             type="button"

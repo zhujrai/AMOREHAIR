@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Inbox, 
   Package, 
@@ -51,6 +51,7 @@ import { BatchThermalLabelsModal } from './BatchThermalLabelsModal';
 import { ShippingConfigModal } from './ShippingConfigModal';
 import { LogoUploadModal } from './LogoUploadModal';
 import { OrderEditModal } from './OrderEditModal';
+import { calcularCobro, faltaPrecio, faltaDatosEnvio, dinero } from '../utils/cobro';
 import { DeliveredHistoryModal } from './DeliveredHistoryModal';
 import { DatabaseStatusModal } from './DatabaseStatusModal';
 import { TrashModal } from './TrashModal';
@@ -104,6 +105,21 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   const [batchOrdersToPrint, setBatchOrdersToPrint] = useState<Order[]>([]);
   const [selectedForPrintIds, setSelectedForPrintIds] = useState<string[]>([]);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  // Tarjeta que se acaba de cerrar: se desplaza a la vista y se resalta unos segundos para no perderse
+  const [tarjetaResaltada, setTarjetaResaltada] = useState<string | null>(null);
+  useEffect(() => {
+    if (!tarjetaResaltada) return;
+    const id = tarjetaResaltada;
+    const enfocar = window.setTimeout(() => {
+      const el = document.getElementById(`order-card-${id}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }, 140);
+    const quitar = window.setTimeout(() => setTarjetaResaltada(null), 3200);
+    return () => {
+      window.clearTimeout(enfocar);
+      window.clearTimeout(quitar);
+    };
+  }, [tarjetaResaltada]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [showBatchThermalModal, setShowBatchThermalModal] = useState(false);
@@ -170,23 +186,23 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
     {
       id: 'nuevos',
       title: 'Nuevos / Pendientes',
-      icon: <Inbox className="w-4 h-4 text-[#818CF8]" />,
-      color: 'border-[#818CF8]/30',
-      bgBadge: 'bg-[#EEF2FF] text-[#818CF8] border-[#818CF8]/20 dark:bg-[#818CF8]/20 dark:text-rose-200 dark:border-[#818CF8]/40',
+      icon: <Inbox className="w-4 h-4 text-[#DFBF8B]" />,
+      color: 'border-[#DFBF8B]/30',
+      bgBadge: 'bg-[#F6E8E1] text-[#DFBF8B] border-[#DFBF8B]/20 dark:bg-[#DFBF8B]/20 dark:text-rose-200 dark:border-[#DFBF8B]/40',
     },
     {
       id: 'empacados',
       title: 'Empacados',
-      icon: <Package className="w-4 h-4 text-[#F59E0B]" />,
-      color: 'border-[#F59E0B]/30',
-      bgBadge: 'bg-[#FFFBEB] text-[#F59E0B] border-[#FBBF24]/30 dark:bg-[#FBBF24]/20 dark:text-amber-200 dark:border-[#FBBF24]/40',
+      icon: <Package className="w-4 h-4 text-[#CFA24A]" />,
+      color: 'border-[#CFA24A]/30',
+      bgBadge: 'bg-[#FBF1DC] text-[#CFA24A] border-[#DFBF8B]/30 dark:bg-[#DFBF8B]/20 dark:text-amber-200 dark:border-[#DFBF8B]/40',
     },
     {
       id: 'en_camino',
       title: 'En Agencia / En Camino',
-      icon: <Truck className="w-4 h-4 text-[#06B6D4]" />,
-      color: 'border-[#06B6D4]/30',
-      bgBadge: 'bg-[#ECFEFF] text-[#06B6D4] border-[#06B6D4]/30 dark:bg-[#06B6D4]/20 dark:text-sky-200 dark:border-[#06B6D4]/40',
+      icon: <Truck className="w-4 h-4 text-[#4E8F96]" />,
+      color: 'border-[#4E8F96]/30',
+      bgBadge: 'bg-[#E6F1F1] text-[#4E8F96] border-[#4E8F96]/30 dark:bg-[#4E8F96]/20 dark:text-sky-200 dark:border-[#4E8F96]/40',
     },
     {
       id: 'entregados',
@@ -228,6 +244,19 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   };
 
   // Drag handlers
+  // Regla de avance: una tarjeta sin precio de venta no sale de "Nuevos"; se abre el detalle para completarlo
+  const [avisoPrecio, setAvisoPrecio] = useState(false);
+  const intentarMover = (orderId: string, destino: OrderStatus) => {
+    const o = orders.find((x) => x.id === orderId);
+    if (o && destino !== 'nuevos' && faltaPrecio(o)) {
+      setAvisoPrecio(true);
+      setEditingOrder(o);
+      setShowEditModal(true);
+      return;
+    }
+    onUpdateOrderStatus(orderId, destino);
+  };
+
   const handleDragStart = (e: React.DragEvent, orderId: string) => {
     e.dataTransfer.setData('text/plain', orderId);
     setDraggedOrderId(orderId);
@@ -241,7 +270,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
     e.preventDefault();
     const orderId = e.dataTransfer.getData('text/plain') || draggedOrderId;
     if (orderId) {
-      onUpdateOrderStatus(orderId, targetStatus);
+      intentarMover(orderId, targetStatus);
     }
     setDraggedOrderId(null);
   };
@@ -268,16 +297,16 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
       {/* Top Helper Banner: Quick Client Form Link (/pedidos) */}
       <div className={`px-3.5 py-2 sm:py-2.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 transition-all text-xs ${
         isDark 
-          ? 'bg-[#1E293B] border-white/10 text-zinc-200' 
-          : 'bg-white border-[#E2E8F0] text-[#0F172A] shadow-2xs'
+          ? 'bg-[#2A1E1A] border-white/10 text-zinc-200' 
+          : 'bg-white border-[#EADCD3] text-[#1F1613] shadow-2xs'
       }`}>
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="font-semibold text-[#475569] dark:text-zinc-300 flex items-center gap-1.5 flex-shrink-0">
-            <Link2 className="w-3.5 h-3.5 text-[#6366F1] dark:text-[#FBBF24] flex-shrink-0" />
+          <span className="font-semibold text-[#6B5A55] dark:text-zinc-300 flex items-center gap-1.5 flex-shrink-0">
+            <Link2 className="w-3.5 h-3.5 text-[#A8634F] dark:text-[#DFBF8B] flex-shrink-0" />
             <span>Enlace para Clientes:</span>
           </span>
           <code className={`px-2.5 py-0.5 rounded-md font-mono text-[11px] font-medium truncate ${
-            isDark ? 'bg-zinc-900 text-zinc-200 border border-white/10' : 'bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0]'
+            isDark ? 'bg-zinc-900 text-zinc-200 border border-white/10' : 'bg-[#FBF4F0] text-[#1F1613] border border-[#EADCD3]'
           }`}>
             {clientFormUrl}
           </code>
@@ -290,7 +319,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs text-xs ${
               copiedClientUrl
                 ? 'bg-[#10B981] text-white'
-                : 'bg-[#6366F1] hover:bg-[#4F46E5] text-white'
+                : 'bg-[#A8634F] hover:bg-[#8E4F3E] text-white'
             }`}
             title="Copiar enlace para enviar por WhatsApp o Instagram"
           >
@@ -314,11 +343,11 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all cursor-pointer text-xs border ${
                 isDark 
                   ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:bg-zinc-800' 
-                  : 'bg-white border-[#E2E8F0] text-[#0F172A] hover:bg-[#F8FAFC]'
+                  : 'bg-white border-[#EADCD3] text-[#1F1613] hover:bg-[#FBF4F0]'
               }`}
               title="Abrir y probar formulario de cliente"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-[#475569]" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#6B5A55]" />
               <span>Abrir Formulario</span>
             </button>
           )}
@@ -327,14 +356,14 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
       {/* Filter, Search & Actions Bar */}
       <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 ${
-        isDark ? 'bg-[#1E293B] border-white/10' : 'bg-white border-[#E2E8F0] shadow-2xs'
+        isDark ? 'bg-[#2A1E1A] border-white/10' : 'bg-white border-[#EADCD3] shadow-2xs'
       }`}>
         
         {/* Left: Search & Courier Filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
           {/* Search */}
           <div className="relative w-full sm:w-64 lg:w-72 flex-shrink-0" title="Cliente, DNI, teléfono o código...">
-            <Search className="w-4 h-4 text-[#475569] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#6B5A55] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               id="kanban-search-input"
               type="text"
@@ -344,15 +373,15 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full pl-9 pr-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium border focus:outline-none transition-colors ${
                 isDark 
-                  ? 'bg-[#0F172A] border-white/10 text-white placeholder-[#475569]/70 focus:border-[#6366F1]' 
-                  : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] placeholder-[#475569]/70 focus:border-[#6366F1] focus:bg-white'
+                  ? 'bg-[#1F1613] border-white/10 text-white placeholder-[#6B5A55]/70 focus:border-[#A8634F]' 
+                  : 'bg-[#FBF4F0] border-[#EADCD3] text-[#1F1613] placeholder-[#6B5A55]/70 focus:border-[#A8634F] focus:bg-white'
               }`}
             />
           </div>
 
           {/* Courier Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar py-0.5">
-            <span className="text-[11px] font-semibold text-[#475569] dark:text-zinc-400 pr-0.5 flex items-center gap-1 flex-shrink-0">
+            <span className="text-[11px] font-semibold text-[#6B5A55] dark:text-zinc-400 pr-0.5 flex items-center gap-1 flex-shrink-0">
               <Filter className="w-3.5 h-3.5" />
               Courier:
             </span>
@@ -362,10 +391,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onClick={() => setCourierFilter('todos')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap cursor-pointer text-xs ${
                 courierFilter === 'todos'
-                  ? 'bg-[#6366F1] text-white shadow-xs'
+                  ? 'bg-[#A8634F] text-white shadow-xs'
                   : isDark 
                     ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/10' 
-                    : 'bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] hover:bg-zinc-100'
+                    : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
               Todos ({orders.length})
@@ -376,13 +405,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onClick={() => setCourierFilter('shalom')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'shalom'
-                  ? 'bg-[#6366F1] text-white shadow-xs'
+                  ? 'bg-[#A8634F] text-white shadow-xs'
                   : isDark 
                     ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/10' 
-                    : 'bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] hover:bg-zinc-100'
+                    : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
-              <Building2 className={`w-3.5 h-3.5 ${courierFilter === 'shalom' ? 'text-white' : 'text-[#6366F1]'}`} />
+              <Building2 className={`w-3.5 h-3.5 ${courierFilter === 'shalom' ? 'text-white' : 'text-[#A8634F]'}`} />
               Shalom
             </button>
 
@@ -391,13 +420,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onClick={() => setCourierFilter('marvisur')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'marvisur'
-                  ? 'bg-[#6366F1] text-white shadow-xs'
+                  ? 'bg-[#A8634F] text-white shadow-xs'
                   : isDark 
                     ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/10' 
-                    : 'bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] hover:bg-zinc-100'
+                    : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
-              <Truck className={`w-3.5 h-3.5 ${courierFilter === 'marvisur' ? 'text-white' : 'text-[#06B6D4]'}`} />
+              <Truck className={`w-3.5 h-3.5 ${courierFilter === 'marvisur' ? 'text-white' : 'text-[#4E8F96]'}`} />
               Marvisur
             </button>
 
@@ -406,13 +435,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onClick={() => setCourierFilter('olva')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'olva'
-                  ? 'bg-[#6366F1] text-white shadow-xs'
+                  ? 'bg-[#A8634F] text-white shadow-xs'
                   : isDark 
                     ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/10' 
-                    : 'bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] hover:bg-zinc-100'
+                    : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
-              <Truck className={`w-3.5 h-3.5 ${courierFilter === 'olva' ? 'text-white' : 'text-[#F59E0B]'}`} />
+              <Truck className={`w-3.5 h-3.5 ${courierFilter === 'olva' ? 'text-white' : 'text-[#CFA24A]'}`} />
               Olva
             </button>
 
@@ -421,13 +450,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onClick={() => setCourierFilter('delivery_lima')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'delivery_lima'
-                  ? 'bg-[#6366F1] text-white shadow-xs'
+                  ? 'bg-[#A8634F] text-white shadow-xs'
                   : isDark 
                     ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/10' 
-                    : 'bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] hover:bg-zinc-100'
+                    : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
-              <Bike className={`w-3.5 h-3.5 ${courierFilter === 'delivery_lima' ? 'text-white' : 'text-[#06B6D4]'}`} />
+              <Bike className={`w-3.5 h-3.5 ${courierFilter === 'delivery_lima' ? 'text-white' : 'text-[#4E8F96]'}`} />
               Delivery Lima
             </button>
 
@@ -436,10 +465,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onClick={() => setCourierFilter('tienda')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
                 courierFilter === 'tienda'
-                  ? 'bg-[#6366F1] text-white shadow-xs'
+                  ? 'bg-[#A8634F] text-white shadow-xs'
                   : isDark 
                     ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/10' 
-                    : 'bg-[#F8FAFC] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] hover:bg-zinc-100'
+                    : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
               <Store className={`w-3.5 h-3.5 ${courierFilter === 'tienda' ? 'text-white' : 'text-[#10B981]'}`} />
@@ -452,8 +481,8 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
         <div className="flex items-center gap-1.5 self-end lg:self-auto flex-wrap">
           {/* BOTÓN IMPRIMIR SELECCIONADOS */}
           {selectedForPrintIds.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-[#FFFBEB] dark:bg-amber-950/40 border border-[#FBBF24]/30 px-2.5 py-1 rounded-lg">
-              <span className="text-xs font-semibold text-[#F59E0B] dark:text-amber-300">
+            <div className="flex items-center gap-1.5 bg-[#FBF1DC] dark:bg-amber-950/40 border border-[#DFBF8B]/30 px-2.5 py-1 rounded-lg">
+              <span className="text-xs font-semibold text-[#CFA24A] dark:text-amber-300">
                 {selectedForPrintIds.length} selecc.
               </span>
               <button
@@ -464,7 +493,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                   setBatchOrdersToPrint(selectedOrders);
                   setShowBatchThermalModal(true);
                 }}
-                className="px-2.5 py-1 rounded-md bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-xs flex items-center gap-1 shadow-xs cursor-pointer"
+                className="px-2.5 py-1 rounded-md bg-[#A8634F] hover:bg-[#8E4F3E] text-white font-semibold text-xs flex items-center gap-1 shadow-xs cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Imprimir ({selectedForPrintIds.length})</span>
@@ -472,7 +501,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedForPrintIds([])}
-                className="text-[11px] font-medium text-[#475569] hover:text-[#0F172A] dark:hover:text-zinc-200 cursor-pointer"
+                className="text-[11px] font-medium text-[#6B5A55] hover:text-[#1F1613] dark:hover:text-zinc-200 cursor-pointer"
               >
                 Desmarcar
               </button>
@@ -485,16 +514,16 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             onClick={() => setShowTrashModal(true)}
             className={`p-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs relative ${
               trashOrders.length > 0
-                ? 'bg-[#EEF2FF] border-[#818CF8]/30 text-[#818CF8] dark:bg-rose-950/40 dark:text-rose-300'
+                ? 'bg-[#F6E8E1] border-[#DFBF8B]/30 text-[#DFBF8B] dark:bg-rose-950/40 dark:text-rose-300'
                 : isDark 
                   ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:bg-zinc-800' 
-                  : 'bg-white border-[#E2E8F0] text-[#475569] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+                  : 'bg-white border-[#EADCD3] text-[#6B5A55] hover:text-[#1F1613] hover:bg-[#FBF4F0]'
             }`}
             title="Papelera de Reciclaje - Rescatar o eliminar pedidos"
           >
             <Trash2 className="w-4 h-4 stroke-[2]" />
             {trashOrders.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-[#818CF8] text-white text-[10px] font-bold">
+              <span className="px-1.5 py-0.2 rounded-full bg-[#DFBF8B] text-white text-[10px] font-bold">
                 {trashOrders.length}
               </span>
             )}
@@ -507,7 +536,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             className={`p-2 rounded-lg border text-xs font-medium flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
               isDark 
                 ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:text-white' 
-                : 'bg-white border-[#E2E8F0] text-[#475569] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+                : 'bg-white border-[#EADCD3] text-[#6B5A55] hover:text-[#1F1613] hover:bg-[#FBF4F0]'
             }`}
             title="Gestionar Envíos & Sucursales (Shalom / Olva / Delivery Lima / Tienda)"
           >
@@ -521,7 +550,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             className={`p-2 rounded-lg border text-xs font-medium flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
               isDark 
                 ? 'bg-zinc-900 border-white/10 text-[#059669] hover:bg-zinc-800' 
-                : 'bg-white border-[#E2E8F0] text-[#10B981] hover:bg-[#ECFDF5]'
+                : 'bg-white border-[#EADCD3] text-[#10B981] hover:bg-[#ECFDF5]'
             }`}
             title="Base de Datos Supabase Cloud (PostgreSQL) - Sincronización en vivo"
           >
@@ -535,7 +564,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             className={`p-2 rounded-lg border text-xs font-medium flex items-center justify-center transition-colors cursor-pointer shadow-2xs ${
               isDark 
                 ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:text-white' 
-                : 'bg-white border-[#E2E8F0] text-[#475569] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+                : 'bg-white border-[#EADCD3] text-[#6B5A55] hover:text-[#1F1613] hover:bg-[#FBF4F0]'
             }`}
             title="Exportar pedidos a archivo JSON"
           >
@@ -569,25 +598,25 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               onDrop={(e) => handleDrop(e, col.id)}
               className={`rounded-2xl border flex flex-col transition-all min-h-[500px] shadow-2xs ${
                 isDark 
-                  ? 'bg-[#1E293B] border-white/10' 
-                  : 'bg-[#F8FAFC]/80 border-[#E2E8F0]'
+                  ? 'bg-[#2A1E1A] border-white/10' 
+                  : 'bg-[#FBF4F0]/80 border-[#EADCD3]'
               }`}
             >
               
               {/* Column Header */}
               <div className={`p-3.5 border-b flex items-center justify-between gap-2 ${
-                isDark ? 'bg-[#1B191E] border-white/10' : 'bg-white border-[#E2E8F0]'
+                isDark ? 'bg-[#1B191E] border-white/10' : 'bg-white border-[#EADCD3]'
               } rounded-t-2xl`}>
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className={`p-1.5 rounded-lg flex-shrink-0 ${
-                    col.id === 'nuevos' ? 'bg-[#EEF2FF]' :
-                    col.id === 'empacados' ? 'bg-[#FFFBEB]' :
-                    col.id === 'en_camino' ? 'bg-[#ECFEFF]' :
+                    col.id === 'nuevos' ? 'bg-[#F6E8E1]' :
+                    col.id === 'empacados' ? 'bg-[#FBF1DC]' :
+                    col.id === 'en_camino' ? 'bg-[#E6F1F1]' :
                     'bg-[#ECFDF5]'
                   }`}>
                     {col.icon}
                   </div>
-                  <h3 className="font-semibold text-sm tracking-tight truncate text-[#0F172A] dark:text-white">
+                  <h3 className="font-semibold text-sm tracking-tight truncate text-[#1F1613] dark:text-white">
                     {col.title}
                   </h3>
                 </div>
@@ -602,7 +631,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         setBatchOrdersToPrint(colOrders);
                         setShowBatchThermalModal(true);
                       }}
-                      className="p-1 px-2 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-[11px] flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                      className="p-1 px-2 rounded-lg bg-[#A8634F] hover:bg-[#8E4F3E] text-white font-semibold text-[11px] flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                       title={`Imprimir ${colOrders.length} rótulos empacados`}
                     >
                       <Printer className="w-3.5 h-3.5" />
@@ -631,17 +660,27 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                 </div>
               </div>
 
+              {(() => {
+                const saldoCol = colOrders.reduce((s, o) => s + (calcularCobro(o).saldo || 0), 0);
+                return saldoCol > 0 ? (
+                  <div className="flex items-center justify-between px-3.5 py-1.5 text-[11px] font-bold border-b border-[#EADCD3] dark:border-white/10 bg-rose-500/5 text-rose-700 dark:text-rose-300">
+                    <span>Por cobrar en esta etapa</span>
+                    <span className="font-black">{dinero(saldoCol)}</span>
+                  </div>
+                ) : null;
+              })()}
+
               {/* Column Body Cards */}
               <div className="p-3 space-y-3 flex-1 overflow-y-auto overflow-x-hidden max-h-[calc(100vh-280px)]">
                 {displayedOrders.length === 0 ? (
-                  <div className="h-44 border border-dashed border-[#E2E8F0] dark:border-white/10 rounded-xl flex flex-col items-center justify-center text-[#475569] dark:text-zinc-400 p-4 text-center bg-white/40 dark:bg-zinc-900/20">
-                    <div className="p-2 rounded-full bg-[#F8FAFC] dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 mb-2">
+                  <div className="h-44 border border-dashed border-[#EADCD3] dark:border-white/10 rounded-xl flex flex-col items-center justify-center text-[#6B5A55] dark:text-zinc-400 p-4 text-center bg-white/40 dark:bg-zinc-900/20">
+                    <div className="p-2 rounded-full bg-[#FBF4F0] dark:bg-zinc-800 text-[#6B5A55] dark:text-zinc-400 mb-2">
                       <Inbox className="w-5 h-5 opacity-60" />
                     </div>
-                    <p className="text-xs font-semibold text-[#0F172A] dark:text-zinc-200">
+                    <p className="text-xs font-semibold text-[#1F1613] dark:text-zinc-200">
                       {isSearching ? 'Ningún pedido coincide con la búsqueda' : 'Sin pedidos en esta etapa'}
                     </p>
-                    <p className="text-[11px] text-[#475569] dark:text-zinc-400 mt-0.5 font-normal">
+                    <p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 mt-0.5 font-normal">
                       {isSearching ? 'Prueba con otro término de búsqueda' : 'Arrastra una tarjeta aquí'}
                     </p>
                   </div>
@@ -650,14 +689,19 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                     const badge = getShippingTypeBadge(order.shippingType);
                     const prev = getPrevStatus(order.status);
                     const next = getNextStatus(order.status);
+                    const cobroTarjeta = calcularCobro(order);
 
                     let locationPreview = '';
                     if (order.shippingType === 'shalom') {
                       locationPreview = order.agency?.name || 'Agencia Shalom';
                     } else if (order.shippingType === 'olva') {
                       locationPreview = order.agency ? order.agency.name : `Olva Domicilio (${order.deliveryDistrict})`;
+                    } else if (order.shippingType === 'marvisur') {
+                      locationPreview = order.agency?.name || 'Agencia Marvisur';
                     } else if (order.shippingType === 'delivery_lima') {
-                      locationPreview = `${order.deliveryDistrict}: ${order.deliveryAddress}`;
+                      locationPreview = order.deliveryAddress
+                        ? `${order.deliveryDistrict}: ${order.deliveryAddress}`
+                        : 'Dirección por completar';
                     } else {
                       locationPreview = 'Retiro en Tienda CyberPlaza';
                     }
@@ -672,7 +716,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         id={`order-card-${order.id}`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, order.id)}
-                        className="w-full max-w-full min-w-0 p-3.5 rounded-xl border transition-all duration-150 shadow-2xs hover:shadow-xs cursor-grab active:cursor-grabbing group overflow-hidden box-border bg-white dark:bg-[#1E293B] border-[#E2E8F0] dark:border-white/10 hover:border-[#6366F1]/40 dark:hover:border-white/20"
+                        className={`${tarjetaResaltada === order.id ? 'amore-resaltada ' : ''}w-full max-w-full min-w-0 p-3.5 rounded-xl border transition-all duration-150 shadow-2xs hover:shadow-xs cursor-grab active:cursor-grabbing group overflow-hidden box-border bg-white dark:bg-[#2A1E1A] border-[#EADCD3] dark:border-white/10 hover:border-[#A8634F]/40 dark:hover:border-white/20`}
                       >
                         {/* Top: Checkbox Selección, ID, Payment Badge & Courier Badge */}
                         <div className="flex items-center justify-between gap-1.5 mb-2.5 min-w-0 flex-nowrap">
@@ -689,14 +733,14 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 );
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-3.5 h-3.5 rounded text-[#6366F1] accent-[#6366F1] cursor-pointer flex-shrink-0"
+                              className="w-3.5 h-3.5 rounded text-[#A8634F] accent-[#A8634F] cursor-pointer flex-shrink-0"
                               title="Seleccionar para imprimir rótulo"
                             />
-                            <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded-md bg-[#F8FAFC] dark:bg-zinc-800 text-[#0F172A] dark:text-zinc-100 border border-[#E2E8F0] dark:border-zinc-700 whitespace-nowrap flex-shrink-0 leading-none select-all">
+                            <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded-md bg-[#FBF4F0] dark:bg-zinc-800 text-[#1F1613] dark:text-zinc-100 border border-[#EADCD3] dark:border-zinc-700 whitespace-nowrap flex-shrink-0 leading-none select-all">
                               #{order.id}
                             </span>
                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap flex-shrink-0 leading-none truncate ${paymentStyle.paymentBadgeClass}`} title={paymentStyle.paymentLabel}>
-                              {paymentStyle.paymentIcon} {order.shippingType === 'delivery_lima' && order.isCashOnDelivery ? 'Contraentrega' : (order.shippingType === 'tienda' ? 'Tienda' : 'Pagado')}
+                              {paymentStyle.paymentIcon} {order.shippingType === 'delivery_lima' && order.isCashOnDelivery ? 'Contraentrega' : ((cobroTarjeta.saldo ?? 0) > 0 ? 'Con saldo' : (order.shippingType === 'tienda' ? 'Tienda' : 'Pagado'))}
                             </span>
                           </div>
 
@@ -713,12 +757,12 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
                         {/* Customer Name (15-16px, dark text, semibold) & DNI / WhatsApp */}
                         <div className="space-y-1 min-w-0">
-                          <h4 className="font-semibold text-[15px] sm:text-base text-[#0F172A] dark:text-white tracking-tight leading-snug break-words">
+                          <h4 className="font-semibold text-[15px] sm:text-base text-[#1F1613] dark:text-white tracking-tight leading-snug break-words">
                             {order.customerName}
                           </h4>
 
                           <div className="flex items-center justify-between gap-1 text-xs min-w-0">
-                            <span className="text-[#475569] dark:text-zinc-400 font-mono text-[11px] truncate">
+                            <span className="text-[#6B5A55] dark:text-zinc-400 font-mono text-[11px] truncate">
                               {order.documentType}: {order.documentNumber}
                             </span>
                             
@@ -743,37 +787,65 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           </div>
                         </div>
 
-                        {/* Precio (solo lectura - editable en detalle) */}
-                        <div className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 text-xs flex items-center justify-between gap-2 min-w-0">
-                          <span className="font-medium text-[#475569] dark:text-zinc-400">Precio:</span>
-                          <span className="font-bold text-[#0F172A] dark:text-white">
-                            {typeof order.subtotalAmount === 'number' ? `S/ ${order.subtotalAmount.toFixed(2)}` : <span className="text-amber-600 dark:text-amber-400">Sin precio</span>}
-                          </span>
-                          {order.shippingType === 'delivery_lima' && (
-                            <span className="text-[10px] text-[#06B6D4] dark:text-sky-300">
-                              + S/ {(order.deliveryFee !== undefined ? order.deliveryFee : 0).toFixed(2)} transp.
-                            </span>
-                          )}
-                        </div>
+                        {/* Cobro: venta, flete, total y saldo por cobrar (editable en el detalle) */}
+                        {(() => {
+                          const c = calcularCobro(order);
+                          if (c.venta === null) {
+                            return (
+                              <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 text-xs flex items-center justify-between gap-2">
+                                <span className="font-medium text-[#6B5A55] dark:text-zinc-400">Precio:</span>
+                                <span className="font-bold text-amber-600 dark:text-amber-400">Sin precio · requerido</span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 text-xs space-y-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[#6B5A55] dark:text-zinc-400">Venta</span>
+                                <span className="font-bold text-[#1F1613] dark:text-white">{dinero(c.venta)}</span>
+                              </div>
+                              {c.flete > 0 && (
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[#6B5A55] dark:text-zinc-400">Flete</span>
+                                  <span className="font-semibold text-[#1F1613] dark:text-zinc-200">{dinero(c.flete)}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[#6B5A55] dark:text-zinc-400">Total cliente</span>
+                                <span className="font-black text-[#1F1613] dark:text-white">{dinero(c.total as number)}</span>
+                              </div>
+                              <div className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 font-black ${
+                                (c.saldo as number) > 0
+                                  ? 'bg-rose-500/12 text-rose-700 dark:text-rose-300'
+                                  : 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'
+                              }`}>
+                                <span>{(c.saldo as number) > 0 ? 'Saldo por cobrar' : 'Pagado completo'}</span>
+                                <span>{(c.saldo as number) > 0 ? dinero(c.saldo as number) : '✓'}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
-                        {(order.sourceRef || order.consultaId) && (
-                          <div className="mt-1.5 text-[10px] text-violet-700 dark:text-violet-300 flex items-center gap-1 flex-wrap" title="Enlace/video y consulta del catálogo que originaron el pedido">
-                            {order.sourceRef && (<><span className="font-semibold">Origen:</span><span className="font-mono">{order.sourceRef}</span></>)}
-                            {order.consultaId && (<span className="font-mono">{order.sourceRef ? '· ' : ''}Consulta {order.consultaId}</span>)}
-                          </div>
-                        )}
+                        {(() => {
+                          const falta = faltaDatosEnvio(order);
+                          return falta ? (
+                            <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-300">
+                              <span aria-hidden="true">⚠</span>{falta}
+                            </div>
+                          ) : null;
+                        })()}
 
                         {/* Delivery Lima: Cash on Delivery & Payment Method Configuration */}
                         {order.shippingType === 'delivery_lima' && (
-                          <div className="mt-2.5 pt-2 border-t border-dashed border-[#E2E8F0] dark:border-white/10 text-xs space-y-1.5 min-w-0">
+                          <div className="mt-2.5 pt-2 border-t border-dashed border-[#EADCD3] dark:border-white/10 text-xs space-y-1.5 min-w-0">
                             {order.isCashOnDelivery ? (
                               <div className="space-y-1.5">
                                 <div className="flex items-center justify-between gap-1 flex-wrap text-[11px]">
-                                  <span className="font-semibold text-[#6366F1] dark:text-[#FBBF24]">
+                                  <span className="font-semibold text-[#A8634F] dark:text-[#DFBF8B]">
                                     💵 Contraentrega: S/ {(order.cashOnDeliveryAmount || order.subtotalAmount || 0).toFixed(2)}
                                   </span>
                                   {order.deliveryFee !== undefined && order.deliveryFee > 0 && (
-                                    <span className="text-[#475569] dark:text-zinc-400 text-[10px]">
+                                    <span className="text-[#6B5A55] dark:text-zinc-400 text-[10px]">
                                       (Envío pagado)
                                     </span>
                                   )}
@@ -781,7 +853,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
                                 {/* Tipo de pago (solo lectura) - la selección se hace en el detalle */}
                                 <div className="flex items-center gap-1.5 text-[11px]">
-                                  <span className="font-semibold text-[#475569] dark:text-zinc-400">Tipo de pago:</span>
+                                  <span className="font-semibold text-[#6B5A55] dark:text-zinc-400">Tipo de pago:</span>
                                   <span className={`px-2 py-0.5 rounded-md font-bold ${
                                     order.paymentMethod === 'yape' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' :
                                     order.paymentMethod === 'transferencia' ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' :
@@ -794,27 +866,33 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 </div>
                               </div>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/40 dark:text-emerald-300 border border-[#10B981]/30 text-[10px] font-semibold">
-                                💳 Pago Confirmado
-                              </span>
+                              (cobroTarjeta.saldo ?? 0) > 0 ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-[10px] font-semibold">
+                                  ⏳ Pago pendiente
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/40 dark:text-emerald-300 border border-[#10B981]/30 text-[10px] font-semibold">
+                                  💳 Pago Confirmado
+                                </span>
+                              )
                             )}
                           </div>
                         )}
 
                         {/* Location Preview (9.4) */}
-                        <div className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 text-xs text-[#0F172A] dark:text-zinc-200 space-y-1 min-w-0">
+                        <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 text-xs text-[#1F1613] dark:text-zinc-200 space-y-1 min-w-0">
                           <p className="flex items-start gap-1.5 min-w-0">
-                            <MapPin className="w-3.5 h-3.5 text-[#6366F1] dark:text-[#FBBF24] flex-shrink-0 mt-0.5" />
-                            <span className="break-words font-medium text-[#0F172A] dark:text-zinc-100 min-w-0">{locationPreview}</span>
+                            <MapPin className="w-3.5 h-3.5 text-[#A8634F] dark:text-[#DFBF8B] flex-shrink-0 mt-0.5" />
+                            <span className="break-words font-medium text-[#1F1613] dark:text-zinc-100 min-w-0">{locationPreview}</span>
                           </p>
 
-                          <p className="flex items-center gap-1.5 text-[11px] text-[#475569] dark:text-zinc-400">
+                          <p className="flex items-center gap-1.5 text-[11px] text-[#6B5A55] dark:text-zinc-400">
                             <Calendar className="w-3 h-3 flex-shrink-0" />
                             <span>{order.shippingType === 'tienda' ? 'Entrega' : 'Despacho'}: {formatPeruvianDate(order.dispatchDate)}</span>
                           </p>
 
                           {order.itemsDescription && (
-                            <p className="text-[11px] text-[#475569] dark:text-zinc-400 break-words italic">
+                            <p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 break-words italic">
                               📦 {order.itemsDescription}
                             </p>
                           )}
@@ -822,7 +900,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
 
                         {/* Card Actions: Uniform buttons (9.6) */}
-                        <div className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 flex items-center justify-between gap-1.5 min-w-0">
+                        <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 flex items-center justify-between gap-1.5 min-w-0">
                           
                           <div className="flex items-center gap-1.5">
                             {/* Label Print Trigger */}
@@ -833,7 +911,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 e.stopPropagation();
                                 handleOpenLabel(order);
                               }}
-                              className="p-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#EEF2FF] text-[#6366F1] dark:bg-zinc-800 dark:text-rose-300 border border-[#E2E8F0] dark:border-zinc-700 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-[#FBF4F0] hover:bg-[#F6E8E1] text-[#A8634F] dark:bg-zinc-800 dark:text-rose-300 border border-[#EADCD3] dark:border-zinc-700 transition-colors cursor-pointer"
                               title="Imprimir Rótulo"
                             >
                               <Printer className="w-3.5 h-3.5" />
@@ -849,7 +927,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                   setEditingOrder(order);
                                   setShowEditModal(true);
                                 }}
-                                className="p-1.5 rounded-lg bg-[#F8FAFC] hover:bg-zinc-100 text-[#475569] hover:text-[#0F172A] dark:bg-zinc-800 dark:text-zinc-300 border border-[#E2E8F0] dark:border-zinc-700 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg bg-[#FBF4F0] hover:bg-zinc-100 text-[#6B5A55] hover:text-[#1F1613] dark:bg-zinc-800 dark:text-zinc-300 border border-[#EADCD3] dark:border-zinc-700 transition-colors cursor-pointer"
                                 title="Editar pedido"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
@@ -865,9 +943,9 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onUpdateOrderStatus(order.id, prev);
+                                  intentarMover(order.id, prev);
                                 }}
-                                className="p-1.5 rounded-lg bg-[#F8FAFC] hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[#475569] hover:text-[#0F172A] dark:text-zinc-200 border border-[#E2E8F0] dark:border-zinc-700 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg bg-[#FBF4F0] hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-[#6B5A55] hover:text-[#1F1613] dark:text-zinc-200 border border-[#EADCD3] dark:border-zinc-700 transition-colors cursor-pointer"
                                 title="Mover a etapa anterior"
                               >
                                 <ChevronLeft className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -880,9 +958,9 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onUpdateOrderStatus(order.id, next);
+                                  intentarMover(order.id, next);
                                 }}
-                                className="p-1.5 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white transition-colors cursor-pointer shadow-2xs"
+                                className="p-1.5 rounded-lg bg-[#A8634F] hover:bg-[#8E4F3E] text-white transition-colors cursor-pointer shadow-2xs"
                                 title="Avanzar etapa"
                               >
                                 <ChevronRight className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -896,7 +974,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 e.stopPropagation();
                                 onDeleteOrder(order.id);
                               }}
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-[#6366F1] hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-zinc-400 hover:text-[#A8634F] hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                               title="Mover a la papelera (puedes rescatarlo desde la Papelera)"
                             >
                               <Trash2 className="w-3.5 h-3.5 stroke-[1.8]" />
@@ -914,14 +992,14 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                 {hiddenCount > 0 && (
                   <div className={`p-3 rounded-xl border text-center space-y-2 ${
                     isDark 
-                      ? 'bg-[#0F0F12] border-emerald-900/40 text-zinc-300' 
+                      ? 'bg-[#140E0D] border-emerald-900/40 text-zinc-300' 
                       : 'bg-emerald-50/70 border-emerald-300 text-black'
                   }`}>
                     <div className="flex items-center justify-center gap-1.5 text-xs font-black text-emerald-800 dark:text-emerald-500">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>+{hiddenCount} pedidos entregados archivados</span>
                     </div>
-                    <p className="text-[11px] text-[#0F172A] dark:text-zinc-400 leading-tight font-bold">
+                    <p className="text-[11px] text-[#1F1613] dark:text-zinc-400 leading-tight font-bold">
                       Mostrando los 10 más recientes para mantener la agilidad del tablero.
                     </p>
                     <button
@@ -1006,9 +1084,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
         <OrderEditModal
           order={editingOrder}
           isOpen={showEditModal}
+          avisoPrecio={avisoPrecio}
           onClose={() => {
+            const cerradoId = editingOrder?.id;
+            setAvisoPrecio(false);
             setShowEditModal(false);
             setEditingOrder(null);
+            if (cerradoId) setTarjetaResaltada(cerradoId);
           }}
           onSaveOrder={(updated) => {
             onUpdateOrder(updated);

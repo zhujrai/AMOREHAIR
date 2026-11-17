@@ -27,6 +27,8 @@ interface NavbarProps {
   totalOrdersCount?: number;
   storeSettings: StoreSettings;
   onUpdateStoreSettings?: (newSettings: StoreSettings) => void;
+  /** Cotizaciones nuevas del catálogo sin atender (contador del enlace) */
+  cotizacionesNuevas?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -42,6 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   totalOrdersCount,
   storeSettings,
   onUpdateStoreSettings,
+  cotizacionesNuevas = 0,
 }) => {
   const [showLogoModal, setShowLogoModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -56,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     } transition-colors duration-200 border-b ${
       isDark 
         ? 'border-white/10 bg-[#161419]/95 text-white' 
-        : 'border-[#E2E8F0] bg-white/95 text-[#0F172A]'
+        : 'border-[#EADCD3] bg-white/95 text-[#1F1613]'
     } backdrop-blur-md shadow-2xs`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
@@ -79,25 +82,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#6366F1]/10 text-[#6366F1] flex items-center justify-center font-black">
+                  <div className="w-8 h-8 rounded-xl bg-[#A8634F]/10 text-[#A8634F] flex items-center justify-center font-black">
                     <Truck className="w-4 h-4 stroke-[2.5]" />
                   </div>
-                  <span className="font-black text-sm tracking-tight uppercase text-[#0F172A] dark:text-white">AMORE SALON</span>
+                  <span className="font-black text-sm tracking-tight uppercase text-[#1F1613] dark:text-white">AMORE SALON</span>
                 </div>
               )}
             </div>
 
-            <div className={`hidden sm:flex items-center gap-2 pl-3 border-l ${isDark ? 'border-white/10' : 'border-[#E2E8F0]'}`}>
-              <span className="font-mono-meta text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#475569] dark:text-zinc-300 font-extrabold">
+            <div className={`hidden sm:flex items-center gap-2 pl-3 border-l ${isDark ? 'border-white/10' : 'border-[#EADCD3]'}`}>
+              <span className="font-mono-meta text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#6B5A55] dark:text-zinc-300 font-extrabold">
                 {currentView === 'admin' ? 'TABLERO DE DESPACHOS' : 'FORMULARIO DE ENVÍOS'}
               </span>
               {currentView === 'admin' && isAdminAuthenticated && (
-                <span className="text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#6366F1] dark:bg-[#6366F1]/30 dark:text-rose-200 border border-[#6366F1]/20">
+                <span className="text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-[#F6E8E1] text-[#A8634F] dark:bg-[#A8634F]/30 dark:text-rose-200 border border-[#A8634F]/20">
                   {totalOrdersCount ?? pendingCount} pedidos
                 </span>
               )}
               {currentView === 'cliente' && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 font-mono">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 text-[#6B5A55] dark:text-zinc-400 font-mono">
                   /pedidos
                 </span>
               )}
@@ -116,27 +119,32 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={onNavigateToClient}
                   className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'border-white/10 bg-[#1E293B] hover:bg-zinc-800 text-zinc-200'
-                      : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A]'
+                      ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-zinc-200'
+                      : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'
                   }`}
                   title="Ver Formulario de Clientes (/pedidos)"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-[#6366F1]" />
+                  <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-[#A8634F]" />
                   <span>Form pedidos</span>
                 </button>
 
-                {/* Bandeja de consultas del catálogo (/consultas) */}
+                {/* Bandeja de cotizaciones del catálogo (/cotizaciones) */}
                 <a
                   id="navbar-consultas-btn"
-                  href="/consultas"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                  href="/cotizaciones"
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'border-white/10 bg-[#1E293B] hover:bg-zinc-800 text-zinc-200'
-                      : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A]'
+                      ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-zinc-200'
+                      : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'
                   }`}
-                  title="Consultas del catálogo"
+                  title="Cotizaciones del catálogo"
                 >
-                  <span>Consultas</span>
+                  <span>Cotizaciones</span>
+                  {cotizacionesNuevas > 0 && (
+                    <span className="min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#A8634F] text-white text-[10px] font-black">
+                      {cotizacionesNuevas}
+                    </span>
+                  )}
                 </a>
 
                 {/* Botón Espacio para Logo de la Marca */}
@@ -145,12 +153,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setShowLogoModal(true)}
                   className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'border-white/10 bg-[#1E293B] hover:bg-zinc-800 text-white'
-                      : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A]'
+                      ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-white'
+                      : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'
                   }`}
                   title="Configurar logo de la empresa y datos del remitente"
                 >
-                  <Camera className="w-3.5 h-3.5 text-[#6366F1]" />
+                  <Camera className="w-3.5 h-3.5 text-[#A8634F]" />
                   <span>Logo</span>
                 </button>
 
@@ -164,12 +172,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {adminUser?.email ? adminUser.email.split('@')[0] : 'ADMIN'}
                   </span>
                   {adminUser?.role === 'superadmin' && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#FFFBEB] text-[#F59E0B] border border-[#FBBF24]/30">
+                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#FBF1DC] text-[#CFA24A] border border-[#DFBF8B]/30">
                       SUPER
                     </span>
                   )}
                   {pendingCount > 0 && (
-                    <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#6366F1] text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
+                    <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#A8634F] text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
                       {pendingCount}
                     </span>
                   )}
@@ -180,8 +188,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={onLogout}
                   className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs ${
                     isDark
-                      ? 'bg-[#1E293B] hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
-                      : 'bg-white hover:bg-rose-50 text-[#475569] hover:text-rose-700 border-[#E2E8F0] hover:border-rose-300'
+                      ? 'bg-[#2A1E1A] hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
+                      : 'bg-white hover:bg-rose-50 text-[#6B5A55] hover:text-rose-700 border-[#EADCD3] hover:border-rose-300'
                   }`}
                   title={`Cerrar Sesión (${adminUser?.email || 'Admin'})`}
                 >
@@ -198,8 +206,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onNavigateToAdmin}
                 className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
                   isDark
-                    ? 'border-white/10 bg-[#6366F1] hover:bg-[#4F46E5] text-zinc-300 hover:text-white'
-                    : 'border-[#E2E8F0] bg-white hover:bg-zinc-50 text-zinc-700 hover:text-[#0F172A]'
+                    ? 'border-white/10 bg-[#A8634F] hover:bg-[#8E4F3E] text-zinc-300 hover:text-white'
+                    : 'border-[#EADCD3] bg-white hover:bg-zinc-50 text-zinc-700 hover:text-[#1F1613]'
                 }`}
                 title="Acceso al Tablero Administrativo"
               >
@@ -214,8 +222,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={onNavigateToClient}
                 className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
                   isDark
-                    ? 'border-white/10 bg-[#6366F1] hover:bg-[#4F46E5] text-white'
-                    : 'border-[#E2E8F0] bg-white hover:bg-zinc-50 text-[#0F172A]'
+                    ? 'border-white/10 bg-[#A8634F] hover:bg-[#8E4F3E] text-white'
+                    : 'border-[#EADCD3] bg-white hover:bg-zinc-50 text-[#1F1613]'
                 }`}
                 title="Ir al Formulario de Envíos (/pedidos)"
               >
@@ -232,7 +240,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
                 isDark
                   ? 'bg-zinc-900/90 hover:bg-zinc-800 border-white/10 text-white hover:border-blue-500/40'
-                  : 'bg-white hover:bg-zinc-100 border-[#E2E8F0] text-[#0F172A] hover:border-blue-500/40'
+                  : 'bg-white hover:bg-zinc-100 border-[#EADCD3] text-[#1F1613] hover:border-blue-500/40'
               }`}
               title="Compartir / Copiar enlace del formulario de envíos"
               aria-label="Compartir formulario"
@@ -247,13 +255,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setIsDark(!isDark)}
               className={`p-2 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs ${
                 isDark
-                  ? 'border-white/10 bg-[#6366F1] hover:bg-[#4F46E5] text-amber-400'
-                  : 'border-[#E2E8F0] bg-white hover:bg-zinc-100 text-[#0F172A]'
+                  ? 'border-white/10 bg-[#A8634F] hover:bg-[#8E4F3E] text-amber-400'
+                  : 'border-[#EADCD3] bg-white hover:bg-zinc-100 text-[#1F1613]'
               }`}
               title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
               aria-label="Cambiar tema"
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#0F172A]" />}
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#1F1613]" />}
             </button>
           </div>
 
