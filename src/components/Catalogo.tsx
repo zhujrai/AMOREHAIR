@@ -12,6 +12,8 @@ import { trazoContorno, ZonaCatalogo } from '../utils/contornos';
 
 const WHATSAPP = '51940339934';
 const CLAVE_CESTA = 'amore_cesta_v1';
+// Texto del mensaje del botón de kit completo. IMPORTANTE: debe corresponder a una oferta real que la asesora confirme.
+const TEXTO_KIT = 'Lleva el kit completo y pide tu descuento exclusivo: tu asesora te lo confirma en la cotización.';
 
 type Zona = ZonaCatalogo;
 interface Presentacion { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null; orden: number }
@@ -91,6 +93,11 @@ const ESTILOS = `
 .cat .esqueleto { background:linear-gradient(90deg,var(--hueco) 0,rgba(255,255,255,.5) 50%,var(--hueco) 100%); background-size:400px 100%; animation:catBrillo 1.3s linear infinite; }
 .cat .boton-acento { background:linear-gradient(135deg,var(--acento2),var(--acento)); color:#fff; box-shadow:0 10px 24px -10px rgba(168,99,79,.8); }
 .cat .boton-acento:active { transform:scale(.97); }
+@keyframes catLatido { 0%,100% { transform:scale(1); box-shadow:0 10px 24px -10px rgba(168,99,79,.8), 0 0 0 0 rgba(198,129,115,.55); } 50% { transform:scale(1.045); box-shadow:0 14px 30px -10px rgba(168,99,79,.9), 0 0 0 11px rgba(198,129,115,0); } }
+@keyframes catReflejo { 0% { transform:translateX(-140%) skewX(-22deg); } 55%,100% { transform:translateX(320%) skewX(-22deg); } }
+.cat .latido { position:relative; overflow:hidden; animation:catLatido 1.7s ease-in-out infinite; }
+.cat .latido::after { content:''; position:absolute; top:0; bottom:0; left:0; width:38%; pointer-events:none; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:catReflejo 2.9s ease-in-out infinite; }
+.cat .latido:active { animation-play-state:paused; transform:scale(.97); }
 @media (prefers-reduced-motion: reduce) { .cat * { animation:none !important; transition:none !important; } }
 `;
 
@@ -500,9 +507,16 @@ export const Catalogo: React.FC = () => {
                 {/* Etiqueta y acción en vidrio */}
                 <div className="vidrio pointer-events-none absolute left-2.5 top-2.5 max-w-[62%] truncate rounded-full px-3 py-1.5 text-[11px] font-semibold">{nombreCorto(activa)}</div>
                 {disponiblesActiva > 0 && elegidasActiva < disponiblesActiva && (
-                  <button type="button" onClick={elegirTodoElKit} className="vidrio absolute bottom-2.5 right-2.5 cursor-pointer rounded-full px-3.5 py-2 text-[11px] font-semibold active:scale-95 transition-transform">
-                    Elegir todo el kit
-                  </button>
+                  <div className="group absolute bottom-2.5 right-2.5">
+                    {/* Mensaje al pasar el cursor o enfocar (en el celular se ve la etiqueta "Dcto. exclusivo") */}
+                    <span id="tip-kit" role="tooltip" className="pointer-events-none absolute bottom-full right-0 mb-2 w-52 rounded-2xl px-3.5 py-2.5 text-[12px] font-medium leading-snug opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100" style={{ background: 'var(--ink)', color: 'var(--bg)' }}>
+                      {TEXTO_KIT}
+                    </span>
+                    <button type="button" onClick={elegirTodoElKit} className="boton-acento latido flex cursor-pointer flex-col items-center rounded-full px-4 py-2 leading-tight">
+                      <span className="text-[12px] font-bold">Elegir todo el kit</span>
+                      <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#FFE9B8]">Dcto. exclusivo</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -642,7 +656,7 @@ export const Catalogo: React.FC = () => {
             id="consultar-whatsapp-btn"
             onClick={consultar}
             disabled={lineas.length === 0 || enviando}
-            className="boton-acento flex h-[50px] shrink-0 cursor-pointer items-center gap-2 rounded-full px-5 text-[15px] font-semibold transition-transform disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+            className={`boton-acento ${lineas.length > 0 && !enviando ? 'latido' : ''} flex h-[50px] shrink-0 cursor-pointer items-center gap-2 rounded-full px-5 text-[15px] font-semibold transition-transform disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none`}
           >
             <Icono d={D_WSP} className="h-[18px] w-[18px]" />
             {enviando ? 'Enviando…' : 'Pedir cotización'}
