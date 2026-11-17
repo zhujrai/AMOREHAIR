@@ -125,6 +125,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Form pedidos</span>
                 </button>
 
+                {/* Bandeja de consultas del catálogo (/consultas) */}
+                <a
+                  id="navbar-consultas-btn"
+                  href="/consultas"
+                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                    isDark
+                      ? 'border-white/10 bg-[#1E293B] hover:bg-zinc-800 text-zinc-200'
+                      : 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A]'
+                  }`}
+                  title="Consultas del catálogo"
+                >
+                  <span>Consultas</span>
+                </a>
+
                 {/* Botón Espacio para Logo de la Marca */}
                 <button
                   id="navbar-edit-logo-btn"
