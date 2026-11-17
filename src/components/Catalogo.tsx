@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../utils/dbApi';
+import { trazoContorno, ZonaCatalogo } from '../utils/contornos';
 
 /**
- * Catálogo por escenas de rutina (prototipo).
- * La clienta toca los productos de la foto (se resaltan y pasan a su selección), ajusta presentación/cantidad
- * y envía una CONSULTA por WhatsApp. El precio final lo fija la vendedora: aquí solo hay precios sugeridos.
+ * Catálogo por escenas de rutina.
+ * La clienta toca el CONTORNO de cada producto sobre la foto del kit (se ilumina y entra a su selección).
+ * Debajo hay un resumen corto de lo elegido, solo para repasar y ajustar cantidad/tamaño.
+ * Envía una CONSULTA por WhatsApp; el precio final lo fija la vendedora (aquí solo hay precios sugeridos).
  */
 
 const WHATSAPP = '51940339934';
 
-interface Zona { x: number; y: number; w: number; h: number }
+type Zona = ZonaCatalogo;
 interface Presentacion { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null; orden: number }
 interface Producto { id: string; marca: string; nombre: string; tipo: string | null; disponible: boolean }
 interface Pieza { id: number; producto_id: string; presentacion_foto_id: string | null; zona: Zona; orden: number }
@@ -26,6 +28,36 @@ function refDelEnlace(): string | undefined {
     return undefined;
   }
 }
+
+/** Miniatura cuadrada recortada de la misma foto (según la zona de la pieza). */
+const Miniatura: React.FC<{ foto: string; zona: Zona; ancho: number; alto: number; lado?: number }> = ({ foto, zona, ancho, alto, lado = 44 }) => {
+  const pw = zona.w * ancho;
+  const ph = zona.h * alto;
+  const escala = lado / Math.max(pw, ph);
+  return (
+    <div className="relative shrink-0 rounded-xl bg-[#F2E7DF]" style={{ width: lado, height: lado }}>
+      {/* Solo se ve el recorte exacto del producto (sin los vecinos), centrado en el cuadro */}
+      <div
+        className="absolute overflow-hidden rounded-md"
+        style={{ width: pw * escala, height: ph * escala, left: (lado - pw * escala) / 2, top: (lado - ph * escala) / 2 }}
+      >
+        <img
+          src={foto}
+          alt=""
+          draggable={false}
+          style={{
+            position: 'absolute',
+            maxWidth: 'none',
+            width: ancho * escala,
+            height: alto * escala,
+            left: -zona.x * ancho * escala,
+            top: -zona.y * alto * escala,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
 
 export const Catalogo: React.FC = () => {
   const [rutina, setRutina] = useState<Rutina | null>(null);
@@ -89,21 +121,32 @@ export const Catalogo: React.FC = () => {
     [piezas]
   );
 
+  const seleccionInicial = (p: Pieza): ItemSel => {
+    const pres = presentaciones[p.producto_id] || [];
+    const inicial = pres.find((x) => x.id === p.presentacion_foto_id) || pres[0];
+    return { presentacionId: inicial?.id || '', cantidad: 1 };
+  };
+
   const alternar = (p: Pieza) => {
     const prod = productos[p.producto_id];
     if (!prod || !prod.disponible) return;
     setSeleccion((prev) => {
       const copia = { ...prev };
-      if (copia[p.producto_id]) {
-        delete copia[p.producto_id];
-      } else {
-        const pres = presentaciones[p.producto_id] || [];
-        const inicial = pres.find((x) => x.id === p.presentacion_foto_id) || pres[0];
-        copia[p.producto_id] = { presentacionId: inicial?.id || '', cantidad: 1 };
-      }
+      if (copia[p.producto_id]) delete copia[p.producto_id];
+      else copia[p.producto_id] = seleccionInicial(p);
       return copia;
     });
   };
+
+  const elegirTodo = () =>
+    setSeleccion((prev) => {
+      const copia = { ...prev };
+      piezas.forEach((p) => {
+        const prod = productos[p.producto_id];
+        if (prod && prod.disponible && !copia[p.producto_id]) copia[p.producto_id] = seleccionInicial(p);
+      });
+      return copia;
+    });
 
   const cambiar = (productoId: string, cambios: Partial<ItemSel>) =>
     setSeleccion((prev) => (prev[productoId] ? { ...prev, [productoId]: { ...prev[productoId], ...cambios } } : prev));
@@ -114,13 +157,14 @@ export const Catalogo: React.FC = () => {
       const prod = productos[p.producto_id];
       const sel = seleccion[p.producto_id];
       const pres = (presentaciones[p.producto_id] || []).find((x) => x.id === sel.presentacionId);
-      return { prod, sel, pres };
+      return { pieza: p, prod, sel, pres };
     });
 
   const todosConPrecio = lineas.length > 0 && lineas.every((l) => l.pres?.precio_sugerido != null);
   const totalSugerido = todosConPrecio
     ? lineas.reduce((s, l) => s + (l.pres!.precio_sugerido as number) * l.sel.cantidad, 0)
     : null;
+  const disponibles = piezas.filter((p) => productos[p.producto_id]?.disponible).length;
 
   const consultar = async () => {
     if (!rutina || lineas.length === 0) return;
@@ -197,10 +241,18 @@ export const Catalogo: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center px-6 text-center text-sm text-zinc-600">{error || 'Catálogo no disponible.'}</div>;
   }
 
-  const aspecto = rutina.ancho_foto && rutina.alto_foto ? `${rutina.ancho_foto} / ${rutina.alto_foto}` : '3 / 4';
+  const W = rutina.ancho_foto || 1000;
+  const H = rutina.alto_foto || 1333;
 
   return (
     <div className="min-h-screen bg-[#FBF4F0] text-[#2B1D1A]">
+      {/* Animaciones del contorno: las piezas sin elegir "respiran" para invitar a tocar */}
+      <style>{`
+        @keyframes amorePulso { 0%,100% { stroke-opacity: .55 } 50% { stroke-opacity: 1 } }
+        .contorno-libre { animation: amorePulso 2.4s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .contorno-libre { animation: none; } }
+      `}</style>
+
       <header className="px-4 pt-5 pb-3 text-center">
         <p className="text-[11px] tracking-[0.3em] uppercase text-[#B06F5C] font-semibold">Amore Salón · Hair Style Studio</p>
         <h1 className="mt-1 text-xl font-extrabold leading-tight">{rutina.nombre}</h1>
@@ -208,104 +260,138 @@ export const Catalogo: React.FC = () => {
       </header>
 
       <main className="max-w-md mx-auto px-4 pb-32">
-        {/* Escena: la foto completa con zonas tocables */}
-        <div className="relative rounded-3xl overflow-hidden shadow-lg bg-white select-none" style={{ aspectRatio: aspecto }}>
+        {/* Escena: la foto del kit; cada producto tiene un contorno que se ilumina al elegirlo */}
+        <div className="relative rounded-3xl overflow-hidden shadow-lg bg-white select-none" style={{ aspectRatio: `${W} / ${H}` }}>
           <img src={rutina.foto_url} alt={rutina.nombre} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-          {piezasOrdenadas.map((p) => {
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 w-full h-full" role="group" aria-label="Productos del kit">
+            {piezasOrdenadas.map((p) => {
+              const prod = productos[p.producto_id];
+              if (!prod) return null;
+              const marcado = Boolean(seleccion[p.producto_id]);
+              const trazo = trazoContorno(p.zona, W, H);
+              const libre = !prod.disponible;
+              return (
+                <g
+                  key={p.id}
+                  role="button"
+                  tabIndex={libre ? -1 : 0}
+                  aria-pressed={marcado}
+                  aria-label={`${marcado ? 'Quitar' : 'Elegir'} ${prod.nombre}`}
+                  aria-disabled={libre}
+                  onClick={() => alternar(p)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(p); } }}
+                  style={{ cursor: libre ? 'not-allowed' : 'pointer', outline: 'none', opacity: libre ? 0.4 : 1 }}
+                >
+                  {/* Área de toque amplia e invisible (ayuda con los frascos angostos) */}
+                  <path d={trazo} fill="transparent" stroke="transparent" strokeWidth={22} vectorEffect="non-scaling-stroke" pointerEvents="all" />
+                  {/* Contorno visible */}
+                  <path
+                    d={trazo}
+                    className={marcado ? '' : 'contorno-libre'}
+                    fill={marcado ? 'rgba(176,111,92,0.26)' : 'rgba(255,255,255,0.05)'}
+                    stroke={marcado ? '#FFE3A8' : 'rgba(255,255,255,0.95)'}
+                    strokeWidth={marcado ? 3.2 : 1.6}
+                    strokeDasharray={marcado ? undefined : '7 5'}
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    pointerEvents="none"
+                    style={{
+                      transition: 'all .25s ease',
+                      filter: marcado ? 'drop-shadow(0 0 7px rgba(255,214,140,.95)) drop-shadow(0 0 2px rgba(176,111,92,1))' : 'none',
+                    }}
+                  />
+                </g>
+              );
+            })}
+          </svg>
+          {/* Insignias (no interceptan el toque) */}
+          {piezas.map((p) => {
             const prod = productos[p.producto_id];
             if (!prod) return null;
             const marcado = Boolean(seleccion[p.producto_id]);
             return (
-              <button
-                key={p.id}
-                type="button"
-                aria-pressed={marcado}
-                aria-label={`${marcado ? 'Quitar' : 'Elegir'} ${prod.nombre}`}
-                disabled={!prod.disponible}
-                onClick={() => alternar(p)}
-                className={`absolute rounded-2xl transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-[#DFBF8B] ${
-                  marcado
-                    ? 'border-[3px] border-[#B06F5C] bg-[#B06F5C]/25 shadow-[0_0_0_4px_rgba(223,191,139,0.55)]'
-                    : 'border-2 border-dashed border-white/80 bg-white/5 hover:bg-white/25'
-                } ${!prod.disponible ? 'opacity-40 cursor-not-allowed' : ''}`}
-                style={{
-                  left: `${p.zona.x * 100}%`,
-                  top: `${p.zona.y * 100}%`,
-                  width: `${p.zona.w * 100}%`,
-                  height: `${p.zona.h * 100}%`,
-                }}
+              <span
+                key={`b-${p.id}`}
+                aria-hidden="true"
+                className={`pointer-events-none absolute w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shadow-md transition-all ${
+                  marcado ? 'bg-[#B06F5C] text-white scale-100' : 'bg-white/90 text-[#B06F5C] scale-90'
+                }`}
+                style={{ left: `calc(${(p.zona.x + p.zona.w) * 100}% - 26px)`, top: `calc(${p.zona.y * 100}% + 4px)` }}
               >
-                <span
-                  className={`absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shadow-md transition-all ${
-                    marcado ? 'bg-[#B06F5C] text-white scale-100' : 'bg-white text-[#B06F5C] scale-90'
-                  }`}
-                >
-                  {marcado ? '✓' : '+'}
-                </span>
-              </button>
+                {marcado ? '✓' : '+'}
+              </span>
             );
           })}
         </div>
-        <p className="mt-2 text-center text-[11px] text-[#8A7A76]">Toca los productos que quieres. Tu asesora confirma el precio final.</p>
 
-        {/* Lista con ajustes */}
-        <ul className="mt-5 space-y-2.5">
-          {piezas.map((p) => {
-            const prod = productos[p.producto_id];
-            if (!prod) return null;
-            const sel = seleccion[p.producto_id];
-            const pres = presentaciones[p.producto_id] || [];
-            return (
-              <li
-                key={p.id}
-                className={`rounded-2xl border p-3 transition-colors ${sel ? 'bg-white border-[#B06F5C] shadow-sm' : 'bg-white/60 border-[#EAD7BC]'}`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id={`pieza-${p.id}`}
-                    checked={Boolean(sel)}
-                    disabled={!prod.disponible}
-                    onChange={() => alternar(p)}
-                    className="w-5 h-5 accent-[#B06F5C] cursor-pointer"
-                  />
-                  <label htmlFor={`pieza-${p.id}`} className="flex-1 cursor-pointer">
-                    <span className="block text-sm font-bold leading-tight">{prod.nombre}</span>
-                    <span className="block text-[11px] text-[#8A7A76]">{prod.marca}{prod.disponible ? '' : ' · Agotado'}</span>
-                  </label>
-                </div>
+        <div className="mt-2.5 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-[#8A7A76] leading-snug">Toca el contorno de cada producto para elegirlo. Tu asesora confirma el precio final.</p>
+          {disponibles > 0 && lineas.length < disponibles && (
+            <button
+              type="button"
+              onClick={elegirTodo}
+              className="shrink-0 rounded-full border border-[#B06F5C] px-3 py-1.5 text-[11px] font-bold text-[#B06F5C] cursor-pointer hover:bg-[#B06F5C] hover:text-white transition-colors"
+            >
+              Elegir todo el kit
+            </button>
+          )}
+        </div>
 
-                {sel && (
-                  <div className="mt-2.5 flex items-center gap-2 pl-8">
-                    {pres.length > 1 ? (
-                      <select
-                        value={sel.presentacionId}
-                        onChange={(e) => cambiar(prod.id, { presentacionId: e.target.value })}
-                        className="flex-1 min-w-0 rounded-xl border border-[#EAD7BC] bg-[#FBF4F0] px-2 py-1.5 text-xs font-semibold"
-                      >
-                        {pres.map((x) => (
-                          <option key={x.id} value={x.id}>
-                            {x.etiqueta}{x.precio_sugerido != null ? ` · ref. ${dinero(x.precio_sugerido)}` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="flex-1 text-xs font-semibold text-[#2B1D1A]">
-                        {pres[0]?.etiqueta}
-                        {pres[0]?.precio_sugerido != null && <span className="text-[#8A7A76]"> · ref. {dinero(pres[0].precio_sugerido)}</span>}
-                      </span>
-                    )}
+        {/* Resumen corto para repasar lo elegido (no protagonista) */}
+        <section className="mt-4" aria-label="Tu selección">
+          <h2 className="text-[11px] font-extrabold uppercase tracking-widest text-[#B06F5C]">Tu selección</h2>
+          {lineas.length === 0 ? (
+            <p className="mt-2 rounded-2xl border border-dashed border-[#EAD7BC] bg-white/50 px-3 py-3 text-center text-xs text-[#8A7A76]">
+              Aún no has elegido productos.
+            </p>
+          ) : (
+            <ul className="mt-2 divide-y divide-[#F1E4DA] rounded-2xl border border-[#EAD7BC] bg-white">
+              {lineas.map(({ pieza, prod, sel }) => {
+                const pres = presentaciones[prod.id] || [];
+                return (
+                  <li key={pieza.id} className="flex items-center gap-2.5 px-2.5 py-2">
+                    <Miniatura foto={rutina.foto_url} zona={pieza.zona} ancho={W} alto={H} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-bold leading-tight">{prod.nombre}</p>
+                      {pres.length > 1 ? (
+                        <select
+                          value={sel.presentacionId}
+                          onChange={(e) => cambiar(prod.id, { presentacionId: e.target.value })}
+                          className="mt-0.5 max-w-full rounded-lg border border-[#EAD7BC] bg-[#FBF4F0] px-1.5 py-0.5 text-[11px] font-semibold"
+                          aria-label={`Tamaño de ${prod.nombre}`}
+                        >
+                          {pres.map((x) => (
+                            <option key={x.id} value={x.id}>
+                              {x.etiqueta}{x.precio_sugerido != null ? ` · ref. ${dinero(x.precio_sugerido)}` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-[11px] text-[#8A7A76]">
+                          {pres[0]?.etiqueta}
+                          {pres[0]?.precio_sugerido != null && ` · ref. ${dinero(pres[0].precio_sugerido)}`}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex items-center rounded-xl border border-[#EAD7BC] bg-[#FBF4F0]">
                       <button type="button" aria-label="Menos" onClick={() => cambiar(prod.id, { cantidad: Math.max(1, sel.cantidad - 1) })} className="w-7 h-7 text-base font-bold cursor-pointer">−</button>
-                      <span className="w-6 text-center text-xs font-bold">{sel.cantidad}</span>
+                      <span className="w-5 text-center text-xs font-bold">{sel.cantidad}</span>
                       <button type="button" aria-label="Más" onClick={() => cambiar(prod.id, { cantidad: Math.min(9, sel.cantidad + 1) })} className="w-7 h-7 text-base font-bold cursor-pointer">+</button>
                     </div>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                    <button
+                      type="button"
+                      aria-label={`Quitar ${prod.nombre}`}
+                      onClick={() => alternar(pieza)}
+                      className="w-7 h-7 rounded-full text-sm text-[#8A7A76] hover:bg-[#FBF4F0] cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
         {/* Datos opcionales */}
         <div className="mt-5 grid grid-cols-2 gap-2.5">
@@ -338,7 +424,7 @@ export const Catalogo: React.FC = () => {
             </p>
             <p className="text-[11px] text-[#8A7A76] truncate">
               {lineas.length === 0
-                ? 'Toca la foto o la lista'
+                ? 'Toca el contorno en la foto'
                 : totalSugerido != null
                   ? `Precio referencial ${dinero(totalSugerido)} · lo confirma tu asesora`
                   : 'Precio por confirmar con tu asesora'}
