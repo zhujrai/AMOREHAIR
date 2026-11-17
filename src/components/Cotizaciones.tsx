@@ -9,7 +9,7 @@ import { dinero } from '../utils/cobro';
  * flete (el cliente solo ve el TOTAL), conversa por WhatsApp y, al aceptarse, la pasa al tablero como tarjeta.
  */
 
-interface LineaSel { producto: string; presentacion: string | null; cantidad: number; precio_sugerido: number | null; rutina?: string }
+interface LineaSel { producto: string; presentacion: string | null; cantidad: number; precio_sugerido: number | null; rutina?: string; marca?: string }
 interface Cotizacion {
   id: string;
   created_at: string;
@@ -63,7 +63,10 @@ const lineaTexto = (l: LineaSel) => `${l.cantidad} × ${l.producto}${l.presentac
 
 function agrupar(sel: LineaSel[]): [string, LineaSel[]][] {
   const mapa = new Map<string, LineaSel[]>();
-  sel.forEach((l) => mapa.set(l.rutina || 'Productos', [...(mapa.get(l.rutina || 'Productos') || []), l]));
+  sel.forEach((l) => {
+    const clave = l.marca || l.rutina || 'Productos';
+    mapa.set(clave, [...(mapa.get(clave) || []), l]);
+  });
   return Array.from(mapa.entries());
 }
 
