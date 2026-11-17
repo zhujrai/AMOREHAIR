@@ -16,7 +16,7 @@ const CLAVE_CESTA = 'amore_cesta_v1';
 const TEXTO_KIT = 'Lleva el kit completo y pide tu descuento exclusivo: tu asesora te lo confirma en la cotización.';
 
 type Zona = ZonaCatalogo;
-interface Presentacion { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null; orden: number }
+interface Presentacion { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null; orden: number; stock_modo?: string; stock_cantidad?: number }
 interface Producto { id: string; marca: string; nombre: string; tipo: string | null; disponible: boolean }
 interface Pieza { id: number; rutina_id: string; producto_id: string; presentacion_foto_id: string | null; zona: Zona; orden: number }
 interface Rutina { id: string; nombre: string; descripcion: string | null; foto_url: string; ancho_foto: number | null; alto_foto: number | null; orden?: number }
@@ -126,6 +126,13 @@ export const Catalogo: React.FC = () => {
       return !v;
     });
   };
+  const [despachoUrl, setDespachoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!despachoUrl) return;
+    const f = (e: KeyboardEvent) => { if (e.key === 'Escape') setDespachoUrl(null); };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, [despachoUrl]);
   const [barrido, setBarrido] = useState(0); // cuenta de veces que se eligió el kit completo (dispara el barrido de luz)
   const cestaRef = useRef<HTMLElement | null>(null);
   const toque = useRef<{ x: number; y: number } | null>(null);
@@ -162,8 +169,9 @@ export const Catalogo: React.FC = () => {
 
         if (!activo) return;
         const porProducto: Record<string, Presentacion[]> = {};
-        (pres || []).forEach((x: Presentacion) => { (porProducto[x.producto_id] ||= []).push(x); });
-        const mapaProductos: Record<string, Producto> = Object.fromEntries((prods || []).map((p: Producto) => [p.id, p]));
+        // Stock: una presentación agotada (modo cantidad con 0) no se ofrece; sin presentaciones disponibles el producto figura agotado
+        (pres || []).forEach((x: Presentacion) => { if (x.stock_modo === 'cantidad' && (x.stock_cantidad ?? 0) <= 0) return; (porProducto[x.producto_id] ||= []).push(x); });
+        const mapaProductos: Record<string, Producto> = Object.fromEntries((prods || []).map((p: Producto) => [p.id, { ...p, disponible: p.disponible && (porProducto[p.id] || []).length > 0 }]));
         setRutinas(rs as Rutina[]);
         setPiezas((pz || []) as Pieza[]);
         setProductos(mapaProductos);
@@ -283,7 +291,7 @@ export const Catalogo: React.FC = () => {
   const elegidasActiva = piezasActiva.filter((p) => seleccion[p.producto_id]).length;
   const cantidadPorRutina = (id: string) => piezas.filter((p) => p.rutina_id === id && seleccion[p.producto_id]).length;
 
-  const consultar = async () => {
+  const consultar = async (destino: 'whatsapp' | 'despacho' = 'whatsapp') => {
     if (lineas.length === 0) return;
     setEnviando(true);
     setError('');
@@ -324,6 +332,15 @@ export const Catalogo: React.FC = () => {
       `Hola Amore Salón, ${nombre.trim() ? `soy ${nombre.trim()}. ` : ''}Quiero una cotización:\n\n${detalle}` +
       `${codigo ? `\n\nCódigo de cotización: ${codigo}` : ''}${ref ? `\nOrigen: ${ref}` : ''}`;
     setEnviando(false);
+    if (destino === 'despacho') {
+      // Abre el formulario de despacho encima del catálogo (la cotización ya quedó registrada)
+      const q = new URLSearchParams();
+      if (codigo) q.set('c', codigo);
+      if (ref) q.set('ref', ref);
+      q.set('items', lineas.map((l) => `${l.sel.cantidad} × ${l.prod.nombre}${l.pres ? ` (${l.pres.etiqueta})` : ''}`).join('; ').slice(0, 300));
+      setDespachoUrl(`/pedidos?${q.toString()}`);
+      return;
+    }
     window.location.href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
   };
 
@@ -632,6 +649,7 @@ export const Catalogo: React.FC = () => {
             />
           </div>
           <p className="mt-2 px-1 text-[12px]" style={{ color: 'var(--muted)' }}>Opcional. Tu asesora te responde por WhatsApp y confirma el precio final.</p>
+          {lineas.length > 0 && (<button type="button" onClick={() => consultar('despacho')} disabled={enviando} className="mt-3 w-full cursor-pointer rounded-2xl py-3 text-[14px] font-semibold disabled:opacity-50" style={{ background: 'var(--hueco)', color: 'var(--ink)' }}>Ya sé a dónde enviar: completar datos de envío →</button>)}
           {error && <p className="mt-3 text-center text-[13px] text-red-600">{error}</p>}
         </section>
       </main>
@@ -661,7 +679,7 @@ export const Catalogo: React.FC = () => {
           <button
             type="button"
             id="consultar-whatsapp-btn"
-            onClick={consultar}
+            onClick={() => consultar('whatsapp')}
             disabled={lineas.length === 0 || enviando}
             className={`boton-acento ${lineas.length > 0 && !enviando ? 'latido' : ''} flex h-[50px] shrink-0 cursor-pointer items-center gap-2 rounded-full px-5 text-[15px] font-semibold transition-transform disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none`}
           >
@@ -670,6 +688,15 @@ export const Catalogo: React.FC = () => {
           </button>
         </div>
       </div>
+      {despachoUrl && (
+        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--bg)' }} role="dialog" aria-label="Datos de envío">
+          <div className="flex items-center justify-between px-4 py-3">
+            <p className="text-[15px] font-semibold">Datos de envío</p>
+            <button type="button" onClick={() => setDespachoUrl(null)} aria-label="Cerrar" className="h-10 w-10 cursor-pointer rounded-full text-xl leading-none" style={{ background: 'var(--hueco)' }}>×</button>
+          </div>
+          <iframe src={despachoUrl} title="Formulario de despacho" className="min-h-0 w-full flex-1 border-0" />
+        </div>
+      )}
     </div>
   );
 };

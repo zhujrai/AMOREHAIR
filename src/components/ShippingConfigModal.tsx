@@ -797,7 +797,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   </div>
                 </div>
 
-                {/* Retiro en Tienda */}
+                {/* Retiro en Local Amore */}
                 <div className={`p-4 rounded-2xl border transition-all ${
                   shippingConfig.tienda
                     ? isDark ? 'bg-emerald-950/20 border-emerald-900/40' : 'bg-emerald-50/80 border-emerald-200'
@@ -809,7 +809,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         <Store className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm">Retiro en Salón / Tienda</h4>
+                        <h4 className="font-bold text-sm">Retiro en Local Amore</h4>
                         <p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 font-bold">Corte: 10:00 PM • Entrega en mostrador</p>
                       </div>
                     </div>

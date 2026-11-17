@@ -80,6 +80,14 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [authListo, setAuthListo] = useState<boolean>(false);
+  // Perfil: 'admin' ve todo; 'asesor' no ve la opción de base de datos. Mientras se consulta se asume 'asesor' (lo más restrictivo).
+  const [rolPersonal, setRolPersonal] = useState<'admin' | 'asesor'>('asesor');
+  useEffect(() => {
+    if (!isAdminAuthenticated) { setRolPersonal('asesor'); return; }
+    let activo = true;
+    supabase.rpc('mi_rol').then(({ data }) => { if (activo) setRolPersonal(data === 'admin' ? 'admin' : 'asesor'); });
+    return () => { activo = false; };
+  }, [isAdminAuthenticated]);
   const [recuperandoClave, setRecuperandoClave] = useState<boolean>(() => hayRecuperacionPendiente());
 
   // Restaura la sesión al abrir la página y reacciona a cierres de sesión (p. ej. desde otra pestaña)
@@ -615,6 +623,18 @@ export default function App() {
     showToast(`Pedido #${updatedOrder.id} modificado correctamente`);
   };
 
+  // Marca la tarjeta como vista (quita la etiqueta "New") sin avisos en pantalla
+  const handleMarkSeen = (orderId: string) => {
+    const ahora = new Date().toISOString();
+    setOrders((prev) => {
+      const o = prev.find((x) => x.id === orderId);
+      if (!o || o.seenAt) return prev;
+      const actualizado = { ...o, seenAt: ahora };
+      saveServerOrder(actualizado).catch(() => {});
+      return prev.map((x) => (x.id === orderId ? actualizado : x));
+    });
+  };
+
   // Delete order -> Move to Trash (Soft Delete)
   const handleDeleteOrder = (orderId: string) => {
     setOrders((prev) =>
@@ -738,6 +758,7 @@ export default function App() {
           totalOrdersCount={activeOrdersCount}
           storeSettings={storeSettings}
           cotizacionesNuevas={cotizacionesNuevas}
+          rolPersonal={rolPersonal}
           onUpdateStoreSettings={handleUpdateStoreSettings}
         />
       )}
@@ -784,6 +805,8 @@ export default function App() {
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onUpdateOrder={handleUpdateOrder}
+            onMarkSeen={handleMarkSeen}
+            rolPersonal={rolPersonal}
             onDeleteOrder={handleDeleteOrder}
             onRestoreOrder={handleRestoreOrder}
             onDeleteOrderPermanent={handleDeleteOrderPermanent}

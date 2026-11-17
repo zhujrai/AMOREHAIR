@@ -51,7 +51,8 @@ import { BatchThermalLabelsModal } from './BatchThermalLabelsModal';
 import { ShippingConfigModal } from './ShippingConfigModal';
 import { LogoUploadModal } from './LogoUploadModal';
 import { OrderEditModal } from './OrderEditModal';
-import { calcularCobro, faltaPrecio, faltaDatosEnvio, dinero } from '../utils/cobro';
+import { calcularCobro, motivoBloqueo, faltaDatosEnvio, dinero } from '../utils/cobro';
+import type { Bloqueo } from '../utils/cobro';
 import { DeliveredHistoryModal } from './DeliveredHistoryModal';
 import { DatabaseStatusModal } from './DatabaseStatusModal';
 import { TrashModal } from './TrashModal';
@@ -60,6 +61,8 @@ interface AdminKanbanProps {
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
   onUpdateOrder?: (order: Order) => void;
+  onMarkSeen?: (orderId: string) => void;
+  rolPersonal?: 'admin' | 'asesor';
   onDeleteOrder: (orderId: string) => void;
   onRestoreOrder?: (order: Order) => void;
   onDeleteOrderPermanent?: (orderId: string) => void;
@@ -82,6 +85,8 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   orders,
   onUpdateOrderStatus,
   onUpdateOrder,
+  onMarkSeen,
+  rolPersonal = 'asesor',
   onDeleteOrder,
   onRestoreOrder,
   onDeleteOrderPermanent,
@@ -245,22 +250,39 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
   // Drag handlers
   // Regla de avance: una tarjeta sin precio de venta no sale de "Nuevos"; se abre el detalle para completarlo
-  const [avisoPrecio, setAvisoPrecio] = useState(false);
-  // Abrir el detalle de una tarjeta (al tocar su cabecera)
+  const [aviso, setAviso] = useState<Bloqueo | null>(null);
+  // Etiqueta temporal sobre la tarjeta que se acaba de mover (para ubicarla en su nueva columna)
+  const [movida, setMovida] = useState<{ id: string; texto: string } | null>(null);
+  useEffect(() => {
+    if (!movida) return;
+    const q = window.setTimeout(() => setMovida(null), 4200);
+    return () => window.clearTimeout(q);
+  }, [movida]);
+  const NOMBRE_ETAPA: Record<OrderStatus, string> = { nuevos: 'Nuevos', empacados: 'Empacados', en_camino: 'En camino', entregados: 'Entregados' };
+  // Abrir el detalle de una tarjeta (al tocar su cabecera); al abrirla deja de ser "New"
   const abrirDetalle = (o: Order) => {
-    setAvisoPrecio(false);
+    setAviso(null);
     setEditingOrder(o);
     setShowEditModal(true);
+    if (!o.seenAt && onMarkSeen) onMarkSeen(o.id);
   };
   const intentarMover = (orderId: string, destino: OrderStatus) => {
     const o = orders.find((x) => x.id === orderId);
-    if (o && destino !== 'nuevos' && faltaPrecio(o)) {
-      setAvisoPrecio(true);
+    const bloqueo = o ? motivoBloqueo(o, destino) : null;
+    if (o && bloqueo) {
+      setAviso(bloqueo);
       setEditingOrder(o);
       setShowEditModal(true);
+      if (!o.seenAt && onMarkSeen) onMarkSeen(o.id);
       return;
     }
     onUpdateOrderStatus(orderId, destino);
+    if (o && o.status !== destino) {
+      const orden: OrderStatus[] = ['nuevos', 'empacados', 'en_camino', 'entregados'];
+      const flecha = orden.indexOf(destino) > orden.indexOf(o.status) ? '→' : '←';
+      setMovida({ id: orderId, texto: `${flecha} ${NOMBRE_ETAPA[destino]}` });
+      setTarjetaResaltada(orderId);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, orderId: string) => {
@@ -478,7 +500,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             >
               <Store className={`w-3.5 h-3.5 ${courierFilter === 'tienda' ? 'text-white' : 'text-[#10B981]'}`} />
-              Tienda
+              Local Amore
             </button>
           </div>
         </div>
@@ -544,11 +566,12 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                 ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:text-white' 
                 : 'bg-white border-[#EADCD3] text-[#6B5A55] hover:text-[#1F1613] hover:bg-[#FBF4F0]'
             }`}
-            title="Gestionar Envíos & Sucursales (Shalom / Olva / Delivery Lima / Tienda)"
+            title="Gestionar Envíos & Sucursales (Shalom / Olva / Delivery Lima / Local Amore)"
           >
             <Settings2 className="w-4 h-4 stroke-[2]" />
           </button>
 
+          {rolPersonal === 'admin' && (<>
           {/* ESTADO BASE DE DATOS SUPABASE */}
           <button
             id="admin-supabase-status-btn"
@@ -562,6 +585,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
           >
             <Database className="w-4 h-4 stroke-[2]" />
           </button>
+          </>)}
 
           {/* EXPORTAR BASE DE DATOS */}
           <button
@@ -709,7 +733,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         ? `${order.deliveryDistrict}: ${order.deliveryAddress}`
                         : 'Dirección por completar';
                     } else {
-                      locationPreview = 'Retiro en Tienda CyberPlaza';
+                      locationPreview = 'Retiro en Local Amore';
                     }
 
                     const waDirectUrl = getCustomerDirectWhatsAppUrl(order);
@@ -748,11 +772,12 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                               className="w-3.5 h-3.5 rounded text-[#A8634F] accent-[#A8634F] cursor-pointer flex-shrink-0"
                               title="Seleccionar para imprimir rótulo"
                             />
+                            {order.status === 'nuevos' && !order.seenAt && (<span className="new-pulso text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#A8634F] text-white leading-none flex-shrink-0">New</span>)}
                             <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded-md bg-[#FBF4F0] dark:bg-zinc-800 text-[#1F1613] dark:text-zinc-100 border border-[#EADCD3] dark:border-zinc-700 whitespace-nowrap flex-shrink-0 leading-none select-all">
                               #{order.id}
                             </span>
                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap flex-shrink-0 leading-none truncate ${paymentStyle.paymentBadgeClass}`} title={paymentStyle.paymentLabel}>
-                              {paymentStyle.paymentIcon} {order.shippingType === 'delivery_lima' && order.isCashOnDelivery ? 'Contraentrega' : ((cobroTarjeta.saldo ?? 0) > 0 ? 'Con saldo' : (order.shippingType === 'tienda' ? 'Tienda' : 'Pagado'))}
+                              {paymentStyle.paymentIcon} {(order.shippingType === 'delivery_lima' || order.shippingType === 'tienda') && order.isCashOnDelivery ? (order.shippingType === 'tienda' ? 'Paga al recoger' : 'Contraentrega') : ((cobroTarjeta.saldo ?? 0) > 0 ? 'Con saldo' : (order.shippingType === 'tienda' ? 'Local Amore' : 'Pagado'))}
                             </span>
                           </div>
 
@@ -767,6 +792,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           </span>
                         </div>
 
+                        {movida?.id === order.id && (<div className="mb-1.5 inline-flex items-center rounded-full bg-[#DFBF8B] px-2.5 py-0.5 text-[11px] font-extrabold text-[#4A2E22] amore-aparece">Movida {movida.texto}</div>)}
                         {/* Customer Name (15-16px, dark text, semibold) & DNI / WhatsApp */}
                         <div
                           className="space-y-1 min-w-0 cursor-pointer rounded-lg -mx-1.5 px-1.5 py-1 transition-colors hover:bg-[#F6E8E1]/70 dark:hover:bg-white/5"
@@ -787,14 +813,14 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                               href={waDirectUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/40 dark:text-emerald-300 border border-[#10B981]/30 hover:bg-[#D4EADE] transition-colors flex-shrink-0 group/wame"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[13px] font-semibold bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-950/40 dark:text-emerald-300 border border-[#10B981]/30 hover:bg-[#D4EADE] transition-colors flex-shrink-0 group/wame"
                               title={`Abrir WhatsApp directo con ${order.customerPhone}`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <img
                                 src={WHATSAPP_ICON_URL}
                                 alt="WhatsApp"
-                                className="w-3.5 h-3.5 object-contain flex-shrink-0 group-hover/wame:scale-110 transition-transform"
+                                className="w-4 h-4 object-contain flex-shrink-0 group-hover/wame:scale-110 transition-transform"
                                 referrerPolicy="no-referrer"
                               />
                               <span className="font-mono whitespace-nowrap">{displayPhone}</span>
@@ -812,6 +838,9 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 <span className="font-bold text-amber-600 dark:text-amber-400">Sin precio · requerido</span>
                               </div>
                             );
+                          }
+                          if (order.status === 'en_camino' || order.status === 'entregados') {
+                            return (<div className={`mt-2.5 flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-xs font-black ${(c.saldo as number) > 0 ? 'bg-rose-500/12 text-rose-700 dark:text-rose-300' : 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'}`}><span>{(c.saldo as number) > 0 ? 'Saldo por cobrar' : 'Pagado completo'}</span><span>{(c.saldo as number) > 0 ? dinero(c.saldo as number) : '✓'}</span></div>);
                           }
                           return (
                             <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 text-xs space-y-1">
@@ -851,13 +880,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         })()}
 
                         {/* Delivery Lima: Cash on Delivery & Payment Method Configuration */}
-                        {order.shippingType === 'delivery_lima' && (
+                        {(order.shippingType === 'delivery_lima' || order.shippingType === 'tienda') && (
                           <div className="mt-2.5 pt-2 border-t border-dashed border-[#EADCD3] dark:border-white/10 text-xs space-y-1.5 min-w-0">
                             {order.isCashOnDelivery ? (
                               <div className="space-y-1.5">
                                 <div className="flex items-center justify-between gap-1 flex-wrap text-[11px]">
                                   <span className="font-semibold text-[#A8634F] dark:text-[#DFBF8B]">
-                                    💵 Contraentrega: S/ {(order.cashOnDeliveryAmount || order.subtotalAmount || 0).toFixed(2)}
+                                    💵 {order.shippingType === 'tienda' ? 'Paga al recoger' : 'Contraentrega'}: S/ {(order.cashOnDeliveryAmount || order.subtotalAmount || 0).toFixed(2)}
                                   </span>
                                   {order.deliveryFee !== undefined && order.deliveryFee > 0 && (
                                     <span className="text-[#6B5A55] dark:text-zinc-400 text-[10px]">
@@ -906,11 +935,11 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                             <span>{order.shippingType === 'tienda' ? 'Entrega' : 'Despacho'}: {formatPeruvianDate(order.dispatchDate)}</span>
                           </p>
 
-                          {order.itemsDescription && (
-                            <p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 break-words italic">
-                              📦 {order.itemsDescription}
-                            </p>
-                          )}
+                          {order.trackingNumber && order.status !== 'nuevos' && (<p className="text-[11px] font-mono font-bold text-[#1F1613] dark:text-zinc-100">🔖 Guía: {order.trackingNumber}</p>)}
+                          {order.itemsDescription && (() => {
+                            const partes = order.itemsDescription.split(/;|\n/).map((s) => s.trim()).filter(Boolean);
+                            return (<p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 break-words line-clamp-2">📦 {partes.length > 1 ? `${partes.length} productos · ${partes[0]}…` : order.itemsDescription}</p>);
+                          })()}
                         </div>
 
 
@@ -1084,10 +1113,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
         <OrderEditModal
           order={editingOrder}
           isOpen={showEditModal}
-          avisoPrecio={avisoPrecio}
+          aviso={aviso}
           onClose={() => {
             const cerradoId = editingOrder?.id;
-            setAvisoPrecio(false);
+            setAviso(null);
             setShowEditModal(false);
             setEditingOrder(null);
             if (cerradoId) setTarjetaResaltada(cerradoId);
@@ -1106,12 +1135,12 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
       )}
 
       {/* Modal de Estado y Sincronización de Base de Datos Supabase */}
-      <DatabaseStatusModal
+      {rolPersonal === 'admin' && <DatabaseStatusModal
         isOpen={showDatabaseModal}
         onClose={() => setShowDatabaseModal(false)}
         isDark={isDark}
         orders={orders}
-      />
+      />}
 
       {/* Modal de Papelera de Reciclaje */}
       <TrashModal

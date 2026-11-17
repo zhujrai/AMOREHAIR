@@ -31,3 +31,20 @@ export function faltaDatosEnvio(o: Order): string | null {
   if (!(o.documentNumber || '').trim()) return 'Falta documento';
   return null;
 }
+
+
+export type CampoBloqueo = 'subtotalAmount' | 'amountPaid';
+export interface Bloqueo { campo: CampoBloqueo; mensaje: string }
+
+/**
+ * Reglas de avance del tablero:
+ *  1) sin precio de venta no sale de "Nuevos";
+ *  2) sin un abono registrado (aunque sea parcial) no pasa a "Empacados" ni más allá.
+ * Devuelve null si puede avanzar.
+ */
+export function motivoBloqueo(o: Order, destino: string): Bloqueo | null {
+  if (destino === 'nuevos') return null;
+  if (faltaPrecio(o)) return { campo: 'subtotalAmount', mensaje: 'Antes de pasarla al tablero indica el precio de venta y guárdalo.' };
+  if (!(calcularCobro(o).pagado > 0)) return { campo: 'amountPaid', mensaje: 'Para empacar registra el abono recibido (aunque sea parcial) en "Pagado" y guárdalo.' };
+  return null;
+}

@@ -408,7 +408,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   let courierCutoffName = 'Shalom';
   if (shippingType === 'marvisur') courierCutoffName = 'Marvisur';
   else if (shippingType === 'delivery_lima') courierCutoffName = 'Delivery Lima';
-  else if (shippingType === 'tienda') courierCutoffName = 'Retiro en Tienda';
+  else if (shippingType === 'tienda') courierCutoffName = 'Retiro en Local Amore';
   else if (shippingType === 'olva') courierCutoffName = 'Olva Courier';
 
   return (
@@ -607,7 +607,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                             : 'Envío a Domicilio'
                         )}
                         {shippingType === 'delivery_lima' && (deliveryDistrict || 'Lima Metropolitana')}
-                        {shippingType === 'tienda' && 'CyberPlaza - Lima Centro'}
+                        {shippingType === 'tienda' && 'Local Amore'}
                       </div>
                     </div>
                   </div>
@@ -975,7 +975,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
               }`}>
                 <div className="font-extrabold text-xs text-[#10B981] dark:text-emerald-300 flex items-center gap-1.5">
                   <Store className="w-4 h-4" />
-                  <span>Retiro en {storeSettings.storeName}</span>
+                  <span>Retiro en Local Amore</span>
                 </div>
                 <p className="text-xs text-[#10B981] dark:text-zinc-200 font-medium">
                   {storeSettings.address} • {storeSettings.openingHours}

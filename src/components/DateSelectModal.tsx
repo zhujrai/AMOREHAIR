@@ -29,7 +29,7 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
   const isMotorizado = shippingType === 'delivery_lima';
   const modalTitle = isTienda ? 'Fecha de Entrega' : 'Fecha de Envío';
   const modalDesc = isTienda 
-    ? 'Selecciona la fecha en la que retirarás tu pedido en tienda'
+    ? 'Selecciona la fecha en la que retirarás tu pedido en el Local Amore'
     : 'Selecciona la fecha en la que despacharemos tu paquete';
 
   return (

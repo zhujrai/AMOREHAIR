@@ -29,7 +29,7 @@ export const ShippingLabel: React.FC<ShippingLabelProps> = ({
   else if (isMarvisur) courierHeaderName = 'EXPRESO MARVISUR';
   else if (isOlva) courierHeaderName = 'OLVA COURIER';
   else if (isDelivery) courierHeaderName = 'DELIVERY MOTORIZADO LIMA';
-  else if (isTienda) courierHeaderName = 'RETIRO EN SALÓN / TIENDA';
+  else if (isTienda) courierHeaderName = 'RETIRO EN LOCAL AMORE';
 
   const hasNotes = Boolean(order.notes && order.notes.trim().length > 0);
 

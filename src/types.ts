@@ -81,8 +81,11 @@ export interface Order {
   previousStatus?: OrderStatus; // Status before being moved to trash
   sourceRef?: string; // Código del enlace/video de origen (?ref=AMR_049)
   consultaId?: string; // Consulta del catálogo de la que viene el pedido (?c=CO-1)
+  seenAt?: string; // Primera vez que alguien del equipo abrió la tarjeta (si falta: es "New")
   amountPaid?: number; // Adelanto / monto ya pagado (el saldo por cobrar = total − pagado)
 }
+
+export type RolPersonal = 'admin' | 'asesor';
 
 export interface AdminUser {
   id: string;

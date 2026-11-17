@@ -226,7 +226,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
                       </span>
                       {getShippingIcon(order.shippingType)}
                       <span className="text-xs font-black capitalize">
-                        {order.shippingType === 'shalom' ? 'Shalom' : order.shippingType === 'olva' ? 'Olva' : order.shippingType === 'delivery_lima' ? 'Delivery Lima' : 'Retiro en Tienda'}
+                        {order.shippingType === 'shalom' ? 'Shalom' : order.shippingType === 'olva' ? 'Olva' : order.shippingType === 'delivery_lima' ? 'Delivery Lima' : 'Retiro en Local Amore'}
                       </span>
                       <span className="text-zinc-400">•</span>
                       <span className="text-[11px] text-[#6B5A55] dark:text-zinc-400">

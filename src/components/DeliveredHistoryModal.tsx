@@ -185,7 +185,7 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
               { id: 'shalom', label: 'Shalom' },
               { id: 'olva', label: 'Olva' },
               { id: 'delivery_lima', label: 'Delivery' },
-              { id: 'tienda', label: 'Salón' }
+              { id: 'tienda', label: 'Local Amore' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -242,7 +242,7 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
                   } else if (order.shippingType === 'delivery_lima') {
                     locationStr = `${order.deliveryDistrict}: ${order.deliveryAddress}`;
                   } else {
-                    locationStr = 'Retiro en Salón';
+                    locationStr = 'Retiro en Local Amore';
                   }
 
                   return (

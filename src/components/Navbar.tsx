@@ -29,6 +29,7 @@ interface NavbarProps {
   onUpdateStoreSettings?: (newSettings: StoreSettings) => void;
   /** Cotizaciones nuevas del catálogo sin atender (contador del enlace) */
   cotizacionesNuevas?: number;
+  rolPersonal?: 'admin' | 'asesor';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -45,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   storeSettings,
   onUpdateStoreSettings,
   cotizacionesNuevas = 0,
+  rolPersonal = 'asesor',
 }) => {
   const [showLogoModal, setShowLogoModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -147,6 +149,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
                 </a>
 
+                {/* Stock (vista gráfica) */}
+                <a
+                  id="navbar-stock-btn"
+                  href="/stock"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${isDark ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-zinc-200' : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'}`}
+                  title="Stock de productos"
+                >
+                  <span>Stock</span>
+                </a>
+
                 {/* Botón Espacio para Logo de la Marca */}
                 <button
                   id="navbar-edit-logo-btn"
@@ -176,6 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       SUPER
                     </span>
                   )}
+                  <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#F6E8E1] text-[#8E4F3E] uppercase">{rolPersonal === 'admin' ? 'Admin' : 'Asesor'}</span>
                   {pendingCount > 0 && (
                     <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#A8634F] text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
                       {pendingCount}

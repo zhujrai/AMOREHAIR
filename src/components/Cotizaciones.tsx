@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../utils/dbApi';
 import { restaurarSesion } from '../utils/auth';
 import { dinero } from '../utils/cobro';
+import { KitResaltado } from './KitResaltado';
+import type { PiezaKit } from './KitResaltado';
+import type { ZonaCatalogo } from '../utils/contornos';
 
 /**
  * Bandeja de cotizaciones (solo administradores con sesión).
@@ -9,7 +12,7 @@ import { dinero } from '../utils/cobro';
  * flete (el cliente solo ve el TOTAL), conversa por WhatsApp y, al aceptarse, la pasa al tablero como tarjeta.
  */
 
-interface LineaSel { producto: string; presentacion: string | null; cantidad: number; precio_sugerido: number | null; rutina?: string; marca?: string }
+interface LineaSel { producto_id?: string; producto: string; presentacion: string | null; cantidad: number; precio_sugerido: number | null; rutina?: string; marca?: string }
 interface Cotizacion {
   id: string;
   created_at: string;
@@ -34,6 +37,9 @@ const ESTADOS = [
   { valor: 'descartada', etiqueta: 'Descartadas' },
 ];
 
+interface RutinaFoto { id: string; nombre: string; foto_url: string; ancho_foto: number | null; alto_foto: number | null }
+interface PiezaDB { rutina_id: string; producto_id: string; zona: ZonaCatalogo }
+
 const ETIQUETAS = ['duda de precio', 'pide descuento', 'compara marcas', 'cliente frecuente', 'urgente', 'cambió productos', 'sin respuesta'];
 
 const MEDIOS = [
@@ -41,7 +47,7 @@ const MEDIOS = [
   { valor: 'marvisur', etiqueta: 'Marvisur (agencia)' },
   { valor: 'olva', etiqueta: 'Olva' },
   { valor: 'delivery_lima', etiqueta: 'Delivery Lima' },
-  { valor: 'tienda', etiqueta: 'Retiro en tienda' },
+  { valor: 'tienda', etiqueta: 'Retiro en Local Amore' },
 ];
 
 const hoyISO = () => {
@@ -70,6 +76,12 @@ function agrupar(sel: LineaSel[]): [string, LineaSel[]][] {
   return Array.from(mapa.entries());
 }
 
+function agruparRutina(sel: LineaSel[]): [string, LineaSel[]][] {
+  const mapa = new Map<string, LineaSel[]>();
+  sel.forEach((l) => { const k = l.rutina || l.marca || 'Productos'; mapa.set(k, [...(mapa.get(k) || []), l]); });
+  return Array.from(mapa.entries());
+}
+
 function enlaceDespacho(c: Cotizacion): string {
   const params = new URLSearchParams();
   if (c.ref) params.set('ref', c.ref);
@@ -85,7 +97,7 @@ function mensajeCotizacion(c: Cotizacion): string {
   const detalle = agrupar(c.seleccion)
     .map(([r, ls]) => `*${r}*\n${ls.map((l) => `• ${lineaTexto(l)}`).join('\n')}`)
     .join('\n\n');
-  const total = venta > 0 ? `\n\n*Total: ${dinero(venta + flete)}*${flete > 0 ? ' (incluye envío)' : ''}` : '';
+  const total = venta > 0 ? (flete > 0 ? `\n\n*Total: ${dinero(venta + flete)}* (incluye envío)` : `\n\n*Total productos: ${dinero(venta)}*\n_El costo de envío se calcula según tu destino al completar tus datos._`) : '';
   return (
     `Hola${c.nombre ? ` ${c.nombre.trim()}` : ''}, te comparto tu cotización ${c.id}:\n\n${detalle}${total}` +
     `\n\nSi estás de acuerdo, completa tus datos de envío aquí:\n${enlaceDespacho(c)}`
@@ -101,6 +113,8 @@ export const Cotizaciones: React.FC = () => {
   const [aviso, setAviso] = useState('');
   const [edicion, setEdicion] = useState<Record<string, { venta: string; flete: string; motivo: string; notas: string }>>({});
   const [pasando, setPasando] = useState<string | null>(null);
+  const [rutinasFoto, setRutinasFoto] = useState<RutinaFoto[]>([]);
+  const [piezasDB, setPiezasDB] = useState<PiezaDB[]>([]);
   const [envio, setEnvio] = useState({ medio: 'shalom', fecha: hoyISO(), dni: '' });
 
   const cargar = useCallback(async () => {
@@ -117,7 +131,11 @@ export const Cotizaciones: React.FC = () => {
     restaurarSesion().then((u) => {
       setAdmin(Boolean(u));
       setListo(true);
-      if (u) cargar();
+      if (u) {
+        cargar();
+        supabase.from('rutinas').select('id,nombre,foto_url,ancho_foto,alto_foto').then(({ data }) => setRutinasFoto((data || []) as RutinaFoto[]));
+        supabase.from('rutina_piezas').select('rutina_id,producto_id,zona').then(({ data }) => setPiezasDB((data || []) as PiezaDB[]));
+      }
     });
   }, [cargar]);
 
@@ -126,14 +144,16 @@ export const Cotizaciones: React.FC = () => {
     window.setTimeout(() => setAviso(''), ms);
   };
 
+  // Actualiza la pantalla al instante y guarda en segundo plano; si falla, vuelve a leer lo guardado
   const guardar = async (c: Cotizacion, cambios: Partial<Cotizacion>, mensaje = 'Guardado') => {
+    setCotizaciones((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...cambios } : x)));
+    avisar(mensaje, 1400);
     const { error: e } = await supabase.from('consultas').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', c.id);
     if (e) {
       setError('No se pudo guardar el cambio.');
+      await cargar();
       return false;
     }
-    avisar(mensaje);
-    await cargar();
     return true;
   };
 
@@ -153,13 +173,10 @@ export const Cotizaciones: React.FC = () => {
   const guardarCotizacion = async (c: Cotizacion) => {
     const v = valores(c);
     const venta = num(v.venta);
-    const flete = num(v.flete);
     if (v.venta.trim() !== '' && venta === null) return setError('El precio de venta debe ser un número válido.');
-    if (v.flete.trim() !== '' && flete === null) return setError('El flete debe ser un número válido.');
     setError('');
     await guardar(c, {
       precio_final: venta,
-      flete,
       motivo_ajuste: v.motivo.trim() || null,
       notas: v.notas.trim() || null,
       estado: c.estado === 'nueva' && venta !== null ? 'en_conversacion' : c.estado,
@@ -183,7 +200,7 @@ export const Cotizaciones: React.FC = () => {
   const pasarAlTablero = async (c: Cotizacion) => {
     const venta = c.precio_final ?? 0;
     const flete = c.flete ?? 0;
-    if (venta <= 0) return setError('Antes de pasarla al tablero indica el precio de venta y guárdalo.');
+    if (venta <= 0) { setError('Antes de pasarla al tablero indica el precio de venta y guárdalo.'); document.getElementById(`venta-${c.id}`)?.focus(); return; }
     setError('');
     const { data: id, error: eId } = await supabase.rpc('siguiente_pedido_id');
     if (eId || typeof id !== 'string') return setError('No se pudo obtener el número de pedido.');
@@ -265,7 +282,7 @@ export const Cotizaciones: React.FC = () => {
         {visibles.map((c) => {
           const v = valores(c);
           const venta = num(v.venta) ?? 0;
-          const flete = num(v.flete) ?? 0;
+          const flete = c.flete ?? 0; // el flete se define luego, en la tarjeta, cuando se conoce el destino
           const total = venta + flete;
           const tel = (c.telefono || '').replace(/^51/, '');
           return (
@@ -292,33 +309,38 @@ export const Cotizaciones: React.FC = () => {
                 )}
               </div>
 
-              <div className="space-y-1.5 rounded-xl bg-[#FBF4F0] p-3 text-sm">
-                {agrupar(c.seleccion).map(([r, ls]) => (
-                  <div key={r}>
-                    <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#A8634F]">{r}</p>
-                    <ul className="mt-0.5 space-y-0.5">{ls.map((l, i) => <li key={i}>• {lineaTexto(l)}</li>)}</ul>
-                  </div>
-                ))}
+              <div className="space-y-3 rounded-xl bg-[#FBF4F0] p-3 text-sm">
+                {agruparRutina(c.seleccion).map(([r, ls]) => {
+                  const rutina = rutinasFoto.find((x) => x.nombre.split('·')[0].trim() === (ls[0].rutina || r));
+                  const ids = new Set(ls.map((l) => l.producto_id).filter(Boolean) as string[]);
+                  const piezas: PiezaKit[] = rutina ? piezasDB.filter((p) => p.rutina_id === rutina.id).map((p) => ({ producto_id: p.producto_id, zona: p.zona, elegida: ids.has(p.producto_id) })) : [];
+                  return (
+                    <div key={r} className="flex flex-col gap-3 sm:flex-row">
+                      {rutina && piezas.length > 0 && <KitResaltado foto={rutina.foto_url} ancho={rutina.ancho_foto || 1000} alto={rutina.alto_foto || 1333} piezas={piezas} className="w-full sm:w-44 shrink-0" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#A8634F]">{r}</p>
+                        <ul className="mt-1 space-y-1">{ls.map((l, i) => <li key={i} className="flex gap-2 text-[14px] leading-snug"><span className="text-[#A8634F]">•</span><span className="min-w-0 break-words">{lineaTexto(l)}</span></li>)}</ul>
+                      </div>
+                    </div>
+                  );
+                })}
                 {c.total_sugerido != null && <p className="text-xs text-[#8A7A76]">Total sugerido por catálogo: {dinero(Number(c.total_sugerido))}</p>}
               </div>
 
-              {/* Cotización: el cliente solo verá el total */}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {/* Cotización de productos. El flete NO se calcula aquí: se agrega en la tarjeta cuando se sabe el destino */}
+              <div className="grid grid-cols-2 gap-2">
                 <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">
-                  Precio de venta
-                  <input value={v.venta} onChange={(e) => setEdicion((p) => ({ ...p, [c.id]: { ...v, venta: e.target.value } }))} inputMode="decimal" placeholder="0.00" className="mt-1 w-full rounded-xl border border-[#EADCD3] px-2.5 py-2 text-sm font-bold normal-case" />
+                  Precio de venta (productos) *
+                  <input id={`venta-${c.id}`} value={v.venta} onChange={(e) => setEdicion((p) => ({ ...p, [c.id]: { ...v, venta: e.target.value } }))} inputMode="decimal" placeholder="0.00" className="mt-1 w-full rounded-xl border border-[#EADCD3] px-2.5 py-2 text-sm font-bold normal-case" />
                 </label>
-                <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">
-                  Flete
-                  <input value={v.flete} onChange={(e) => setEdicion((p) => ({ ...p, [c.id]: { ...v, flete: e.target.value } }))} inputMode="decimal" placeholder="0.00" className="mt-1 w-full rounded-xl border border-[#EADCD3] px-2.5 py-2 text-sm font-bold normal-case" />
-                </label>
-                <div className="col-span-2 flex items-end">
+                <div className="flex items-end">
                   <div className="w-full rounded-xl bg-[#F6E8E1] px-3 py-2">
-                    <p className="text-[10px] font-black uppercase tracking-wide text-[#8E4F3E]">Total que ve la clienta</p>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-[#8E4F3E]">{flete > 0 ? 'Total que ve la clienta' : 'Total productos'}</p>
                     <p className="text-lg font-black text-[#2B1D1A]">{total > 0 ? dinero(total) : '—'}</p>
                   </div>
                 </div>
               </div>
+              <p className="text-[11px] text-[#8A7A76]">El envío se calcula después, cuando la clienta indique su destino (en el detalle de la tarjeta).</p>
               <input value={v.motivo} onChange={(e) => setEdicion((p) => ({ ...p, [c.id]: { ...v, motivo: e.target.value } }))} placeholder="Motivo del ajuste de precio (opcional)" className="w-full rounded-xl border border-[#EADCD3] px-2.5 py-2 text-sm" />
 
               {/* Etiquetas y notas: alimentan el conocimiento del negocio */}
@@ -338,9 +360,9 @@ export const Cotizaciones: React.FC = () => {
                 <button type="button" onClick={() => guardarCotizacion(c)} className="rounded-xl bg-[#2B1D1A] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#A8634F] transition-colors">Guardar</button>
                 {venta > 0 && (
                   <>
-                    <button type="button" onClick={() => copiar(mensajeCotizacion({ ...c, precio_final: venta, flete }), 'Cotización copiada')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Copiar cotización</button>
+                    <button type="button" onClick={() => copiar(mensajeCotizacion({ ...c, precio_final: venta }), 'Cotización copiada')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Copiar cotización</button>
                     {tel && (
-                      <a href={`https://wa.me/51${tel}?text=${encodeURIComponent(mensajeCotizacion({ ...c, precio_final: venta, flete }))}`} target="_blank" rel="noreferrer" className="rounded-xl bg-[#25D366] px-3.5 py-2 text-xs font-bold text-white">Enviar por WhatsApp</a>
+                      <a href={`https://wa.me/51${tel}?text=${encodeURIComponent(mensajeCotizacion({ ...c, precio_final: venta }))}`} target="_blank" rel="noreferrer" className="rounded-xl bg-[#25D366] px-3.5 py-2 text-xs font-bold text-white">Enviar por WhatsApp</a>
                     )}
                   </>
                 )}
@@ -371,7 +393,7 @@ export const Cotizaciones: React.FC = () => {
                   </div>
                   <p className="text-[11px] text-[#8A7A76]">Usa esta opción <b>o</b> el enlace de despacho (si la clienta completa el formulario llegará otra tarjeta; evita duplicados eligiendo solo una).</p>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => pasarAlTablero({ ...c, precio_final: num(v.venta), flete: num(v.flete) })} className="rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Crear tarjeta</button>
+                    <button type="button" onClick={() => pasarAlTablero({ ...c, precio_final: num(v.venta) })} className="rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Crear tarjeta</button>
                     <button type="button" onClick={() => setPasando(null)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer">Cancelar</button>
                   </div>
                 </div>

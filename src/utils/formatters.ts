@@ -13,7 +13,7 @@ export function getShippingTypeLabel(type?: ShippingType | null): string {
     case 'delivery_lima':
       return 'Delivery (Lima Metropolitana)';
     case 'tienda':
-      return 'Retiro en tienda física';
+      return 'Retiro en Local Amore';
     default:
       return 'Seleccionar';
   }
@@ -145,7 +145,7 @@ export function getOrderPaymentCardStyle(order: Order, isDark: boolean): {
   if (order.shippingType === 'tienda') {
     return {
       cardClasses: baseCard,
-      paymentLabel: 'Pago en Tienda',
+      paymentLabel: 'Pago en Local Amore',
       paymentBadgeClass: isDark
         ? 'bg-[#059669]/30 text-emerald-300 border-[#059669]/40'
         : 'bg-[#ECFDF5] text-[#10B981] border-[#059669]/30',
@@ -258,7 +258,7 @@ export function getShippingTypeBadge(type: ShippingType): {
       };
     case 'tienda':
       return {
-        label: 'TIENDA',
+        label: 'LOCAL AMORE',
         bgDark: 'bg-[#059669]/30',
         bgLight: 'bg-[#ECFDF5]',
         textDark: 'text-emerald-300',
@@ -480,7 +480,7 @@ export function buildWhatsAppMessage(order: Order, store: StoreSettings): string
     agencyOrLocationText = `🏙️ Distrito: ${order.deliveryDistrict || 'Lima Metropolitana'}`;
     addressOrRefText = `📍 ${order.deliveryAddress || 'Dirección'}${order.deliveryReference ? `, Ref. ${order.deliveryReference}` : ''}`;
   } else {
-    shippingHeaderType = 'RETIRO EN TIENDA';
+    shippingHeaderType = 'RETIRO EN LOCAL AMORE';
     courierName = store.storeName || 'Amore Salon';
     agencyOrLocationText = `🏪 Local: ${store.address || 'CyberPlaza - Lima Centro'}`;
     addressOrRefText = `⏰ Horario: ${store.openingHours || 'Lun - Sáb: 9am - 8pm'}`;
@@ -570,7 +570,7 @@ function mensajeBaseEtapa(order: Order, store?: Partial<StoreSettings>): string 
 
     return (
       `¡Hola ${customerFirst}! 👋 Te saludamos de *${storeName}*.\n\n` +
-      `Tu pedido *#${order.id}* para *Retiro en Tienda* se encuentra en preparación. Te avisaremos en cuanto esté disponible para que pases a recogerlo. 🏪✨`
+      `Tu pedido *#${order.id}* para *Retiro en Local Amore* se encuentra en preparación. Te avisaremos en cuanto esté disponible para que pases a recogerlo. 🏪✨`
     );
   }
 

@@ -341,6 +341,7 @@ export async function fetchServerOrders(): Promise<Order[]> {
         sourceRef: r.raw_data?.sourceRef || undefined,
         consultaId: r.raw_data?.consultaId || undefined,
         amountPaid: typeof r.raw_data?.amountPaid === 'number' ? r.raw_data.amountPaid : undefined,
+        seenAt: typeof r.raw_data?.seenAt === 'string' ? r.raw_data.seenAt : undefined,
       };
     });
   } catch (err) {

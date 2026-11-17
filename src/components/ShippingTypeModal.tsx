@@ -125,7 +125,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
     },
     {
       type: 'tienda',
-      title: 'Retiro en Salón / Tienda',
+      title: 'Retiro en Local Amore',
       description: 'En nuestro local comercial',
       badge: 'Gratis / Sin Costo',
       icon: <Store className="w-5 h-5 text-emerald-500" />,
