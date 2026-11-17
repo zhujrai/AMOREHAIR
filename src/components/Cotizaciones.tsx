@@ -3,6 +3,7 @@ import { supabase } from '../utils/dbApi';
 import { restaurarSesion } from '../utils/auth';
 import { dinero } from '../utils/cobro';
 import { KitResaltado } from './KitResaltado';
+import { generarImagenCotizacion } from '../utils/imagenCotizacion';
 import type { PiezaKit } from './KitResaltado';
 import type { ZonaCatalogo } from '../utils/contornos';
 
@@ -48,6 +49,15 @@ const MEDIOS = [
   { valor: 'olva', etiqueta: 'Olva' },
   { valor: 'delivery_lima', etiqueta: 'Delivery Lima' },
   { valor: 'tienda', etiqueta: 'Retiro en Local Amore' },
+];
+
+const saludo = (c: Cotizacion) => `Hola${c.nombre ? ` ${c.nombre.trim().split(' ')[0]}` : ''}`;
+/** Respuestas rápidas por WhatsApp (texto editable antes de enviar; WhatsApp abre el chat con el mensaje listo). */
+const RESPUESTAS: { etiqueta: string; texto: (c: Cotizacion) => string }[] = [
+  { etiqueta: 'Saludo', texto: (c) => `${saludo(c)} 💖 soy de Amore Salon. Vi tu cotización ${c.id}, ¿te ayudo con alguna duda?` },
+  { etiqueta: 'Seguimiento', texto: (c) => `${saludo(c)} 🌸 ¿pudiste revisar tu cotización ${c.id}? Quedo atenta para ayudarte a completar tu pedido.` },
+  { etiqueta: 'Pedir datos de envío', texto: (c) => `${saludo(c)} ✨ para coordinar tu envío completa tus datos aquí:\n${enlaceDespacho(c)}` },
+  { etiqueta: 'Disponibilidad', texto: (c) => `${saludo(c)} 💖 ya revisé la disponibilidad de tu cotización ${c.id}: todo lo que elegiste está listo para enviarse.` },
 ];
 
 const hoyISO = () => {
@@ -190,6 +200,55 @@ export const Cotizaciones: React.FC = () => {
     guardar(c, { etiquetas: actuales.includes(tag) ? actuales.filter((t) => t !== tag) : [...actuales, tag] }, 'Etiqueta actualizada');
   };
 
+  /** Agrupa la selección por rutina y busca su foto y las piezas elegidas (para la vista y para la imagen). */
+  const kitsDe = (c: Cotizacion) =>
+    agruparRutina(c.seleccion).map(([r, ls]) => {
+      const ids = new Set(ls.map((l) => l.producto_id || nombres[l.producto]).filter(Boolean) as string[]);
+      const porNombre = rutinasFoto.find((x) => x.nombre.split('·')[0].trim() === (ls[0].rutina || r));
+      const cuenta = (rid: string) => piezasDB.filter((p) => p.rutina_id === rid && ids.has(p.producto_id)).length;
+      const rutina = porNombre && cuenta(porNombre.id) > 0 ? porNombre : [...rutinasFoto].sort((x, y) => cuenta(y.id) - cuenta(x.id))[0];
+      const piezas: PiezaKit[] = rutina && cuenta(rutina.id) > 0 ? piezasDB.filter((p) => p.rutina_id === rutina.id).map((p) => ({ producto_id: p.producto_id, zona: p.zona, elegida: ids.has(p.producto_id) })) : [];
+      return { r, ls, rutina: rutina && piezas.length > 0 ? rutina : undefined, piezas };
+    });
+
+  /** Cotización como imagen: en el celular abre "Compartir" (se elige el chat de WhatsApp); en escritorio la descarga. */
+  const compartirImagen = async (c: Cotizacion, venta: number) => {
+    try {
+      avisar('Generando imagen…', 4000);
+      const flete = c.flete ?? 0;
+      const blob = await generarImagenCotizacion({
+        codigo: c.id,
+        nombre: c.nombre?.trim() || null,
+        grupos: kitsDe(c).map(({ r, ls, rutina, piezas }) => ({
+          titulo: r,
+          foto: rutina ? new URL(rutina.foto_url, window.location.origin).toString() : null,
+          ancho: rutina?.ancho_foto || 1000,
+          alto: rutina?.alto_foto || 1333,
+          zonasElegidas: piezas.filter((p) => p.elegida).map((p) => p.zona),
+          lineas: ls.map(lineaTexto),
+        })),
+        total: venta > 0 ? dinero(venta + flete) : '',
+        notaTotal: flete > 0 ? 'Total (incluye envío)' : 'Total productos',
+      });
+      const archivo = new File([blob], `cotizacion-${c.id}.png`, { type: 'image/png' });
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (nav.canShare && nav.canShare({ files: [archivo] })) {
+        await nav.share({ files: [archivo], text: `Tu cotización ${c.id}` });
+        avisar('Compartida');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = archivo.name;
+      enlace.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+      avisar('Imagen descargada: adjúntala en el chat de WhatsApp');
+    } catch (e) {
+      if ((e as Error)?.name !== 'AbortError') setError('No se pudo generar la imagen (si la foto está en otro dominio, revisa permisos CORS).');
+    }
+  };
+
   const copiar = async (texto: string, ok: string) => {
     try {
       await navigator.clipboard.writeText(texto);
@@ -312,13 +371,7 @@ export const Cotizaciones: React.FC = () => {
               </div>
 
               <div className="space-y-3 rounded-xl bg-[#FBF4F0] p-3 text-sm">
-                {agruparRutina(c.seleccion).map(([r, ls]) => {
-                  const ids = new Set(ls.map((l) => l.producto_id || nombres[l.producto]).filter(Boolean) as string[]);
-                  // La rutina es la de la cotización o, si no coincide, la que contiene más de estas piezas
-                  const porNombre = rutinasFoto.find((x) => x.nombre.split('·')[0].trim() === (ls[0].rutina || r));
-                  const cuenta = (rid: string) => piezasDB.filter((p) => p.rutina_id === rid && ids.has(p.producto_id)).length;
-                  const rutina = porNombre && cuenta(porNombre.id) > 0 ? porNombre : [...rutinasFoto].sort((x, y) => cuenta(y.id) - cuenta(x.id))[0];
-                  const piezas: PiezaKit[] = rutina && cuenta(rutina.id) > 0 ? piezasDB.filter((p) => p.rutina_id === rutina.id).map((p) => ({ producto_id: p.producto_id, zona: p.zona, elegida: ids.has(p.producto_id) })) : [];
+                {kitsDe(c).map(({ r, ls, rutina, piezas }) => {
                   return (
                     <div key={r} className="flex flex-col gap-3 sm:flex-row">
                       {rutina && piezas.length > 0 && <KitResaltado foto={rutina.foto_url} ancho={rutina.ancho_foto || 1000} alto={rutina.alto_foto || 1333} piezas={piezas} className="mx-auto w-full max-w-[220px] sm:mx-0 sm:w-44 shrink-0" />}
@@ -371,11 +424,21 @@ export const Cotizaciones: React.FC = () => {
                     )}
                   </>
                 )}
+                {venta > 0 && (<button type="button" onClick={() => compartirImagen(c, venta)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Cotización en imagen</button>)}
                 <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace de despacho copiado')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Enlace de despacho</button>
                 {!c.pedido_id && (
                   <button type="button" onClick={() => setPasando(pasando === c.id ? null : c.id)} className="ml-auto rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Pasar al tablero</button>
                 )}
               </div>
+
+              {tel && (
+                <div className="flex flex-wrap items-center gap-1.5" aria-label="Respuestas rápidas">
+                  <span className="text-[10px] font-black uppercase tracking-wide text-[#8A7A76]">Respuestas rápidas</span>
+                  {RESPUESTAS.map((rp) => (
+                    <a key={rp.etiqueta} href={`https://wa.me/51${tel}?text=${encodeURIComponent(rp.texto(c))}`} target="_blank" rel="noreferrer" className="rounded-full bg-[#ECFDF5] px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-[#D4EADE]">{rp.etiqueta}</a>
+                  ))}
+                </div>
+              )}
 
               {pasando === c.id && (
                 <div className="space-y-2.5 rounded-xl border border-dashed border-[#DFBF8B] bg-[#FBF1DC]/50 p-3">
