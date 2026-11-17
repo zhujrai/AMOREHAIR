@@ -37,12 +37,12 @@ import {
   checkDatabaseStatus,
   supabase
 } from './utils/dbApi';
+import { restaurarSesion, alCambiarSesion, vigilarActividad, cerrarSesion } from './utils/auth';
 import { playNewOrderSound } from './utils/audioNotification';
 
 const STORAGE_KEY_ORDERS = 'logiperu_orders_v1';
 const STORAGE_KEY_THEME = 'logiperu_theme_v1';
 const STORAGE_KEY_CUSTOMERS = 'logiperu_customers_v1';
-const STORAGE_KEY_ADMIN_AUTH = 'logiperu_admin_auth_v1';
 const STORAGE_KEY_SHIPPING_CONFIG = 'logiperu_shipping_config_v1';
 const STORAGE_KEY_SHALOM_AGENCIES = 'logiperu_shalom_agencies_v2';
 const STORAGE_KEY_OLVA_AGENCIES = 'logiperu_olva_agencies_v1';
@@ -97,53 +97,42 @@ export default function App() {
   // Current view state: 'admin' (by default on /) or 'cliente' (on /pedidos)
   const [currentView, setCurrentView] = useState<'cliente' | 'admin'>(getInitialView);
 
-  // Admin authentication state with persistent credentials check
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    const isSessionAuth = sessionStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true';
-    const isLocalAuth = localStorage.getItem(STORAGE_KEY_ADMIN_AUTH) === 'true';
-    const hasToken = Boolean(localStorage.getItem('logiperu_admin_token') || sessionStorage.getItem('logiperu_admin_token'));
-    return (isSessionAuth || isLocalAuth) && (hasToken || Boolean(localStorage.getItem('logiperu_admin_user')));
-  });
+  // Autenticación de administradores con Supabase Auth (sesión real, renovada automáticamente)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [authListo, setAuthListo] = useState<boolean>(false);
 
-  // Current logged in admin user
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
-    const saved = localStorage.getItem('logiperu_admin_user') || sessionStorage.getItem('logiperu_admin_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-
-  // Auto-verify saved session token with backend on mount
+  // Restaura la sesión al abrir la página y reacciona a cierres de sesión (p. ej. desde otra pestaña)
   useEffect(() => {
-    const token = localStorage.getItem('logiperu_admin_token') || sessionStorage.getItem('logiperu_admin_token');
-    if (token) {
-      fetch('/api/admin/verify-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.valid) {
-            setIsAdminAuthenticated(true);
-            if (data.user) {
-              setAdminUser(data.user);
-              if (localStorage.getItem('logiperu_admin_token')) {
-                localStorage.setItem('logiperu_admin_user', JSON.stringify(data.user));
-              }
-            }
-          }
-        })
-        .catch(() => {
-          // If server temporarily unreachable, keep client session active
-        });
-    }
+    let activo = true;
+    restaurarSesion().then((user) => {
+      if (!activo) return;
+      if (user) {
+        setAdminUser(user);
+        setIsAdminAuthenticated(true);
+      }
+      setAuthListo(true);
+    });
+    const salir = alCambiarSesion((user) => {
+      if (!activo) return;
+      if (!user) {
+        setIsAdminAuthenticated(false);
+        setAdminUser(null);
+      }
+    });
+    return () => {
+      activo = false;
+      salir();
+    };
   }, []);
+
+  // Cierre automático por inactividad o por superar la duración máxima de la sesión
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+    return vigilarActividad(() => {
+      handleAdminLogout('Sesión cerrada por inactividad. Vuelve a iniciar sesión.');
+    });
+  }, [isAdminAuthenticated]);
 
   // Orders State with localStorage persistence
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -529,35 +518,21 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_MARVISUR_AGENCIES, JSON.stringify(marvisurAgencies));
   }, [marvisurAgencies]);
 
-  // Handle admin login success
-  const handleAdminLoginSuccess = (token?: string, user?: AdminUser, remember = true) => {
+  // Handle admin login success (la sesión la gestiona Supabase Auth)
+  const handleAdminLoginSuccess = (_token?: string, user?: AdminUser, _remember = true) => {
     setIsAdminAuthenticated(true);
     if (user) {
       setAdminUser(user);
     }
-    if (remember) {
-      localStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
-      if (token) localStorage.setItem('logiperu_admin_token', token);
-      if (user) localStorage.setItem('logiperu_admin_user', JSON.stringify(user));
-    } else {
-      sessionStorage.setItem(STORAGE_KEY_ADMIN_AUTH, 'true');
-      if (token) sessionStorage.setItem('logiperu_admin_token', token);
-      if (user) sessionStorage.setItem('logiperu_admin_user', JSON.stringify(user));
-    }
     showToast(`¡Bienvenido ${user?.name || 'Administrador'}! Sesión iniciada.`);
   };
 
-  // Handle admin logout
-  const handleAdminLogout = () => {
+  // Handle admin logout (el parámetro puede ser un mensaje o el evento del clic)
+  const handleAdminLogout = (motivo?: unknown) => {
+    cerrarSesion().catch(() => {});
     setIsAdminAuthenticated(false);
     setAdminUser(null);
-    localStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-    sessionStorage.removeItem(STORAGE_KEY_ADMIN_AUTH);
-    localStorage.removeItem('logiperu_admin_token');
-    sessionStorage.removeItem('logiperu_admin_token');
-    localStorage.removeItem('logiperu_admin_user');
-    sessionStorage.removeItem('logiperu_admin_user');
-    showToast('Sesión de Administrador cerrada correctamente');
+    showToast(typeof motivo === 'string' ? motivo : 'Sesión de Administrador cerrada correctamente');
   };
 
   // Handle new order creation from Client form
@@ -759,6 +734,10 @@ export default function App() {
             onNavigateToAdmin={() => navigateToView('admin')}
             isDbConnected={isDbConnected}
           />
+        ) : !authListo ? (
+          <div className="min-h-[60vh] flex items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
+            Verificando sesión…
+          </div>
         ) : !isAdminAuthenticated ? (
           <AdminLogin
             onLoginSuccess={handleAdminLoginSuccess}

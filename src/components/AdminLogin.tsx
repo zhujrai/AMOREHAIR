@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { StoreSettings, AdminUser } from '../types';
 import { getBrandLogo } from '../utils/formatters';
+import { iniciarSesion } from '../utils/auth';
 
 interface AdminLoginProps {
   onLoginSuccess: (token?: string, user?: AdminUser, remember?: boolean) => void;
@@ -20,13 +21,6 @@ interface AdminLoginProps {
   isDark: boolean;
 }
 
-// Built-in authorized users fallback for static hosting & offline environments
-const AUTHORIZED_ACCOUNTS: Record<string, { name: string; role: string; password: string }> = {
-  'zhujrai@gmail.com': { name: 'Zhujrai', role: 'superadmin', password: 'Itzelita' },
-  'zhujrai278@gmail.com': { name: 'Zhujrai 278', role: 'admin', password: 'Itzelita' },
-  'lizlindaura@gmail.com': { name: 'Liz Lindaura', role: 'admin', password: 'Itzelita' },
-  'albsal611@gmail.com': { name: 'Alberto Salinas', role: 'admin', password: 'Itzelita' },
-};
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({
   onLoginSuccess,
@@ -69,118 +63,32 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
     setError('');
     const cleanEmail = email.trim().toLowerCase();
-    const cleanPassword = password.trim();
 
     if (!cleanEmail) {
       setError('Ingresa tu correo de usuario.');
       return;
     }
 
-    if (!cleanPassword) {
+    if (!password) {
       setError('Ingresa tu contraseña de acceso.');
       return;
     }
 
     setIsLoading(true);
-
-    // Function to handle successful login and storage
-    const completeLogin = (token?: string, user?: AdminUser) => {
-      const targetUser: AdminUser = user || {
-        id: `usr-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '')}`,
-        email: cleanEmail,
-        name: AUTHORIZED_ACCOUNTS[cleanEmail]?.name || cleanEmail.split('@')[0],
-        role: AUTHORIZED_ACCOUNTS[cleanEmail]?.role || 'admin'
-      };
-
-      if (rememberMe) {
-        localStorage.setItem('logiperu_remembered_email', cleanEmail);
-        if (token) {
-          localStorage.setItem('logiperu_admin_token', token);
-        }
-        localStorage.setItem('logiperu_admin_user', JSON.stringify(targetUser));
-      } else {
-        localStorage.removeItem('logiperu_remembered_email');
-        localStorage.removeItem('logiperu_admin_token');
-        localStorage.removeItem('logiperu_admin_user');
-        if (token) {
-          sessionStorage.setItem('logiperu_admin_token', token);
-        }
-        sessionStorage.setItem('logiperu_admin_user', JSON.stringify(targetUser));
-      }
-
-      onLoginSuccess(token, targetUser, rememberMe);
-    };
-
     try {
-      // 1. Try to authenticate against the server API
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
-
-      let res: Response | null = null;
-      try {
-        res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            email: cleanEmail,
-            password: cleanPassword 
-          }),
-          signal: controller.signal
-        });
-      } catch {
-        res = null; // Backend not available (e.g. static hosting on GitHub Pages/Vercel/Netlify)
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (res && res.ok) {
-        try {
-          const data = await res.json();
-          if (data.success) {
-            completeLogin(data.token, data.user);
-            return;
-          } else {
-            if (data.lockoutSeconds && data.lockoutSeconds > 0) {
-              setLockoutSeconds(data.lockoutSeconds);
-            }
-            if (typeof data.remainingAttempts === 'number') {
-              setRemainingAttempts(data.remainingAttempts);
-            }
-            setError(data.error || 'Correo o contraseña incorrectos.');
-            return;
-          }
-        } catch {
-          // If JSON parse fails (e.g., server returned HTML on 404), continue to fallback below
-        }
-      }
-
-      // 2. Client-side verified fallback (ideal for production static deployments, mirror repos, or offline PWA)
-      const matchingAccount = AUTHORIZED_ACCOUNTS[cleanEmail];
-      if (matchingAccount && cleanPassword === matchingAccount.password) {
-        completeLogin(undefined, {
-          id: `usr-${cleanEmail.split('@')[0]}`,
-          email: cleanEmail,
-          name: matchingAccount.name,
-          role: matchingAccount.role
-        });
+      // Autenticación real con Supabase Auth (sin contraseñas en el código)
+      const res = await iniciarSesion(cleanEmail, password, rememberMe);
+      if (res.ok === false) {
+        setError(res.error);
+        if (res.bloqueoSeg) setLockoutSeconds(res.bloqueoSeg);
         return;
       }
-
-      // If user/pass does not match client database
-      setError('Correo o contraseña incorrectos. Verifica tus credenciales.');
-    } catch {
-      // Final safeguard: check client credentials
-      const matchingAccount = AUTHORIZED_ACCOUNTS[cleanEmail];
-      if (matchingAccount && cleanPassword === matchingAccount.password) {
-        completeLogin(undefined, {
-          id: `usr-${cleanEmail.split('@')[0]}`,
-          email: cleanEmail,
-          name: matchingAccount.name,
-          role: matchingAccount.role
-        });
+      if (rememberMe) {
+        localStorage.setItem('logiperu_remembered_email', cleanEmail);
       } else {
-        setError('Correo o contraseña incorrectos.');
+        localStorage.removeItem('logiperu_remembered_email');
       }
+      onLoginSuccess(undefined, res.user, rememberMe);
     } finally {
       setIsLoading(false);
     }
@@ -250,8 +158,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
         {/* Native HTML Login Form supporting browser credential auto-fill and password managers */}
         <form 
-          method="POST"
-          action="/api/admin/login"
           autoComplete="on"
           onSubmit={handleSubmit} 
           className="space-y-4"
