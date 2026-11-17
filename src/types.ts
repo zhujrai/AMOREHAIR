@@ -79,6 +79,7 @@ export interface Order {
   isDeleted?: boolean;
   deletedAt?: string; // ISO string when deleted
   previousStatus?: OrderStatus; // Status before being moved to trash
+  sourceRef?: string; // Código del enlace/video de origen (?ref=AMR_049)
 }
 
 export interface AdminUser {

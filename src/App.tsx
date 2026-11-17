@@ -25,6 +25,7 @@ import { Lock, Sparkles, ShieldCheck, Bell, WifiOff, RefreshCw, AlertTriangle } 
 import { 
   fetchServerOrders, 
   saveServerOrder, 
+  createServerOrder,
   deleteServerOrder, 
   deleteServerOrderPermanently,
   restoreServerOrder,
@@ -125,6 +126,20 @@ export default function App() {
       salir();
     };
   }, []);
+
+  // Con RLS activo, los pedidos solo se ven con sesión: recargarlos al iniciar sesión
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+    fetchServerOrders()
+      .then((serverOrders) => {
+        if (Array.isArray(serverOrders)) {
+          serverOrders.forEach((o) => knownOrderIdsRef.current.add(o.id));
+          setOrders(serverOrders);
+          localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(serverOrders));
+        }
+      })
+      .catch(() => {});
+  }, [isAdminAuthenticated]);
 
   // Cierre automático por inactividad o por superar la duración máxima de la sesión
   useEffect(() => {
@@ -541,7 +556,7 @@ export default function App() {
     setOrders((prev) => [newOrder, ...prev]);
 
     // Persist to Supabase
-    saveServerOrder(newOrder).catch(() => {});
+    createServerOrder(newOrder).catch(() => {});
 
     // Add or update customer in known customers memory
     setKnownCustomers((prev) => {

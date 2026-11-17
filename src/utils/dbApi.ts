@@ -219,6 +219,12 @@ export async function initializeDatabaseSchema(): Promise<{ success: boolean; me
 }
 
 export async function generateNextOrderId(): Promise<string> {
+  // Preferido: función segura en la base de datos (no requiere leer pedidos con la clave pública)
+  try {
+    const { data, error } = await supabase.rpc('siguiente_pedido_id');
+    if (!error && typeof data === 'string' && data) return data;
+  } catch {}
+
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -327,38 +333,42 @@ export async function fetchServerOrders(): Promise<Order[]> {
   }
 }
 
+function orderToRecord(order: Order) {
+  return {
+    id: order.id,
+    created_at: order.createdAt || new Date().toISOString(),
+    dispatch_date: order.dispatchDate || '',
+    status: order.status || 'nuevos',
+    customer_name: order.customerName,
+    customer_phone: order.customerPhone,
+    document_type: order.documentType || 'DNI',
+    document_number: order.documentNumber,
+    shipping_type: order.shippingType,
+    items_description: order.itemsDescription || '',
+    notes: order.notes || '',
+    whatsapp_sent: Boolean(order.whatsappSent),
+    tracking_number: order.trackingNumber || null,
+    agency: order.agency || null,
+    delivery_address: order.deliveryAddress || null,
+    delivery_district: order.deliveryDistrict || null,
+    delivery_reference: order.deliveryReference || null,
+    is_cash_on_delivery: Boolean(order.isCashOnDelivery),
+    cash_on_delivery_amount: order.cashOnDeliveryAmount ?? null,
+    delivery_fee: order.deliveryFee ?? null,
+    subtotal_amount: order.subtotalAmount ?? null,
+    total_amount: order.totalAmount ?? null,
+    payment_method: order.paymentMethod || null,
+    is_deleted: Boolean(order.isDeleted),
+    deleted_at: order.deletedAt || null,
+    previous_status: order.previousStatus || 'nuevos',
+    raw_data: order,
+    updated_at: new Date().toISOString()
+    };
+}
+
 export async function saveServerOrder(order: Order): Promise<boolean> {
   try {
-    const record = {
-      id: order.id,
-      created_at: order.createdAt || new Date().toISOString(),
-      dispatch_date: order.dispatchDate || '',
-      status: order.status || 'nuevos',
-      customer_name: order.customerName,
-      customer_phone: order.customerPhone,
-      document_type: order.documentType || 'DNI',
-      document_number: order.documentNumber,
-      shipping_type: order.shippingType,
-      items_description: order.itemsDescription || '',
-      notes: order.notes || '',
-      whatsapp_sent: Boolean(order.whatsappSent),
-      tracking_number: order.trackingNumber || null,
-      agency: order.agency || null,
-      delivery_address: order.deliveryAddress || null,
-      delivery_district: order.deliveryDistrict || null,
-      delivery_reference: order.deliveryReference || null,
-      is_cash_on_delivery: Boolean(order.isCashOnDelivery),
-      cash_on_delivery_amount: order.cashOnDeliveryAmount ?? null,
-      delivery_fee: order.deliveryFee ?? null,
-      subtotal_amount: order.subtotalAmount ?? null,
-      total_amount: order.totalAmount ?? null,
-      payment_method: order.paymentMethod || null,
-      is_deleted: Boolean(order.isDeleted),
-      deleted_at: order.deletedAt || null,
-      previous_status: order.previousStatus || 'nuevos',
-      raw_data: order,
-      updated_at: new Date().toISOString()
-    };
+    const record = orderToRecord(order);
 
     const { error } = await supabase
       .from('orders')
@@ -385,6 +395,24 @@ export async function saveServerOrder(order: Order): Promise<boolean> {
     return true;
   } catch (err) {
     console.error('Fallo al guardar pedido:', err);
+    return false;
+  }
+}
+
+/**
+ * Crea un pedido nuevo con INSERT puro. Es lo único que el formulario público puede hacer
+ * cuando RLS está activo (no requiere leer ni actualizar pedidos existentes).
+ */
+export async function createServerOrder(order: Order): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('orders').insert([orderToRecord(order)]);
+    if (error) {
+      console.warn('Error creando pedido en Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Fallo al crear pedido:', err);
     return false;
   }
 }

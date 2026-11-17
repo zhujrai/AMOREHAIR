@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { generateNextOrderId } from '../utils/dbApi';
 import { 
   Building2, 
   Truck, 
@@ -331,7 +332,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm() || !shippingType) {
       const firstError = document.querySelector('.border-red-500, .text-red-500, .text-red-600');
@@ -339,7 +340,19 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
       return;
     }
 
-    const orderId = generateOrderId();
+    // Numeración segura desde la base de datos (si falla, usa un número aleatorio como antes)
+    let orderId = generateOrderId();
+    try {
+      orderId = await generateNextOrderId();
+    } catch {}
+
+    // Código de origen del enlace (p. ej. ?ref=AMR_049) para saber qué video generó el pedido
+    let sourceRef: string | undefined;
+    try {
+      const ref = new URLSearchParams(window.location.search).get('ref') || '';
+      const limpio = ref.trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+      sourceRef = limpio || undefined;
+    } catch {}
     const newOrder: Order = {
       id: orderId,
       createdAt: new Date().toISOString(),
@@ -353,6 +366,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
       itemsDescription: itemsDescription.trim() || 'Rutina personalizada',
       notes: notes.trim() || undefined,
       whatsappSent: false,
+      sourceRef,
     };
 
     if (shippingType === 'shalom') {
