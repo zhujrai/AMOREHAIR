@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Printer, X } from 'lucide-react';
 import { Order, StoreSettings } from '../types';
-import { ShippingLabel, LabelPaperSize } from './ShippingLabel';
+import { ShippingLabel, LabelPaperSize, LabelOrientation, paginaDeImpresion } from './ShippingLabel';
 
 interface ThermalLabelModalProps {
   order: Order | null;
@@ -19,6 +19,15 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
   isDark,
 }) => {
   const [paperSize, setPaperSize] = useState<LabelPaperSize>('thermal');
+  const [orientation, setOrientation] = useState<LabelOrientation>('horizontal');
+
+  // Esc cierra
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const f = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !order) return null;
 
@@ -112,13 +121,28 @@ export const ThermalLabelModal: React.FC<ThermalLabelModalProps> = ({
           </div>
         </div>
 
+        {/* Orientación del rótulo */}
+        <div className="px-4 sm:px-6 pt-3 flex items-center justify-between gap-2 print:hidden flex-wrap">
+          <span className="text-xs font-black text-black dark:text-zinc-300">Orientación:</span>
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800">
+            {(['horizontal', 'vertical'] as LabelOrientation[]).map((o) => (
+              <button key={o} type="button" onClick={() => setOrientation(o)} className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${orientation === o ? 'bg-black text-white dark:bg-white dark:text-[#1F1613] shadow-xs' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                {o === 'horizontal' ? '▭ Horizontal (recomendado)' : '▯ Vertical'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <style>{`@media print { @page { size: ${paginaDeImpresion(paperSize, orientation)}; margin: 0; } }`}</style>
+
         {/* PRINTABLE LABEL AREA */}
         <div className="p-4 sm:p-6 flex justify-center bg-zinc-900/10 dark:bg-black/40 print:p-0 print:m-0 print:bg-transparent">
-          <div id="printable-thermal-label" className="print:w-full print-active-single-container">
+          <div id="printable-thermal-label" className="w-full print:w-full print-active-single-container">
             <ShippingLabel
               order={order}
               storeSettings={storeSettings}
               paperSize={paperSize}
+              orientation={orientation}
             />
           </div>
         </div>

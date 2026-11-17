@@ -115,6 +115,7 @@ export const Cotizaciones: React.FC = () => {
   const [pasando, setPasando] = useState<string | null>(null);
   const [rutinasFoto, setRutinasFoto] = useState<RutinaFoto[]>([]);
   const [piezasDB, setPiezasDB] = useState<PiezaDB[]>([]);
+  const [nombres, setNombres] = useState<Record<string, string>>({}); // nombre de producto -> id (cotizaciones antiguas sin producto_id)
   const [envio, setEnvio] = useState({ medio: 'shalom', fecha: hoyISO(), dni: '' });
 
   const cargar = useCallback(async () => {
@@ -134,6 +135,7 @@ export const Cotizaciones: React.FC = () => {
       if (u) {
         cargar();
         supabase.from('rutinas').select('id,nombre,foto_url,ancho_foto,alto_foto').then(({ data }) => setRutinasFoto((data || []) as RutinaFoto[]));
+        supabase.from('productos').select('id,nombre').then(({ data }) => setNombres(Object.fromEntries((data || []).map((p: { id: string; nombre: string }) => [p.nombre, p.id]))));
         supabase.from('rutina_piezas').select('rutina_id,producto_id,zona').then(({ data }) => setPiezasDB((data || []) as PiezaDB[]));
       }
     });
@@ -311,12 +313,15 @@ export const Cotizaciones: React.FC = () => {
 
               <div className="space-y-3 rounded-xl bg-[#FBF4F0] p-3 text-sm">
                 {agruparRutina(c.seleccion).map(([r, ls]) => {
-                  const rutina = rutinasFoto.find((x) => x.nombre.split('·')[0].trim() === (ls[0].rutina || r));
-                  const ids = new Set(ls.map((l) => l.producto_id).filter(Boolean) as string[]);
-                  const piezas: PiezaKit[] = rutina ? piezasDB.filter((p) => p.rutina_id === rutina.id).map((p) => ({ producto_id: p.producto_id, zona: p.zona, elegida: ids.has(p.producto_id) })) : [];
+                  const ids = new Set(ls.map((l) => l.producto_id || nombres[l.producto]).filter(Boolean) as string[]);
+                  // La rutina es la de la cotización o, si no coincide, la que contiene más de estas piezas
+                  const porNombre = rutinasFoto.find((x) => x.nombre.split('·')[0].trim() === (ls[0].rutina || r));
+                  const cuenta = (rid: string) => piezasDB.filter((p) => p.rutina_id === rid && ids.has(p.producto_id)).length;
+                  const rutina = porNombre && cuenta(porNombre.id) > 0 ? porNombre : [...rutinasFoto].sort((x, y) => cuenta(y.id) - cuenta(x.id))[0];
+                  const piezas: PiezaKit[] = rutina && cuenta(rutina.id) > 0 ? piezasDB.filter((p) => p.rutina_id === rutina.id).map((p) => ({ producto_id: p.producto_id, zona: p.zona, elegida: ids.has(p.producto_id) })) : [];
                   return (
                     <div key={r} className="flex flex-col gap-3 sm:flex-row">
-                      {rutina && piezas.length > 0 && <KitResaltado foto={rutina.foto_url} ancho={rutina.ancho_foto || 1000} alto={rutina.alto_foto || 1333} piezas={piezas} className="w-full sm:w-44 shrink-0" />}
+                      {rutina && piezas.length > 0 && <KitResaltado foto={rutina.foto_url} ancho={rutina.ancho_foto || 1000} alto={rutina.alto_foto || 1333} piezas={piezas} className="mx-auto w-full max-w-[220px] sm:mx-0 sm:w-44 shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#A8634F]">{r}</p>
                         <ul className="mt-1 space-y-1">{ls.map((l, i) => <li key={i} className="flex gap-2 text-[14px] leading-snug"><span className="text-[#A8634F]">•</span><span className="min-w-0 break-words">{lineaTexto(l)}</span></li>)}</ul>
