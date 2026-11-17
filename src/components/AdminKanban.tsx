@@ -342,6 +342,30 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
     setDraggedOrderId(null);
   };
 
+  // Registrar un abono sin abrir el detalle: pregunta el monto (por defecto el saldo) y lo suma a lo pagado
+  const registrarAbono = (o: Order) => {
+    const c = calcularCobro(o);
+    if (!onUpdateOrder || c.saldo === null || c.saldo <= 0) return;
+    const texto = window.prompt(`Monto abonado por ${o.customerName}\nSaldo por cobrar: ${dinero(c.saldo)}`, c.saldo.toFixed(2));
+    if (texto === null) return;
+    const monto = parseFloat(texto.replace(',', '.'));
+    if (!(monto > 0) || monto > 100000) return;
+    onUpdateOrder({ ...o, amountPaid: Math.round((c.pagado + monto) * 100) / 100 });
+  };
+
+  // Atajo: "/" lleva el cursor al buscador (si no se está escribiendo en otro campo)
+  useEffect(() => {
+    const f = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+      e.preventDefault();
+      document.getElementById('kanban-search-input')?.focus();
+    };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, []);
+
   const handleOpenLabel = (order: Order) => {
     setSelectedLabelOrder(order);
     setShowThermalModal(true);
@@ -907,7 +931,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                             );
                           }
                           if (!vista.cobro || order.status === 'en_camino' || order.status === 'entregados') {
-                            return (<div className={`mt-2.5 flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-xs font-black ${(c.saldo as number) > 0 ? 'bg-rose-500/12 text-rose-700 dark:text-rose-300' : 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'}`}><span>{(c.saldo as number) > 0 ? 'Saldo por cobrar' : 'Pagado completo'}</span><span>{(c.saldo as number) > 0 ? dinero(c.saldo as number) : '✓'}</span></div>);
+                            return (<div className={`mt-2.5 flex items-center justify-between gap-2 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-black ${(c.saldo as number) > 0 ? 'bg-rose-500/12 text-rose-700 dark:text-rose-300' : 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'}`}><span>{(c.saldo as number) > 0 ? 'Saldo' : 'Pagado completo'}</span>{(c.saldo as number) > 0 && onUpdateOrder && order.status !== 'entregados' && (<button type="button" onClick={(e) => { e.stopPropagation(); registrarAbono(order); }} title="Registrar abono" aria-label="Registrar abono" className="ml-auto mr-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/80 text-[13px] font-black leading-none text-rose-700 hover:bg-white cursor-pointer dark:bg-black/30 dark:text-rose-200">+</button>)}<span>{(c.saldo as number) > 0 ? dinero(c.saldo as number) : '✓'}</span></div>);
                           }
                           return (
                             <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 text-xs space-y-1">
@@ -925,12 +949,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                                 <span className="text-[#6B5A55] dark:text-zinc-400">Total cliente</span>
                                 <span className="font-black text-[#1F1613] dark:text-white">{dinero(c.total as number)}</span>
                               </div>
-                              <div className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 font-black ${
+                              <div className={`flex items-center justify-between gap-2 whitespace-nowrap rounded-lg px-2 py-1 font-black ${
                                 (c.saldo as number) > 0
                                   ? 'bg-rose-500/12 text-rose-700 dark:text-rose-300'
                                   : 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'
                               }`}>
-                                <span>{(c.saldo as number) > 0 ? 'Saldo por cobrar' : 'Pagado completo'}</span>
+                                <span>{(c.saldo as number) > 0 ? 'Saldo' : 'Pagado completo'}</span>
+                                {(c.saldo as number) > 0 && onUpdateOrder && order.status !== 'entregados' && (<button type="button" onClick={(e) => { e.stopPropagation(); registrarAbono(order); }} title="Registrar abono" aria-label="Registrar abono" className="ml-auto mr-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/80 text-[13px] font-black leading-none text-rose-700 hover:bg-white cursor-pointer dark:bg-black/30 dark:text-rose-200">+</button>)}
                                 <span>{(c.saldo as number) > 0 ? dinero(c.saldo as number) : '✓'}</span>
                               </div>
                             </div>
