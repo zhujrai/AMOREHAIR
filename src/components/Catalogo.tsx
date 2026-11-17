@@ -29,6 +29,7 @@ function refDelEnlace(): string | undefined {
 
 export const Catalogo: React.FC = () => {
   const [rutina, setRutina] = useState<Rutina | null>(null);
+  const [listaRutinas, setListaRutinas] = useState<Rutina[] | null>(null);
   const [piezas, setPiezas] = useState<Pieza[]>([]);
   const [productos, setProductos] = useState<Record<string, Producto>>({});
   const [presentaciones, setPresentaciones] = useState<Record<string, Presentacion[]>>({});
@@ -45,10 +46,16 @@ export const Catalogo: React.FC = () => {
     (async () => {
       try {
         const idPedido = window.location.pathname.replace(/^\/catalogo\/?/, '').split('/')[0];
-        let consulta = supabase.from('rutinas').select('*').order('orden').limit(1);
-        if (idPedido) consulta = supabase.from('rutinas').select('*').eq('id', idPedido).limit(1);
+        const consulta = idPedido
+          ? supabase.from('rutinas').select('*').eq('id', idPedido).limit(1)
+          : supabase.from('rutinas').select('*').order('orden');
         const { data: rutinas, error: eR } = await consulta;
         if (eR) throw eR;
+        // Sin rutina elegida y con varias disponibles: se muestra el índice para escoger
+        if (!idPedido && (rutinas || []).length > 1) {
+          if (activo) setListaRutinas(rutinas as Rutina[]);
+          return;
+        }
         const r = (rutinas || [])[0] as Rutina | undefined;
         if (!r) throw new Error('No hay rutinas disponibles por ahora.');
 
@@ -162,6 +169,30 @@ export const Catalogo: React.FC = () => {
   if (cargando) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">Cargando catálogo…</div>;
   }
+  if (listaRutinas) {
+    const ref = refDelEnlace();
+    return (
+      <div className="min-h-screen bg-[#FBF4F0] text-[#2B1D1A]">
+        <header className="px-4 pt-5 pb-3 text-center">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-[#B06F5C] font-semibold">Amore Salón · Hair Style Studio</p>
+          <h1 className="mt-1 text-xl font-extrabold">Elige tu rutina</h1>
+          <p className="mt-1 text-xs text-[#8A7A76]">Toca una rutina, marca los productos que quieres y consulta por WhatsApp.</p>
+        </header>
+        <main className="max-w-md mx-auto px-4 pb-10 grid grid-cols-2 gap-3">
+          {listaRutinas.map((r) => (
+            <a
+              key={r.id}
+              href={`/catalogo/${r.id}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`}
+              className="rounded-2xl overflow-hidden bg-white shadow-md border border-[#EAD7BC] flex flex-col"
+            >
+              <img src={r.foto_url} alt={r.nombre} className="w-full aspect-[4/5] object-cover" loading="lazy" />
+              <span className="p-2.5 text-xs font-bold leading-snug">{r.nombre}</span>
+            </a>
+          ))}
+        </main>
+      </div>
+    );
+  }
   if (!rutina) {
     return <div className="min-h-screen flex items-center justify-center px-6 text-center text-sm text-zinc-600">{error || 'Catálogo no disponible.'}</div>;
   }
@@ -205,7 +236,7 @@ export const Catalogo: React.FC = () => {
                 }}
               >
                 <span
-                  className={`absolute -top-3 -right-3 w-7 h-7 rounded-full flex items-center justify-center text-sm font-black shadow-md transition-all ${
+                  className={`absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shadow-md transition-all ${
                     marcado ? 'bg-[#B06F5C] text-white scale-100' : 'bg-white text-[#B06F5C] scale-90'
                   }`}
                 >
