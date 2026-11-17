@@ -1,4 +1,5 @@
 import { Order, ShippingType, StoreSettings } from '../types';
+import { calcularCobro, dinero } from './cobro';
 
 export function getShippingTypeLabel(type?: ShippingType | null): string {
   if (!type) return 'Seleccionar';
@@ -517,7 +518,19 @@ export function getWhatsAppShareUrl(order: Order, store: StoreSettings): string 
   return `https://wa.me/${targetNumber}?text=${encodeURIComponent(text)}`;
 }
 
+/** Mensaje al cliente según la etapa del pedido; si queda saldo por pagar, lo agrega (venta + flete = total). */
 export function buildCustomerStatusWhatsAppMessage(order: Order, store?: Partial<StoreSettings>): string {
+  const base = mensajeBaseEtapa(order, store);
+  const c = calcularCobro(order);
+  if (order.status === 'entregados' || order.isCashOnDelivery || c.total === null || c.saldo === null || c.saldo <= 0) return base;
+  const pagado = c.pagado > 0 ? ` (abonado ${dinero(c.pagado)})` : '';
+  return base + `
+
+💰 *Total:* ${dinero(c.total)}${pagado}
+*Saldo por pagar:* ${dinero(c.saldo)}`;
+}
+
+function mensajeBaseEtapa(order: Order, store?: Partial<StoreSettings>): string {
   const storeName = store?.storeName || 'AMORE SALON HAIR STYLE';
   const customerFirst = order.customerName.split(' ')[0] || order.customerName;
 

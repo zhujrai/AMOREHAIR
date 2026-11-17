@@ -452,7 +452,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-      <div className={`w-full max-w-4xl rounded-2xl border-2 shadow-2xl transition-all duration-200 my-auto max-h-[92vh] flex flex-col ${
+      <div className={`w-full max-w-4xl rounded-2xl border shadow-2xl transition-all duration-200 my-auto max-h-[92vh] flex flex-col ${
         isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
       }`}>
         
@@ -883,7 +883,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
             <div className="space-y-4">
               
               {/* Sync status & Action Toolbar */}
-              <div className={`p-4 rounded-2xl border-2 flex flex-wrap items-center justify-between gap-3 ${
+              <div className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-3 ${
                 isDark ? 'bg-[#140E0D] border-[#2A1F1B]' : 'bg-zinc-50 border-zinc-300'
               }`}>
                 <div className="flex items-center gap-3">
@@ -957,7 +957,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                     placeholder={`Buscar en ${activeTab === 'shalom' ? 'Shalom' : activeTab === 'marvisur' ? 'Marvisur' : 'Olva'} por departamento, provincia, distrito o dirección...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                    className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold border ${
                       isDark ? 'bg-[#140E0D] border-[#2A1F1B] text-white placeholder:text-[#6B5A55]' : 'bg-white border-zinc-300 text-black placeholder:text-[#6B5A55]'
                     }`}
                   />
@@ -995,7 +995,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleExportJSON(activeTab)}
-                    className={`px-3 py-2 rounded-xl border-2 text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl border text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer ${
                       isDark ? 'bg-[#140E0D] border-[#2A1F1B] text-purple-300 hover:border-purple-500' : 'bg-purple-50 border-purple-200 text-purple-800 hover:border-purple-400'
                     }`}
                     title="Exportar JSON completo de agencias"
@@ -1007,7 +1007,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleExportCSV(activeTab)}
-                    className={`p-2 rounded-xl border-2 text-xs font-black flex items-center gap-1 transition-colors cursor-pointer ${
+                    className={`p-2 rounded-xl border text-xs font-black flex items-center gap-1 transition-colors cursor-pointer ${
                       isDark ? 'bg-[#140E0D] border-[#2A1F1B] text-zinc-300' : 'bg-zinc-50 border-zinc-300 text-zinc-700'
                     }`}
                     title="Exportar CSV"
@@ -1018,7 +1018,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleResetAgencies(activeTab)}
-                    className={`p-2 rounded-xl border-2 text-xs text-[#6B5A55] hover:text-red-500 transition-colors cursor-pointer ${
+                    className={`p-2 rounded-xl border text-xs text-[#6B5A55] hover:text-red-500 transition-colors cursor-pointer ${
                       isDark ? 'bg-[#140E0D] border-[#2A1F1B]' : 'bg-zinc-50 border-zinc-300'
                     }`}
                     title="Restablecer catálogo oficial de contingencia"
@@ -1030,7 +1030,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
 
               {/* Add New Agency Form Modal Collapse */}
               {showAddForm && (
-                <div className={`p-4 rounded-2xl border-2 space-y-3 animate-in fade-in duration-150 ${
+                <div className={`p-4 rounded-2xl border space-y-3 animate-in fade-in duration-150 ${
                   isDark ? 'bg-[#140E0D] border-[#2A1F1B]' : 'bg-zinc-50 border-zinc-300'
                 }`}>
                   <h5 className="font-black text-xs uppercase tracking-wider text-[#C68173] flex items-center gap-1.5">
@@ -1046,7 +1046,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         placeholder="Ej: Lima / La Victoria / Luna Pizarro"
                         value={newAgencyName}
                         onChange={(e) => setNewAgencyName(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border ${
                           isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
                         }`}
                       />
@@ -1059,7 +1059,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         placeholder="Ej: Av. Luna Pizarro 542"
                         value={newAgencyAddress}
                         onChange={(e) => setNewAgencyAddress(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border ${
                           isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
                         }`}
                       />
@@ -1072,7 +1072,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         placeholder="Ej: Lima / Arequipa / Cusco"
                         value={newAgencyDepartment}
                         onChange={(e) => setNewAgencyDepartment(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border ${
                           isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
                         }`}
                       />
@@ -1085,7 +1085,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         placeholder="Ej: MARV-LIM-01"
                         value={newAgencyCode}
                         onChange={(e) => setNewAgencyCode(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-bold border ${
                           isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
                         }`}
                       />
@@ -1098,7 +1098,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                           <select
                             value={newAgencyTipo}
                             onChange={(e) => setNewAgencyTipo(e.target.value as 'TIENDA' | 'AGENTE')}
-                            className={`w-full px-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                            className={`w-full px-3 py-2 rounded-xl text-xs font-bold border ${
                               isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
                             }`}
                           >
@@ -1114,7 +1114,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                             placeholder="Ej: 150117"
                             value={newAgencyUbigeo}
                             onChange={(e) => setNewAgencyUbigeo(e.target.value)}
-                            className={`w-full px-3 py-2 rounded-xl text-xs font-bold border-2 ${
+                            className={`w-full px-3 py-2 rounded-xl text-xs font-bold border ${
                               isDark ? 'bg-[#1B1412] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300 text-black'
                             }`}
                           />
@@ -1152,7 +1152,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   filteredAgencies.map((agency) => (
                     <div
                       key={agency.id}
-                      className={`p-3 rounded-2xl border-2 flex items-center justify-between gap-3 ${
+                      className={`p-3 rounded-2xl border flex items-center justify-between gap-3 ${
                         isDark ? 'bg-[#140E0D] border-[#2A1F1B]' : 'bg-[#FBF4F0] border-[#EADCD3]'
                       }`}
                     >
@@ -1213,7 +1213,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
           {/* TAB 4: IMPORTADOR JSON / TXT / CSV */}
           {activeTab === 'import' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border-2 bg-[#C68173]/10 border-[#C68173]/20 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border bg-[#C68173]/10 border-[#C68173]/20 text-xs">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <FileJson className="w-4 h-4 text-[#C68173]" />
@@ -1234,7 +1234,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                         setParsedPreview(parseImportText(rawImportText, newTarget));
                       }
                     }}
-                    className={`px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs border ${
                       isDark ? 'bg-[#140E0D] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300'
                     }`}
                   >
@@ -1246,7 +1246,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   <select
                     value={importMode}
                     onChange={(e) => setImportMode(e.target.value as 'append' | 'replace')}
-                    className={`px-3 py-1.5 rounded-xl font-bold text-xs border-2 ${
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs border ${
                       isDark ? 'bg-[#140E0D] border-[#2A1F1B] text-white' : 'bg-white border-zinc-300'
                     }`}
                   >
@@ -1258,7 +1258,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
 
               {/* Upload file box */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className={`p-5 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                <label className={`p-5 rounded-2xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
                   isDark ? 'bg-[#140E0D] border-zinc-700 hover:border-[#C68173]' : 'bg-zinc-50 border-zinc-300 hover:border-[#C68173]'
                 }`}>
                   <FileCode2 className="w-8 h-8 text-[#C68173] mb-2" />
@@ -1274,7 +1274,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   />
                 </label>
 
-                <div className={`p-4 rounded-2xl border-2 text-xs space-y-2 ${
+                <div className={`p-4 rounded-2xl border text-xs space-y-2 ${
                   isDark ? 'bg-[#140E0D] border-[#2A1F1B]' : 'bg-[#FBF4F0] border-[#EADCD3]'
                 }`}>
                   <div className="flex items-center justify-between">
@@ -1311,7 +1311,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                   placeholder='Pega aquí tu JSON completo (ej: [{"name": "...", "address": "..."}]) o texto CSV...'
                   value={rawImportText}
                   onChange={(e) => handleRawTextChange(e.target.value)}
-                  className={`w-full p-3 rounded-xl text-xs font-mono border-2 ${
+                  className={`w-full p-3 rounded-xl text-xs font-mono border ${
                     isDark ? 'bg-[#140E0D] border-[#2A1F1B] text-white placeholder:text-[#6B5A55]' : 'bg-white border-zinc-300 text-[#1F1613] placeholder:text-zinc-400'
                   }`}
                 />
@@ -1334,7 +1334,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
                     </button>
                   </div>
 
-                  <div className="border-2 rounded-2xl max-h-[180px] overflow-y-auto text-xs border-[#EADCD3] dark:border-zinc-800">
+                  <div className="border rounded-2xl max-h-[180px] overflow-y-auto text-xs border-[#EADCD3] dark:border-zinc-800">
                     <table className="w-full text-left">
                       <thead className={`text-[10px] font-black uppercase sticky top-0 ${
                         isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'

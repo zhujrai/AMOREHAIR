@@ -543,7 +543,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   }}
                   className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
                     errors.shippingType
-                      ? 'border-2 border-red-500 bg-red-500/10'
+                      ? 'border border-red-500 bg-red-500/10'
                       : isDark 
                         ? 'bg-[#DFBF8B]/20 hover:bg-[#DFBF8B]/35 border border-[#DFBF8B]/30 text-white' 
                         : 'bg-[#F6E8E1] hover:bg-rose-100/90 border border-[#DFBF8B]/30 text-black shadow-xs'
@@ -571,7 +571,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   }}
                   className={`p-3.5 sm:p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
                     errors.shippingType
-                      ? 'border-2 border-red-500 bg-red-500/10'
+                      ? 'border border-red-500 bg-red-500/10'
                       : isDark 
                         ? 'bg-[#2A1E1A] hover:bg-[#201E24] border border-[#A8634F]/30 text-white shadow-xs' 
                         : 'bg-white hover:bg-[#FBF4F0] border border-[#EADCD3] text-[#1F1613] shadow-2xs'
@@ -658,9 +658,9 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   }}
                   className={`p-3.5 rounded-xl cursor-pointer transition-all ${
                     errors.agency
-                      ? 'border-2 border-red-500 bg-red-500/10'
+                      ? 'border border-red-500 bg-red-500/10'
                       : !selectedShalomAgency
-                        ? 'border-2 border-[#A8634F] ring-4 ring-[#A8634F]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
+                        ? 'border border-[#A8634F] ring-4 ring-[#A8634F]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
                         : isDark 
                           ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
                           : 'bg-white hover:bg-zinc-50 border border-[#EADCD3] text-[#1F1613] shadow-2xs'
@@ -734,9 +734,9 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   }}
                   className={`p-3.5 rounded-xl cursor-pointer transition-all ${
                     errors.agency
-                      ? 'border-2 border-red-500 bg-red-500/10'
+                      ? 'border border-red-500 bg-red-500/10'
                       : !selectedMarvisurAgency
-                        ? 'border-2 border-[#4E8F96] ring-4 ring-[#4E8F96]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
+                        ? 'border border-[#4E8F96] ring-4 ring-[#4E8F96]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
                         : isDark 
                           ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
                           : 'bg-white hover:bg-zinc-50 border border-[#EADCD3] text-[#1F1613] shadow-2xs'
@@ -820,9 +820,9 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                       }}
                       className={`p-3.5 rounded-xl cursor-pointer transition-all ${
                         errors.agency
-                          ? 'border-2 border-red-500 bg-red-500/10'
+                          ? 'border border-red-500 bg-red-500/10'
                           : !selectedOlvaAgency
-                            ? 'border-2 border-[#DFBF8B] ring-4 ring-[#DFBF8B]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
+                            ? 'border border-[#DFBF8B] ring-4 ring-[#DFBF8B]/20 bg-white dark:bg-[#211815] shadow-md animate-pulse'
                             : isDark 
                               ? 'bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-white' 
                               : 'bg-white hover:bg-zinc-50 border border-[#EADCD3] text-[#1F1613] shadow-2xs'
@@ -904,7 +904,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                   className={`w-full px-3.5 py-3 rounded-xl text-xs font-bold ${
                     errors.deliveryAddress 
-                      ? 'border-2 border-red-500 ring-2 ring-red-500/20' 
+                      ? 'border border-red-500 ring-2 ring-red-500/20' 
                       : isDark 
                         ? 'bg-zinc-900 text-white border border-white/10' 
                         : 'bg-white text-black placeholder-[#6B5A55]/70 border border-[#EADCD3] shadow-2xs'

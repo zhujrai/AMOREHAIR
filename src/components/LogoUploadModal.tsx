@@ -108,9 +108,9 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
           
           {/* Visual Logo Preview Slot */}
-          <div className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50 dark:bg-[#140E0D] text-center space-y-3">
+          <div className="flex flex-col items-center justify-center p-6 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50 dark:bg-[#140E0D] text-center space-y-3">
             <div className="relative group">
-              <div className="h-24 min-w-[140px] px-3 rounded-2xl border-2 border-red-500/30 shadow-lg overflow-hidden flex items-center justify-center bg-white dark:bg-[#1B1412]">
+              <div className="h-24 min-w-[140px] px-3 rounded-2xl border border-red-500/30 shadow-lg overflow-hidden flex items-center justify-center bg-white dark:bg-[#1B1412]">
                 {logoInput ? (
                   <img
                     src={logoInput}
@@ -159,7 +159,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
               <button
                 type="button"
                 onClick={() => setLogoInput('https://res.cloudinary.com/nqvtgmba/image/upload/v1787124583/AmoreLogo2026horizontal.png')}
-                className={`p-2.5 rounded-xl border-2 text-left flex items-center gap-2 text-xs font-black transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl border text-left flex items-center gap-2 text-xs font-black transition-all cursor-pointer ${
                   logoInput.includes('horizontal')
                     ? 'border-[#C68173] bg-[#C68173]/10 text-red-600 dark:text-[#C68173]'
                     : 'border-zinc-300 dark:border-zinc-800 text-black dark:text-zinc-300 hover:border-black'
@@ -180,7 +180,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
               <button
                 type="button"
                 onClick={() => setLogoInput('https://res.cloudinary.com/nqvtgmba/image/upload/v1787124738/AmoreLogo2026_1x1.png')}
-                className={`p-2.5 rounded-xl border-2 text-left flex items-center gap-2 text-xs font-black transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl border text-left flex items-center gap-2 text-xs font-black transition-all cursor-pointer ${
                   logoInput.includes('1x1')
                     ? 'border-[#C68173] bg-[#C68173]/10 text-red-600 dark:text-[#C68173]'
                     : 'border-zinc-300 dark:border-zinc-800 text-black dark:text-zinc-300 hover:border-black'
@@ -201,7 +201,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
           </div>
 
           {/* Mode Selector */}
-          <div className="flex rounded-xl p-1 bg-zinc-100 dark:bg-zinc-900 border-2 border-[#EADCD3] dark:border-zinc-800">
+          <div className="flex rounded-xl p-1 bg-zinc-100 dark:bg-zinc-900 border border-[#EADCD3] dark:border-zinc-800">
             <button
               type="button"
               onClick={() => setActiveMode('upload')}
@@ -241,7 +241,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
               />
               <label
                 htmlFor="logo-file-input"
-                className={`w-full p-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
+                className={`w-full p-4 rounded-xl border border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
                   isDark 
                     ? 'border-zinc-700 bg-zinc-900/50 hover:bg-zinc-900 hover:border-[#C68173]' 
                     : 'border-zinc-300 bg-zinc-50 hover:bg-zinc-100 hover:border-black'
@@ -269,7 +269,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
                   placeholder="https://misitio.com/logo-amore-salon.png"
                   value={logoInput}
                   onChange={(e) => setLogoInput(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#C68173] ${
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#C68173] ${
                     isDark 
                       ? 'bg-[#140E0D] border-[#2A1F1B] text-zinc-100' 
                       : 'bg-white border-zinc-300 text-black'
@@ -294,7 +294,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
                 value={storeNameInput}
                 onChange={(e) => setStoreNameInput(e.target.value)}
                 placeholder="AMORE SALON HAIR STYLE"
-                className={`w-full px-3.5 py-2.5 rounded-xl border-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#C68173] ${
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#C68173] ${
                   isDark 
                     ? 'bg-[#140E0D] border-[#2A1F1B] text-zinc-100' 
                     : 'bg-white border-zinc-300 text-black'
@@ -312,7 +312,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
                 onChange={(e) => setPhoneInput(e.target.value)}
                 placeholder="940339934"
                 maxLength={9}
-                className={`w-full px-3.5 py-2.5 rounded-xl border-2 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C68173] ${
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#C68173] ${
                   isDark 
                     ? 'bg-[#140E0D] border-[#2A1F1B] text-zinc-100' 
                     : 'bg-white border-zinc-300 text-black'
@@ -330,7 +330,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl border-2 border-zinc-300 dark:border-zinc-700 text-xs font-black text-black dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-black text-black dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             Cancelar
           </button>

@@ -256,3 +256,10 @@ html.dark .label-mono {
 :root.dark .border-white\/10 { border-color: rgba(255, 255, 255, 0.2) !important; }
 :root.dark .border-white\/20 { border-color: rgba(255, 255, 255, 0.3) !important; }
 :root.dark ::placeholder { color: #B9A89E; opacity: 1; }
+
+/* Menos líneas (modo claro): el contenido se separa con espacio, fondos y sombras en vez de bordes */
+:root:not(.dark) [class*="border-[#EADCD3]"] { border-color: rgba(168, 99, 79, 0.13) !important; }
+:root:not(.dark) .border-zinc-300, :root:not(.dark) .border-zinc-200 { border-color: #EEE3DC !important; }
+:root:not(.dark) [id^="order-card-"] [class*="border"] { border-color: transparent !important; }
+:root:not(.dark) [id^="kanban-col-"] { border-color: transparent !important; background-color: rgba(246, 232, 225, 0.55) !important; }
+:root:not(.dark) [id^="kanban-col-"] [class*="border-b"] { border-color: transparent !important; }

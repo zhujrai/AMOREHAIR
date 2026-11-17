@@ -298,7 +298,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm text-white bg-zinc-900 hover:bg-[#A8634F] dark:bg-white dark:text-[#1F1613] dark:hover:bg-zinc-100 shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
           >
             {isLoading ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 <span>Iniciar Sesión</span>

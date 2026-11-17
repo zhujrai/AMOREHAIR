@@ -98,6 +98,9 @@ const ESTILOS = `
 .cat .latido { position:relative; overflow:hidden; animation:catLatido 1.7s ease-in-out infinite; }
 .cat .latido::after { content:''; position:absolute; top:0; bottom:0; left:0; width:38%; pointer-events:none; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:catReflejo 2.9s ease-in-out infinite; }
 .cat .latido:active { animation-play-state:paused; transform:scale(.97); }
+@keyframes catBarrido { from { transform:translateX(-130%) skewX(-18deg); opacity:1; } to { transform:translateX(330%) skewX(-18deg); opacity:.9; } }
+.cat .barrido { position:absolute; top:0; bottom:0; left:0; width:42%; pointer-events:none; mix-blend-mode:screen; background:linear-gradient(90deg,transparent,rgba(255,236,190,.65),transparent); animation:catBarrido 1.15s cubic-bezier(.3,.7,.2,1) both; }
+.cat .recomendado { background:linear-gradient(135deg,#F6DDA3,#DFBF8B); color:#4A2E22; box-shadow:0 6px 14px -6px rgba(120,80,30,.7); }
 @media (prefers-reduced-motion: reduce) { .cat * { animation:none !important; transition:none !important; } }
 `;
 
@@ -123,6 +126,7 @@ export const Catalogo: React.FC = () => {
       return !v;
     });
   };
+  const [barrido, setBarrido] = useState(0); // cuenta de veces que se eligió el kit completo (dispara el barrido de luz)
   const cestaRef = useRef<HTMLElement | null>(null);
   const toque = useRef<{ x: number; y: number } | null>(null);
 
@@ -232,6 +236,7 @@ export const Catalogo: React.FC = () => {
 
   const elegirTodoElKit = () => {
     vibrar(14);
+    setBarrido((n) => n + 1);
     setSeleccion((prev) => {
       const copia = { ...prev };
       piezasActiva.forEach((p) => {
@@ -440,6 +445,7 @@ export const Catalogo: React.FC = () => {
             <div className="min-w-0" onTouchStart={alTocar} onTouchEnd={alSoltar}>
               <div key={activa.id} className="entra relative overflow-hidden rounded-[28px] shadow-[var(--sombra)]" style={{ aspectRatio: `${W} / ${H}`, background: 'var(--hueco)' }}>
                 <img src={activa.foto_url} alt={activa.nombre} className="absolute inset-0 h-full w-full select-none object-cover" draggable={false} />
+                {barrido > 0 && <div key={barrido} className="barrido" aria-hidden="true" />}
 
                 <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" role="group" aria-label="Productos de la rutina">
                   <defs>
@@ -512,8 +518,9 @@ export const Catalogo: React.FC = () => {
                     <span id="tip-kit" role="tooltip" className="pointer-events-none absolute bottom-full right-0 mb-2 w-52 rounded-2xl px-3.5 py-2.5 text-[12px] font-medium leading-snug opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100" style={{ background: 'var(--ink)', color: 'var(--bg)' }}>
                       {TEXTO_KIT}
                     </span>
+                    <span className="recomendado pointer-events-none absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-[3px] text-[9px] font-extrabold uppercase tracking-[0.14em]">★ Recomendado</span>
                     <button type="button" onClick={elegirTodoElKit} className="boton-acento latido flex cursor-pointer flex-col items-center rounded-full px-4 py-2 leading-tight">
-                      <span className="text-[12px] font-bold">Elegir todo el kit</span>
+                      <span className="text-[12px] font-bold">Kit completo</span>
                       <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#FFE9B8]">Dcto. exclusivo</span>
                     </button>
                   </div>

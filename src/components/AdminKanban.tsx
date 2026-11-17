@@ -246,6 +246,12 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   // Drag handlers
   // Regla de avance: una tarjeta sin precio de venta no sale de "Nuevos"; se abre el detalle para completarlo
   const [avisoPrecio, setAvisoPrecio] = useState(false);
+  // Abrir el detalle de una tarjeta (al tocar su cabecera)
+  const abrirDetalle = (o: Order) => {
+    setAvisoPrecio(false);
+    setEditingOrder(o);
+    setShowEditModal(true);
+  };
   const intentarMover = (orderId: string, destino: OrderStatus) => {
     const o = orders.find((x) => x.id === orderId);
     if (o && destino !== 'nuevos' && faltaPrecio(o)) {
@@ -716,10 +722,16 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         id={`order-card-${order.id}`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, order.id)}
-                        className={`${tarjetaResaltada === order.id ? 'amore-resaltada ' : ''}w-full max-w-full min-w-0 p-3.5 rounded-xl border transition-all duration-150 shadow-2xs hover:shadow-xs cursor-grab active:cursor-grabbing group overflow-hidden box-border bg-white dark:bg-[#2A1E1A] border-[#EADCD3] dark:border-white/10 hover:border-[#A8634F]/40 dark:hover:border-white/20`}
+                        className={`${tarjetaResaltada === order.id ? 'amore-resaltada ' : ''}w-full max-w-full min-w-0 p-3.5 rounded-xl border border-transparent transition-all duration-150 shadow-[0_1px_2px_rgba(60,35,25,.05),0_6px_18px_-8px_rgba(60,35,25,.22)] hover:shadow-[0_2px_4px_rgba(60,35,25,.07),0_12px_26px_-8px_rgba(60,35,25,.32)] cursor-grab active:cursor-grabbing group overflow-hidden box-border bg-white dark:bg-[#2A1E1A] dark:border-white/10 dark:hover:border-white/20`}
                       >
                         {/* Top: Checkbox Selección, ID, Payment Badge & Courier Badge */}
-                        <div className="flex items-center justify-between gap-1.5 mb-2.5 min-w-0 flex-nowrap">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          title="Toca para abrir el detalle"
+                          onClick={() => abrirDetalle(order)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') abrirDetalle(order); }}
+                          className="flex items-center justify-between gap-1.5 mb-2 min-w-0 flex-nowrap cursor-pointer rounded-lg -mx-1.5 px-1.5 py-1 transition-colors hover:bg-[#F6E8E1]/70 dark:hover:bg-white/5">
                           <div className="flex items-center gap-1.5 min-w-0 flex-nowrap flex-1 overflow-hidden">
                             <input
                               type="checkbox"
@@ -756,7 +768,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         </div>
 
                         {/* Customer Name (15-16px, dark text, semibold) & DNI / WhatsApp */}
-                        <div className="space-y-1 min-w-0">
+                        <div
+                          className="space-y-1 min-w-0 cursor-pointer rounded-lg -mx-1.5 px-1.5 py-1 transition-colors hover:bg-[#F6E8E1]/70 dark:hover:bg-white/5"
+                          title="Toca para abrir el detalle"
+                          onClick={() => abrirDetalle(order)}>
                           <h4 className="font-semibold text-[15px] sm:text-base text-[#1F1613] dark:text-white tracking-tight leading-snug break-words">
                             {order.customerName}
                           </h4>
@@ -917,22 +932,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                               <Printer className="w-3.5 h-3.5" />
                             </button>
 
-                            {/* Edit Order Modal Trigger */}
-                            {onUpdateOrder && (
-                              <button
-                                id={`edit-order-btn-${order.id}`}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingOrder(order);
-                                  setShowEditModal(true);
-                                }}
-                                className="p-1.5 rounded-lg bg-[#FBF4F0] hover:bg-zinc-100 text-[#6B5A55] hover:text-[#1F1613] dark:bg-zinc-800 dark:text-zinc-300 border border-[#EADCD3] dark:border-zinc-700 transition-colors cursor-pointer"
-                                title="Editar pedido"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            {/* El detalle se abre tocando la cabecera de la tarjeta */}
                           </div>
 
                           {/* Quick Stage Controls */}

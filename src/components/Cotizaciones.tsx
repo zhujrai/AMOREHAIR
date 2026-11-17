@@ -351,7 +351,7 @@ export const Cotizaciones: React.FC = () => {
               </div>
 
               {pasando === c.id && (
-                <div className="space-y-2.5 rounded-xl border-2 border-dashed border-[#DFBF8B] bg-[#FBF1DC]/50 p-3">
+                <div className="space-y-2.5 rounded-xl border border-dashed border-[#DFBF8B] bg-[#FBF1DC]/50 p-3">
                   <p className="text-xs font-bold text-[#2B1D1A]">Crear la tarjeta en el tablero ahora (completarás el resto en su detalle)</p>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">

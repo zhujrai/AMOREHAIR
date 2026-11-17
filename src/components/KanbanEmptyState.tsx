@@ -15,7 +15,7 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
 }) => {
   if (isSearching) {
     return (
-      <div className={`py-12 px-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all ${
+      <div className={`py-12 px-4 rounded-2xl border border-dashed flex flex-col items-center justify-center text-center transition-all ${
         isDark ? 'border-white/10 bg-white/[0.02]' : 'border-zinc-300 bg-white/40'
       }`}>
         <p className="text-xs font-black text-[#1F1613] dark:text-zinc-200">
@@ -29,7 +29,7 @@ export const KanbanEmptyState: React.FC<KanbanEmptyStateProps> = ({
   }
 
   return (
-    <div className={`py-8 px-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all relative overflow-hidden group ${
+    <div className={`py-8 px-4 rounded-2xl border border-dashed flex flex-col items-center justify-center text-center transition-all relative overflow-hidden group ${
       isDark 
         ? 'border-white/10 bg-[#141419]/40 hover:border-white/20' 
         : 'border-zinc-300/80 bg-white/40 hover:border-zinc-400'
