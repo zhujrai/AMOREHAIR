@@ -32,6 +32,10 @@ import {
   Edit3,
   Database,
   Copy,
+  Eye,
+  DollarSign,
+  CreditCard,
+  FileText,
   Link2
 } from 'lucide-react';
 import { Agency, Order, OrderStatus, ShippingMethodsConfig, ShippingType, StoreSettings } from '../types';
@@ -145,6 +149,24 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   const textToCopy = `Registra los datos de entrega aquí: ${clientFormUrl}`;
 
   // Botones compactos de enlaces públicos: copian el enlace para enviarlo por WhatsApp o Instagram
+  // Vista de tarjetas: compacta por defecto. Cada campo que ocupa espacio se puede mostrar u ocultar (se recuerda en este equipo).
+  type CampoVista = 'documento' | 'cobro' | 'pago' | 'ubicacion' | 'fecha' | 'productos' | 'guia' | 'alertas';
+  const VISTA_BASE: Record<CampoVista, boolean> = { documento: false, cobro: false, pago: false, ubicacion: true, fecha: true, productos: false, guia: true, alertas: true };
+  const [vista, setVista] = useState<Record<CampoVista, boolean>>(() => {
+    try { return { ...VISTA_BASE, ...JSON.parse(localStorage.getItem('amore_vista_tarjetas') || '{}') }; } catch { return VISTA_BASE; }
+  });
+  useEffect(() => { try { localStorage.setItem('amore_vista_tarjetas', JSON.stringify(vista)); } catch { /* sin almacenamiento */ } }, [vista]);
+  const alternarCampo = (c: CampoVista) => setVista((v) => ({ ...v, [c]: !v[c] }));
+  const todoVisible = (Object.keys(VISTA_BASE) as CampoVista[]).every((c) => vista[c]);
+  const CAMPOS_VISTA: { campo: CampoVista; icono: React.ReactNode; texto: string }[] = [
+    { campo: 'documento', icono: <User className="w-3.5 h-3.5" />, texto: 'Documento (DNI/CE)' },
+    { campo: 'ubicacion', icono: <MapPin className="w-3.5 h-3.5" />, texto: 'Destino / dirección' },
+    { campo: 'fecha', icono: <Calendar className="w-3.5 h-3.5" />, texto: 'Fecha de despacho' },
+    { campo: 'productos', icono: <Package className="w-3.5 h-3.5" />, texto: 'Detalle de productos' },
+    { campo: 'cobro', icono: <DollarSign className="w-3.5 h-3.5" />, texto: 'Desglose de cobro (venta, flete, total)' },
+    { campo: 'pago', icono: <CreditCard className="w-3.5 h-3.5" />, texto: 'Contraentrega y tipo de pago' },
+    { campo: 'guia', icono: <FileText className="w-3.5 h-3.5" />, texto: 'Número de guía' },
+  ];
   const [enlaceCopiado, setEnlaceCopiado] = useState<'catalogo' | 'clientes' | null>(null);
   const copiarEnlace = async (tipo: 'catalogo' | 'clientes') => {
     const texto = tipo === 'catalogo'
@@ -478,6 +500,34 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
             </div>
           )}
 
+          {/* Qué se ve en las tarjetas (iconos con ayuda al pasar el cursor) */}
+          <div className={`flex items-center gap-0.5 rounded-lg border p-0.5 ${isDark ? 'bg-zinc-900 border-white/10' : 'bg-white border-[#EADCD3]'}`} role="group" aria-label="Campos visibles en las tarjetas">
+            <button
+              type="button"
+              id="vista-todo-btn"
+              onClick={() => setVista(todoVisible ? VISTA_BASE : { documento: true, cobro: true, pago: true, ubicacion: true, fecha: true, productos: true, guia: true, alertas: true })}
+              className={`p-1.5 rounded-md cursor-pointer transition-colors ${todoVisible ? 'bg-[#A8634F] text-white' : 'text-[#6B5A55] hover:bg-[#FBF4F0] dark:text-zinc-300 dark:hover:bg-zinc-800'}`}
+              title={todoVisible ? 'Volver a la vista compacta' : 'Mostrar todos los campos de las tarjetas'}
+              aria-label={todoVisible ? 'Volver a la vista compacta' : 'Mostrar todos los campos'}
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+            {CAMPOS_VISTA.map((c) => (
+              <button
+                key={c.campo}
+                type="button"
+                id={`vista-${c.campo}-btn`}
+                onClick={() => alternarCampo(c.campo)}
+                aria-pressed={vista[c.campo]}
+                aria-label={`${vista[c.campo] ? 'Ocultar' : 'Mostrar'}: ${c.texto}`}
+                title={`${vista[c.campo] ? 'Ocultar' : 'Mostrar'}: ${c.texto}`}
+                className={`p-1.5 rounded-md cursor-pointer transition-colors ${vista[c.campo] ? 'bg-[#F6E8E1] text-[#A8634F] dark:bg-white/10 dark:text-[#DFBF8B]' : 'text-[#B8A8A2] hover:bg-[#FBF4F0] dark:text-zinc-500 dark:hover:bg-zinc-800'}`}
+              >
+                {c.icono}
+              </button>
+            ))}
+          </div>
+
           <button
             id="copy-link-catalogo-btn"
             type="button"
@@ -779,9 +829,9 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           </h4>
 
                           <div className="flex items-center justify-between gap-1 text-xs min-w-0">
-                            <span className="text-[#6B5A55] dark:text-zinc-400 font-mono text-[11px] truncate">
+                            {vista.documento ? (<span className="text-[#6B5A55] dark:text-zinc-400 font-mono text-[11px] truncate">
                               {order.documentType}: {order.documentNumber}
-                            </span>
+                            </span>) : <span />}
                             
                             {/* Enlace Directo wa.me con Logo Oficial */}
                             <a
@@ -815,7 +865,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                               </div>
                             );
                           }
-                          if (order.status === 'en_camino' || order.status === 'entregados') {
+                          if (!vista.cobro || order.status === 'en_camino' || order.status === 'entregados') {
                             return (<div className={`mt-2.5 flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-xs font-black ${(c.saldo as number) > 0 ? 'bg-rose-500/12 text-rose-700 dark:text-rose-300' : 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'}`}><span>{(c.saldo as number) > 0 ? 'Saldo por cobrar' : 'Pagado completo'}</span><span>{(c.saldo as number) > 0 ? dinero(c.saldo as number) : '✓'}</span></div>);
                           }
                           return (
@@ -848,7 +898,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
                         {(() => {
                           const falta = faltaDatosEnvio(order);
-                          return falta ? (
+                          return falta && vista.alertas ? (
                             <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:text-amber-300">
                               <span aria-hidden="true">⚠</span>{falta}
                             </div>
@@ -856,7 +906,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         })()}
 
                         {/* Delivery Lima: Cash on Delivery & Payment Method Configuration */}
-                        {(order.shippingType === 'delivery_lima' || order.shippingType === 'tienda') && (
+                        {vista.pago && (order.shippingType === 'delivery_lima' || order.shippingType === 'tienda') && (
                           <div className="mt-2.5 pt-2 border-t border-dashed border-[#EADCD3] dark:border-white/10 text-xs space-y-1.5 min-w-0">
                             {order.isCashOnDelivery ? (
                               <div className="space-y-1.5">
@@ -901,18 +951,18 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
                         {/* Location Preview (9.4) */}
                         <div className="mt-2.5 pt-2 border-t border-[#EADCD3] dark:border-white/10 text-xs text-[#1F1613] dark:text-zinc-200 space-y-1 min-w-0">
-                          <p className="flex items-start gap-1.5 min-w-0">
+                          {vista.ubicacion && (<p className="flex items-start gap-1.5 min-w-0">
                             <MapPin className="w-3.5 h-3.5 text-[#A8634F] dark:text-[#DFBF8B] flex-shrink-0 mt-0.5" />
                             <span className="break-words font-medium text-[#1F1613] dark:text-zinc-100 min-w-0">{locationPreview}</span>
-                          </p>
+                          </p>)}
 
-                          <p className="flex items-center gap-1.5 text-[11px] text-[#6B5A55] dark:text-zinc-400">
+                          {vista.fecha && (<p className="flex items-center gap-1.5 text-[11px] text-[#6B5A55] dark:text-zinc-400">
                             <Calendar className="w-3 h-3 flex-shrink-0" />
                             <span>{order.shippingType === 'tienda' ? 'Entrega' : 'Despacho'}: {formatPeruvianDate(order.dispatchDate)}</span>
-                          </p>
+                          {!vista.productos && (order.itemsDescription || '').split(/;|\n/).filter((s) => s.trim()).length > 1 && (<span className="ml-1 inline-flex items-center gap-0.5 rounded-md bg-[#F6E8E1] px-1.5 text-[10px] font-bold text-[#8E4F3E] dark:bg-white/10 dark:text-[#DFBF8B]" title="Productos del pedido">📦 {(order.itemsDescription || '').split(/;|\n/).filter((s) => s.trim()).length}</span>)}</p>)}
 
-                          {order.trackingNumber && order.status !== 'nuevos' && (<p className="text-[11px] font-mono font-bold text-[#1F1613] dark:text-zinc-100">🔖 Guía: {order.trackingNumber}</p>)}
-                          {order.itemsDescription && (() => {
+                          {vista.guia && order.trackingNumber && order.status !== 'nuevos' && (<p className="text-[11px] font-mono font-bold text-[#1F1613] dark:text-zinc-100">🔖 Guía: {order.trackingNumber}</p>)}
+                          {vista.productos && order.itemsDescription && (() => {
                             const partes = order.itemsDescription.split(/;|\n/).map((s) => s.trim()).filter(Boolean);
                             return (<p className="text-[11px] text-[#6B5A55] dark:text-zinc-400 break-words line-clamp-2">📦 {partes.length > 1 ? `${partes.length} productos · ${partes[0]}…` : order.itemsDescription}</p>);
                           })()}
