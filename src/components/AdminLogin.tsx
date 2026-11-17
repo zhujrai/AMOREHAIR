@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { StoreSettings, AdminUser } from '../types';
 import { getBrandLogo } from '../utils/formatters';
-import { iniciarSesion } from '../utils/auth';
+import { iniciarSesion, enviarRecuperacion } from '../utils/auth';
 
 interface AdminLoginProps {
   onLoginSuccess: (token?: string, user?: AdminUser, remember?: boolean) => void;
@@ -91,6 +91,26 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
       onLoginSuccess(undefined, res.user, rememberMe);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const [info, setInfo] = useState('');
+
+  const handleOlvide = async () => {
+    setError('');
+    setInfo('');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setError('Escribe tu correo arriba y vuelve a pulsar "¿Olvidaste tu contraseña?".');
+      return;
+    }
+    setIsLoading(true);
+    const res = await enviarRecuperacion(cleanEmail);
+    setIsLoading(false);
+    if (res.ok) {
+      setInfo('Si ese correo tiene una cuenta, te enviamos un enlace para crear una nueva contraseña. Revisa también la carpeta de spam.');
+    } else {
+      setError(res.error || 'No se pudo enviar el correo.');
     }
   };
 
@@ -251,6 +271,24 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
               <span>Recordar sesión en este equipo</span>
             </label>
           </div>
+
+          <div className="flex justify-end -mt-1">
+            <button
+              type="button"
+              id="forgot-password-btn"
+              onClick={handleOlvide}
+              disabled={isLoading || isLocked}
+              className="text-xs font-semibold text-[#6366F1] dark:text-[#FBBF24] hover:underline cursor-pointer disabled:opacity-40"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
+          {info && (
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 dark:text-emerald-300 text-xs font-medium">
+              {info}
+            </div>
+          )}
 
           {/* Submit Button */}
           <button

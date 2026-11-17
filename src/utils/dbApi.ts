@@ -161,12 +161,13 @@ export async function checkDatabaseStatus(): Promise<DbStatusInfo> {
       setTimeout(() => reject(new Error('Tiempo de espera agotado al conectar con la base de datos (timeout 5s)')), 5000)
     );
 
+    // La conectividad se comprueba con 'agencies' (lectura pública); 'orders' solo la ven los admins (RLS)
     const queryPromise = supabase
-      .from('orders')
+      .from('agencies')
       .select('*', { count: 'exact', head: true });
 
     const result = await Promise.race([queryPromise, timeoutPromise]) as any;
-    const { count: orderCount, error: oErr } = result;
+    const { count: agencyCount, error: oErr } = result;
 
     if (oErr) {
       // Intentar fallback al endpoint del servidor local
@@ -179,9 +180,15 @@ export async function checkDatabaseStatus(): Promise<DbStatusInfo> {
       throw new Error(oErr.message);
     }
 
-    const { count: agencyCount } = await supabase
-      .from('agencies')
-      .select('*', { count: 'exact', head: true });
+    // Conteo de pedidos: solo informativo y solo con sesión de administrador
+    let orderCount: number | null = null;
+    try {
+      const { data: s } = await supabase.auth.getSession();
+      if (s.session) {
+        const r = await supabase.from('orders').select('*', { count: 'exact', head: true });
+        orderCount = r.count ?? null;
+      }
+    } catch {}
 
     return {
       connected: true,
@@ -252,6 +259,12 @@ export async function generateNextOrderId(): Promise<string> {
 }
 
 export async function fetchServerOrders(): Promise<Order[]> {
+  // Con RLS activo los pedidos solo los ven los administradores: sin sesión no se consulta
+  try {
+    const { data: s } = await supabase.auth.getSession();
+    if (!s.session) return [];
+  } catch {}
+
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -325,6 +338,7 @@ export async function fetchServerOrders(): Promise<Order[]> {
         isDeleted: isDeleted,
         deletedAt: r.deleted_at || r.raw_data?.deletedAt || undefined,
         previousStatus: (r.previous_status || r.raw_data?.previousStatus || 'nuevos') as any,
+        sourceRef: r.raw_data?.sourceRef || undefined,
       };
     });
   } catch (err) {
@@ -644,6 +658,11 @@ export async function fetchAgenciesFromDatabase(courier: 'shalom' | 'marvisur' |
  * Guarda y actualiza la lista completa de agencias en Supabase en lotes
  */
 export async function saveAgenciesToDatabase(agencies: Agency[], courier: 'shalom' | 'marvisur' | 'olva'): Promise<boolean> {
+  // Solo un administrador con sesión puede actualizar las agencias (RLS); el público no escribe
+  try {
+    const { data: s } = await supabase.auth.getSession();
+    if (!s.session) return false;
+  } catch {}
   if (!agencies || agencies.length === 0) return true;
 
   try {

@@ -747,7 +747,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                         <div className="mt-2.5 pt-2 border-t border-[#E2E8F0] dark:border-white/10 text-xs flex items-center justify-between gap-2 min-w-0">
                           <span className="font-medium text-[#475569] dark:text-zinc-400">Precio:</span>
                           <span className="font-bold text-[#0F172A] dark:text-white">
-                            S/ {order.subtotalAmount !== undefined ? order.subtotalAmount.toFixed(2) : '�'}
+                            {typeof order.subtotalAmount === 'number' ? `S/ ${order.subtotalAmount.toFixed(2)}` : <span className="text-amber-600 dark:text-amber-400">Sin precio</span>}
                           </span>
                           {order.shippingType === 'delivery_lima' && (
                             <span className="text-[10px] text-[#06B6D4] dark:text-sky-300">
@@ -755,6 +755,13 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                             </span>
                           )}
                         </div>
+
+                        {order.sourceRef && (
+                          <div className="mt-1.5 text-[10px] text-violet-700 dark:text-violet-300 flex items-center gap-1" title="Código del enlace o video que originó el pedido">
+                            <span className="font-semibold">Origen:</span>
+                            <span className="font-mono">{order.sourceRef}</span>
+                          </div>
+                        )}
 
                         {/* Delivery Lima: Cash on Delivery & Payment Method Configuration */}
                         {order.shippingType === 'delivery_lima' && (

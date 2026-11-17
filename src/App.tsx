@@ -38,7 +38,8 @@ import {
   checkDatabaseStatus,
   supabase
 } from './utils/dbApi';
-import { restaurarSesion, alCambiarSesion, vigilarActividad, cerrarSesion } from './utils/auth';
+import { restaurarSesion, alCambiarSesion, vigilarActividad, cerrarSesion, hayRecuperacionPendiente, terminarRecuperacion } from './utils/auth';
+import { NuevaClave } from './components/NuevaClave';
 import { playNewOrderSound } from './utils/audioNotification';
 
 const STORAGE_KEY_ORDERS = 'logiperu_orders_v1';
@@ -102,6 +103,7 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [authListo, setAuthListo] = useState<boolean>(false);
+  const [recuperandoClave, setRecuperandoClave] = useState<boolean>(() => hayRecuperacionPendiente());
 
   // Restaura la sesión al abrir la página y reacciona a cierres de sesión (p. ej. desde otra pestaña)
   useEffect(() => {
@@ -735,7 +737,17 @@ export default function App() {
 
       {/* Main Content Router */}
       <main className="flex-1">
-        {currentView === 'cliente' ? (
+        {recuperandoClave ? (
+          <NuevaClave
+            isDark={isDark}
+            onListo={() => {
+              terminarRecuperacion();
+              setRecuperandoClave(false);
+              window.history.replaceState(null, '', window.location.pathname);
+              showToast('Contraseña actualizada. ¡Bienvenido!');
+            }}
+          />
+        ) : currentView === 'cliente' ? (
           <ClientShippingForm
             storeSettings={storeSettings}
             knownCustomers={knownCustomers}

@@ -172,3 +172,56 @@ export function vigilarActividad(alExpirar: () => void): () => void {
     document.removeEventListener('visibilitychange', alVolver);
   };
 }
+
+// ---------------------------------------------------------------------------
+// Recuperación de contraseña
+// ---------------------------------------------------------------------------
+
+/** Se evalúa al cargar el módulo: supabase-js consume el hash del enlace, así que lo anotamos antes. */
+let recuperacionPendiente = false;
+try {
+  recuperacionPendiente = /type=recovery/.test(window.location.hash);
+} catch { /* sin window */ }
+
+export function hayRecuperacionPendiente(): boolean {
+  return recuperacionPendiente;
+}
+
+export function terminarRecuperacion(): void {
+  recuperacionPendiente = false;
+}
+
+/** Envía el correo de recuperación. La respuesta es genérica para no revelar si el correo existe. */
+export async function enviarRecuperacion(email: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/`,
+    });
+    if (error && (error.status === 429 || /rate limit/i.test(error.message))) {
+      return { ok: false, error: 'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.' };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'No se pudo conectar. Revisa tu conexión a internet.' };
+  }
+}
+
+/** Define la nueva contraseña del usuario con la sesión de recuperación activa. */
+export async function cambiarClave(nueva: string): Promise<{ ok: boolean; error?: string }> {
+  if (nueva.length < 8) return { ok: false, error: 'La contraseña debe tener al menos 8 caracteres.' };
+  try {
+    const { error } = await supabase.auth.updateUser({ password: nueva });
+    if (error) {
+      if (/same password|different from the old/i.test(error.message)) {
+        return { ok: false, error: 'La nueva contraseña debe ser distinta de la anterior.' };
+      }
+      return { ok: false, error: 'No se pudo cambiar la contraseña. El enlace pudo haber vencido: solicita uno nuevo.' };
+    }
+    const ahora = String(Date.now());
+    escribir(K_INICIO, ahora);
+    escribir(K_ACTIVIDAD, ahora);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: 'No se pudo conectar. Revisa tu conexión a internet.' };
+  }
+}
