@@ -339,6 +339,7 @@ export async function fetchServerOrders(): Promise<Order[]> {
         deletedAt: r.deleted_at || r.raw_data?.deletedAt || undefined,
         previousStatus: (r.previous_status || r.raw_data?.previousStatus || 'nuevos') as any,
         sourceRef: r.raw_data?.sourceRef || undefined,
+        consultaId: r.raw_data?.consultaId || undefined,
       };
     });
   } catch (err) {

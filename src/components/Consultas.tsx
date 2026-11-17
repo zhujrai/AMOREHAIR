@@ -78,7 +78,15 @@ export const Consultas: React.FC = () => {
   };
 
   const copiarEnlace = async (c: Consulta) => {
-    const url = `${window.location.origin}/pedidos${c.ref ? `?ref=${encodeURIComponent(c.ref)}` : ''}`;
+    const items = c.seleccion
+      .map((l) => `${l.cantidad} × ${l.producto}${l.presentacion ? ` (${l.presentacion})` : ''}`)
+      .join('; ')
+      .slice(0, 300);
+    const params = new URLSearchParams();
+    if (c.ref) params.set('ref', c.ref);
+    params.set('c', c.id);
+    params.set('items', items);
+    const url = `${window.location.origin}/pedidos?${params.toString()}`;
     try {
       await navigator.clipboard.writeText(url);
       setAviso('Enlace de despacho copiado');

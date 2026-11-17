@@ -58,6 +58,18 @@ interface ClientShippingFormProps {
   isDbConnected?: boolean;
 }
 
+// Enlace de despacho enviado por la vendedora: ?c=CO-1 (consulta del catálogo) y ?items=texto (productos elegidos)
+function leerParametro(nombre: string): string {
+  try { return new URLSearchParams(window.location.search).get(nombre) || ''; } catch { return ''; }
+}
+function itemsDesdeEnlace(): string {
+  return leerParametro('items').replace(/[\u0000-\u001F<>]/g, '').trim().slice(0, 300);
+}
+function consultaDesdeEnlace(): string | undefined {
+  const c = leerParametro('c').trim().toUpperCase();
+  return /^CO-\d{1,9}$/.test(c) ? c : undefined;
+}
+
 export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   storeSettings,
   knownCustomers,
@@ -102,7 +114,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
 
   // Package & dispatch date
   const [dispatchDate, setDispatchDate] = useState<string>('');
-  const [itemsDescription, setItemsDescription] = useState('Rutina personalizada');
+  const [itemsDescription, setItemsDescription] = useState(() => itemsDesdeEnlace() || 'Rutina personalizada');
   const [notes, setNotes] = useState('');
 
   // UI Modals - Modal opens when user clicks to choose or change shipping method
@@ -367,6 +379,7 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
       notes: notes.trim() || undefined,
       whatsappSent: false,
       sourceRef,
+      consultaId: consultaDesdeEnlace(),
     };
 
     if (shippingType === 'shalom') {

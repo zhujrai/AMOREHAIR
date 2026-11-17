@@ -756,10 +756,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           )}
                         </div>
 
-                        {order.sourceRef && (
-                          <div className="mt-1.5 text-[10px] text-violet-700 dark:text-violet-300 flex items-center gap-1" title="Código del enlace o video que originó el pedido">
-                            <span className="font-semibold">Origen:</span>
-                            <span className="font-mono">{order.sourceRef}</span>
+                        {(order.sourceRef || order.consultaId) && (
+                          <div className="mt-1.5 text-[10px] text-violet-700 dark:text-violet-300 flex items-center gap-1 flex-wrap" title="Enlace/video y consulta del catálogo que originaron el pedido">
+                            {order.sourceRef && (<><span className="font-semibold">Origen:</span><span className="font-mono">{order.sourceRef}</span></>)}
+                            {order.consultaId && (<span className="font-mono">{order.sourceRef ? '· ' : ''}Consulta {order.consultaId}</span>)}
                           </div>
                         )}
 

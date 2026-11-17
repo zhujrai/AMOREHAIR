@@ -80,6 +80,7 @@ export interface Order {
   deletedAt?: string; // ISO string when deleted
   previousStatus?: OrderStatus; // Status before being moved to trash
   sourceRef?: string; // Código del enlace/video de origen (?ref=AMR_049)
+  consultaId?: string; // Consulta del catálogo de la que viene el pedido (?c=CO-1)
 }
 
 export interface AdminUser {
