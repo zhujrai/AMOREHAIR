@@ -549,6 +549,13 @@ export default function App() {
     cerrarSesion().catch(() => {});
     setIsAdminAuthenticated(false);
     setAdminUser(null);
+    // Al cerrar sesión no deben quedar pedidos ni clientes (datos personales) en la memoria ni en el navegador
+    setOrders([]);
+    setKnownCustomers([]);
+    try {
+      localStorage.removeItem(STORAGE_KEY_ORDERS);
+      localStorage.removeItem(STORAGE_KEY_CUSTOMERS);
+    } catch {}
     showToast(typeof motivo === 'string' ? motivo : 'Sesión de Administrador cerrada correctamente');
   };
 
