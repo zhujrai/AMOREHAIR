@@ -35,7 +35,8 @@ import {
   STORAGE_KEY_MARVISUR_AGENCIES,
   STORAGE_KEY_LAST_SYNC 
 } from '../utils/courierApi';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface ShippingConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -96,6 +97,7 @@ export const ShippingConfigModal: React.FC<ShippingConfigModalProps> = ({
     }
   }, []);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   const showToast = (msg: string) => {

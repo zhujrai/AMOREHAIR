@@ -130,6 +130,7 @@ export default function App() {
 
   // Contador de cotizaciones nuevas del catálogo (solo con sesión de administrador)
   const [cotizacionesNuevas, setCotizacionesNuevas] = useState(0);
+  const [stockAgotados, setStockAgotados] = useState(0);
   useEffect(() => {
     if (!isAdminAuthenticated) {
       setCotizacionesNuevas(0);
@@ -140,6 +141,8 @@ export default function App() {
       try {
         const { count } = await supabase.from('consultas').select('*', { count: 'exact', head: true }).eq('estado', 'nueva');
         if (activo) setCotizacionesNuevas(count ?? 0);
+        const ag = await supabase.from('presentaciones').select('*', { count: 'exact', head: true }).eq('stock_modo', 'cantidad').eq('stock_cantidad', 0);
+        if (activo && !ag.error) setStockAgotados(ag.count ?? 0);
       } catch {}
     };
     contar();
@@ -758,6 +761,7 @@ export default function App() {
           totalOrdersCount={activeOrdersCount}
           storeSettings={storeSettings}
           cotizacionesNuevas={cotizacionesNuevas}
+          stockAgotados={stockAgotados}
           rolPersonal={rolPersonal}
           onUpdateStoreSettings={handleUpdateStoreSettings}
         />

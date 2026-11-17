@@ -13,7 +13,8 @@ import {
   formatShortPeruvianDate,
   WHATSAPP_ICON_URL
 } from '../utils/formatters';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface SuccessSummaryModalProps {
   order: Order | null;
   storeSettings: StoreSettings;
@@ -33,6 +34,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen || !order) return null;
 
   const whatsappUrl = getWhatsAppShareUrl(order, storeSettings);

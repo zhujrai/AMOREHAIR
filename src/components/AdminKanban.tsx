@@ -43,6 +43,7 @@ import {
   getShippingTypeBadge, 
   getShippingTypeLabel, 
   formatPeruvianDate, 
+  formatFechaCorta,
   getCustomerDirectWhatsAppUrl,
   getTrackingWhatsAppUrl,
   formatPeruvianWhatsAppNumber,
@@ -243,7 +244,17 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   ];
 
   const getOrdersByStatus = (status: OrderStatus) => {
-    return filteredOrders.filter((o) => o.status === status);
+    const lista = filteredOrders.filter((o) => o.status === status);
+    // Pendientes y empacados: primero los nuevos sin abrir y luego por fecha de despacho (lo más urgente arriba).
+    if (status === 'nuevos' || status === 'empacados') {
+      return [...lista].sort((a, b) => {
+        const na = a.status === 'nuevos' && !a.seenAt ? 0 : 1;
+        const nb = b.status === 'nuevos' && !b.seenAt ? 0 : 1;
+        if (na !== nb) return na - nb;
+        return (a.dispatchDate || '').localeCompare(b.dispatchDate || '') || (b.createdAt || '').localeCompare(a.createdAt || '');
+      });
+    }
+    return lista;
   };
 
   const getNextStatus = (current: OrderStatus): OrderStatus | null => {
@@ -781,8 +792,8 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                           title="Toca para abrir el detalle"
                           onClick={() => abrirDetalle(order)}
                           onKeyDown={(e) => { if (e.key === 'Enter') abrirDetalle(order); }}
-                          className="flex items-center justify-between gap-1.5 mb-2 min-w-0 flex-nowrap cursor-pointer rounded-lg -mx-1.5 px-1.5 py-1 transition-colors hover:bg-[#F6E8E1]/70 dark:hover:bg-white/5">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-nowrap flex-1 overflow-hidden">
+                          className="flex items-start justify-between gap-1.5 mb-2 min-w-0 flex-nowrap cursor-pointer rounded-lg -mx-1.5 px-1.5 py-1 transition-colors hover:bg-[#F6E8E1]/70 dark:hover:bg-white/5">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-wrap flex-1">
                             <input
                               type="checkbox"
                               checked={selectedForPrintIds.includes(order.id)}
@@ -958,7 +969,16 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
                           {vista.fecha && (<p className="flex items-center gap-1.5 text-[11px] text-[#6B5A55] dark:text-zinc-400">
                             <Calendar className="w-3 h-3 flex-shrink-0" />
-                            <span>{order.shippingType === 'tienda' ? 'Entrega' : 'Despacho'}: {formatPeruvianDate(order.dispatchDate)}</span>
+                            {(() => {
+                              const f = formatFechaCorta(order.dispatchDate);
+                              const atrasado = (f.estado === 'ayer' || f.estado === 'pasado') && (order.status === 'nuevos' || order.status === 'empacados');
+                              const urgente = f.estado === 'hoy' && (order.status === 'nuevos' || order.status === 'empacados');
+                              return (
+                                <span className={`inline-flex items-center gap-1 whitespace-nowrap ${atrasado ? 'rounded-md bg-rose-500/15 px-1.5 font-bold text-rose-700 dark:text-rose-300' : urgente ? 'rounded-md bg-amber-500/15 px-1.5 font-bold text-amber-800 dark:text-amber-300' : ''}`} title={formatPeruvianDate(order.dispatchDate)}>
+                                  {order.shippingType === 'tienda' ? 'Entrega' : 'Despacho'}: {f.texto}{atrasado ? ' · atrasado' : ''}
+                                </span>
+                              );
+                            })()}
                           {!vista.productos && (order.itemsDescription || '').split(/;|\n/).filter((s) => s.trim()).length > 1 && (<span className="ml-1 inline-flex items-center gap-0.5 rounded-md bg-[#F6E8E1] px-1.5 text-[10px] font-bold text-[#8E4F3E] dark:bg-white/10 dark:text-[#DFBF8B]" title="Productos del pedido">📦 {(order.itemsDescription || '').split(/;|\n/).filter((s) => s.trim()).length}</span>)}</p>)}
 
                           {vista.guia && order.trackingNumber && order.status !== 'nuevos' && (<p className="text-[11px] font-mono font-bold text-[#1F1613] dark:text-zinc-100">🔖 Guía: {order.trackingNumber}</p>)}

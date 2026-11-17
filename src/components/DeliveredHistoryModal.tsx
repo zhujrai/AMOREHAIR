@@ -23,7 +23,8 @@ import {
   getCustomerDirectWhatsAppUrl,
   WHATSAPP_ICON_URL 
 } from '../utils/formatters';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface DeliveredHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -65,6 +66,7 @@ export const DeliveredHistoryModal: React.FC<DeliveredHistoryModalProps> = ({
       });
   }, [orders, courierFilter, searchTerm]);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   // Export CSV function

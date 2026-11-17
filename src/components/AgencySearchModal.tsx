@@ -15,7 +15,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { Agency } from '../types';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface AgencySearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -451,6 +452,7 @@ export const AgencySearchModal: React.FC<AgencySearchModalProps> = ({
     return scored.map((s) => s.agency);
   }, [localAgencies, searchTerm]);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   return (

@@ -281,6 +281,24 @@ export function getShippingTypeBadge(type: ShippingType): {
   }
 }
 
+/** Fecha corta para tarjetas: "Hoy", "Mañana", "Ayer" o "mar 17 nov" (con año si no es el actual). */
+export type EstadoFecha = 'hoy' | 'manana' | 'ayer' | 'pasado' | 'futuro' | 'desconocido';
+export function formatFechaCorta(dateString: string): { texto: string; estado: EstadoFecha } {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateString || '');
+  if (!m) return { texto: dateString || '—', estado: 'desconocido' };
+  const fecha = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const hoy = new Date();
+  const base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const dias = Math.round((fecha.getTime() - base.getTime()) / 86400000);
+  if (dias === 0) return { texto: 'Hoy', estado: 'hoy' };
+  if (dias === 1) return { texto: 'Mañana', estado: 'manana' };
+  if (dias === -1) return { texto: 'Ayer', estado: 'ayer' };
+  const opciones: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+  if (fecha.getFullYear() !== hoy.getFullYear()) opciones.year = '2-digit';
+  const texto = fecha.toLocaleDateString('es-PE', opciones).replace(/\./g, '').replace(',', '');
+  return { texto, estado: dias < 0 ? 'pasado' : 'futuro' };
+}
+
 export function formatPeruvianDate(dateString: string): string {
   try {
     const parts = dateString.split('-');

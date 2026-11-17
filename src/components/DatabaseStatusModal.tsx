@@ -23,7 +23,8 @@ import {
   saveServerOrder
 } from '../utils/dbApi';
 import { Order } from '../types';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface DatabaseStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -113,6 +114,7 @@ export const DatabaseStatusModal: React.FC<DatabaseStatusModalProps> = ({
     }
   };
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   return (

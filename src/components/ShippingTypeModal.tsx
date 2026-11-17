@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { X, Building2, Truck, Bike, Store, Check, ArrowRight, Sparkles, Sun, Moon } from 'lucide-react';
 import { ShippingMethodsConfig, ShippingType, StoreSettings } from '../types';
 import { getBrandLogo } from '../utils/formatters';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface ShippingTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,6 +40,7 @@ export const ShippingTypeModal: React.FC<ShippingTypeModalProps> = ({
     }
   }, [isOpen]);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   const brandLogo = getBrandLogo(isDark, storeSettings);

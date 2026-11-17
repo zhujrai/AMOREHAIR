@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { Order } from '../types';
 import { formatPeruvianDate } from '../utils/formatters';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface TrashModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,6 +42,7 @@ export const TrashModal: React.FC<TrashModalProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   const filteredTrash = trashOrders.filter((order) => {

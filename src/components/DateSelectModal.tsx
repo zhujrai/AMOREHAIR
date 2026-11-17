@@ -2,7 +2,8 @@ import React from 'react';
 import { Calendar, Check, X, Clock, AlertCircle } from 'lucide-react';
 import { ShippingType } from '../types';
 import { getNext4DispatchDates } from '../utils/formatters';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface DateSelectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,6 +23,7 @@ export const DateSelectModal: React.FC<DateSelectModalProps> = ({
   cutoffHour,
   shippingType,
 }) => {
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   const dates = getNext4DispatchDates(cutoffHour, shippingType);

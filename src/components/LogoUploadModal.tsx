@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { X, Image as ImageIcon, Upload, Trash2, Check, Sparkles, Link as LinkIcon, Camera } from 'lucide-react';
 import { StoreSettings } from '../types';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface LogoUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,6 +25,7 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

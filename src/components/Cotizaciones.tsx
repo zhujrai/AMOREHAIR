@@ -119,6 +119,7 @@ export const Cotizaciones: React.FC = () => {
   const [admin, setAdmin] = useState(false);
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
   const [filtro, setFiltro] = useState('nueva');
+  const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [edicion, setEdicion] = useState<Record<string, { venta: string; flete: string; motivo: string; notas: string }>>({});
@@ -299,7 +300,11 @@ export const Cotizaciones: React.FC = () => {
     cotizaciones.forEach((c) => { m[c.estado] = (m[c.estado] || 0) + 1; });
     return m;
   }, [cotizaciones]);
-  const visibles = cotizaciones.filter((c) => c.estado === filtro);
+  // Con texto en el buscador se busca en todas las etapas (nombre, teléfono, código, origen, notas, etiquetas y productos)
+  const termino = busqueda.trim().toLowerCase();
+  const visibles = termino
+    ? cotizaciones.filter((c) => [c.id, c.nombre, c.telefono, c.ref, c.notas, c.pedido_id, ...(c.etiquetas || []), ...c.seleccion.map((l) => l.producto)].some((x) => (x || '').toString().toLowerCase().includes(termino)))
+    : cotizaciones.filter((c) => c.estado === filtro);
 
   if (!listo) return <div className="min-h-screen flex items-center justify-center text-sm text-[#8A7A76] bg-[#FBF4F0]">Verificando sesión…</div>;
   if (!admin) {
@@ -318,6 +323,9 @@ export const Cotizaciones: React.FC = () => {
           <a href="/" className="text-xs font-bold text-[#A8634F] hover:underline">← Tablero</a>
           <h1 className="flex-1 text-base font-extrabold">Cotizaciones</h1>
           <button type="button" onClick={cargar} className="rounded-xl border border-[#EADCD3] px-3 py-1.5 text-xs font-bold hover:bg-[#FBF4F0] cursor-pointer">Actualizar</button>
+        </div>
+        <div className="max-w-3xl mx-auto px-4 pb-2">
+          <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, teléfono, código, producto o nota…" aria-label="Buscar cotizaciones" className="w-full rounded-xl bg-[#F6E8E1]/70 px-3 py-2 text-sm placeholder:text-[#8A7A76]" />
         </div>
         <div className="max-w-3xl mx-auto px-4 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
           {ESTADOS.map((e) => (
@@ -338,7 +346,7 @@ export const Cotizaciones: React.FC = () => {
       <main className="max-w-3xl mx-auto p-4 space-y-3">
         {aviso && <div className="fixed top-3 right-3 z-20 max-w-xs rounded-xl bg-[#2B1D1A] px-3 py-2 text-xs font-semibold text-white shadow-lg">{aviso}</div>}
         {error && <p className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-700">{error}</p>}
-        {visibles.length === 0 && !error && <p className="py-8 text-center text-sm text-[#8A7A76]">No hay cotizaciones en esta etapa.</p>}
+        {visibles.length === 0 && !error && <p className="py-8 text-center text-sm text-[#8A7A76]">{termino ? 'Sin resultados para esa búsqueda.' : 'No hay cotizaciones en esta etapa.'}</p>}
 
         {visibles.map((c) => {
           const v = valores(c);

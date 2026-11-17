@@ -30,6 +30,8 @@ interface NavbarProps {
   /** Cotizaciones nuevas del catálogo sin atender (contador del enlace) */
   cotizacionesNuevas?: number;
   rolPersonal?: 'admin' | 'asesor';
+  /** Presentaciones con stock en 0 (aviso en el enlace Stock) */
+  stockAgotados?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -47,6 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onUpdateStoreSettings,
   cotizacionesNuevas = 0,
   rolPersonal = 'asesor',
+  stockAgotados = 0,
 }) => {
   const [showLogoModal, setShowLogoModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -157,6 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   title="Stock de productos"
                 >
                   <span>Stock</span>
+                  {stockAgotados > 0 && (<span className="min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#D9534F] text-white text-[10px] font-black" title={`${stockAgotados} presentaciones agotadas`}>{stockAgotados}</span>)}
                 </a>
 
                 {/* Botón Espacio para Logo de la Marca */}

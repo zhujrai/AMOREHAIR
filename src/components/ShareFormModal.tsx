@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { StoreSettings } from '../types';
 import { getBrandLogo } from '../utils/formatters';
-
+
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 interface ShareFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,6 +32,7 @@ export const ShareFormModal: React.FC<ShareFormModalProps> = ({
   const [copiedFullMessage, setCopiedFullMessage] = useState(false);
   const [customPhone, setCustomPhone] = useState('');
 
+  useEscapeCierra(isOpen, onClose);
   if (!isOpen) return null;
 
   const publicFormUrl = typeof window !== 'undefined' 
