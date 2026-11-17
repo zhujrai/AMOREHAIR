@@ -140,26 +140,28 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
 
   // Drag and drop state
   const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
-  const [copiedClientUrl, setCopiedClientUrl] = useState(false);
 
   const clientFormUrl = typeof window !== 'undefined' ? `${window.location.origin}/pedidos` : '/pedidos';
   const textToCopy = `Registra los datos de entrega aquí: ${clientFormUrl}`;
 
-  const handleCopyClientUrl = async () => {
+  // Botones compactos de enlaces públicos: copian el enlace para enviarlo por WhatsApp o Instagram
+  const [enlaceCopiado, setEnlaceCopiado] = useState<'catalogo' | 'clientes' | null>(null);
+  const copiarEnlace = async (tipo: 'catalogo' | 'clientes') => {
+    const texto = tipo === 'catalogo'
+      ? `Arma tu rutina aquí: ${window.location.origin}/catalogo`
+      : textToCopy;
     try {
-      await navigator.clipboard.writeText(textToCopy);
-      setCopiedClientUrl(true);
-      setTimeout(() => setCopiedClientUrl(false), 2500);
+      await navigator.clipboard.writeText(texto);
     } catch {
       const temp = document.createElement('textarea');
-      temp.value = textToCopy;
+      temp.value = texto;
       document.body.appendChild(temp);
       temp.select();
       document.execCommand('copy');
       document.body.removeChild(temp);
-      setCopiedClientUrl(true);
-      setTimeout(() => setCopiedClientUrl(false), 2500);
     }
+    setEnlaceCopiado(tipo);
+    window.setTimeout(() => setEnlaceCopiado((x) => (x === tipo ? null : x)), 2200);
   };
 
   // Filter orders
@@ -322,66 +324,6 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   return (
     <div className="w-full max-w-[1840px] mx-auto px-2.5 sm:px-5 lg:px-6 xl:px-8 py-2.5 sm:py-4 space-y-2.5 sm:space-y-3.5">
       
-      {/* Top Helper Banner: Quick Client Form Link (/pedidos) */}
-      <div className={`px-3.5 py-2 sm:py-2.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 transition-all text-xs ${
-        isDark 
-          ? 'bg-[#2A1E1A] border-white/10 text-zinc-200' 
-          : 'bg-white border-[#EADCD3] text-[#1F1613] shadow-2xs'
-      }`}>
-        <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="font-semibold text-[#6B5A55] dark:text-zinc-300 flex items-center gap-1.5 flex-shrink-0">
-            <Link2 className="w-3.5 h-3.5 text-[#A8634F] dark:text-[#DFBF8B] flex-shrink-0" />
-            <span>Enlace para Clientes:</span>
-          </span>
-          <code className={`px-2.5 py-0.5 rounded-md font-mono text-[11px] font-medium truncate ${
-            isDark ? 'bg-zinc-900 text-zinc-200 border border-white/10' : 'bg-[#FBF4F0] text-[#1F1613] border border-[#EADCD3]'
-          }`}>
-            {clientFormUrl}
-          </code>
-        </div>
-
-        <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleCopyClientUrl}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs text-xs ${
-              copiedClientUrl
-                ? 'bg-[#10B981] text-white'
-                : 'bg-[#A8634F] hover:bg-[#8E4F3E] text-white'
-            }`}
-            title="Copiar enlace para enviar por WhatsApp o Instagram"
-          >
-            {copiedClientUrl ? (
-              <>
-                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>¡Copiado!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 stroke-[2]" />
-                <span>Copiar Link</span>
-              </>
-            )}
-          </button>
-
-          {onSwitchToClient && (
-            <button
-              type="button"
-              onClick={onSwitchToClient}
-              className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all cursor-pointer text-xs border ${
-                isDark 
-                  ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:bg-zinc-800' 
-                  : 'bg-white border-[#EADCD3] text-[#1F1613] hover:bg-[#FBF4F0]'
-              }`}
-              title="Abrir y probar formulario de cliente"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-[#6B5A55]" />
-              <span>Abrir Formulario</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Filter, Search & Actions Bar */}
       <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 ${
         isDark ? 'bg-[#2A1E1A] border-white/10' : 'bg-white border-[#EADCD3] shadow-2xs'
@@ -535,6 +477,40 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               </button>
             </div>
           )}
+
+          <button
+            id="copy-link-catalogo-btn"
+            type="button"
+            onClick={() => copiarEnlace('catalogo')}
+            className={`px-2.5 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
+              enlaceCopiado === 'catalogo'
+                ? 'bg-[#10B981] border-[#10B981] text-white'
+                : isDark
+                  ? 'bg-zinc-900 border-white/10 text-zinc-200 hover:bg-zinc-800'
+                  : 'bg-white border-[#EADCD3] text-[#1F1613] hover:bg-[#FBF4F0]'
+            }`}
+            title="Copiar el enlace del catálogo para enviarlo a la clienta"
+          >
+            <span>{enlaceCopiado === 'catalogo' ? '¡Copiado!' : 'Catálogo'}</span>
+            {enlaceCopiado === 'catalogo' ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 stroke-[2]" />}
+          </button>
+
+          <button
+            id="copy-link-clientes-btn"
+            type="button"
+            onClick={() => copiarEnlace('clientes')}
+            className={`px-2.5 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
+              enlaceCopiado === 'clientes'
+                ? 'bg-[#10B981] border-[#10B981] text-white'
+                : isDark
+                  ? 'bg-zinc-900 border-white/10 text-zinc-200 hover:bg-zinc-800'
+                  : 'bg-white border-[#EADCD3] text-[#1F1613] hover:bg-[#FBF4F0]'
+            }`}
+            title="Copiar el enlace del formulario de despacho para enviarlo a la clienta"
+          >
+            <span>{enlaceCopiado === 'clientes' ? '¡Copiado!' : 'Clientes'}</span>
+            {enlaceCopiado === 'clientes' ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 stroke-[2]" />}
+          </button>
 
           {/* PAPELERA DE RECICLAJE */}
           <button
