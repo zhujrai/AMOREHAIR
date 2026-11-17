@@ -100,8 +100,22 @@ export async function cerrarSesion(): Promise<void> {
   try { await supabase.auth.signOut(); } catch { /* sin conexión: la sesión local ya se limpió */ }
 }
 
-/** Al abrir la página: devuelve el admin si hay una sesión vigente; si no, null. */
-export async function restaurarSesion(): Promise<AdminUser | null> {
+let restauracionEnCurso: Promise<AdminUser | null> | null = null;
+
+/**
+ * Al abrir la página: devuelve el admin si hay una sesión vigente; si no, null.
+ * Las llamadas simultáneas (p. ej. React StrictMode en desarrollo) comparten una sola restauración.
+ */
+export function restaurarSesion(): Promise<AdminUser | null> {
+  if (!restauracionEnCurso) {
+    restauracionEnCurso = restaurarSesionInterna().finally(() => {
+      restauracionEnCurso = null;
+    });
+  }
+  return restauracionEnCurso;
+}
+
+async function restaurarSesionInterna(): Promise<AdminUser | null> {
   if (leer(K_NO_RECORDAR) === '1' && !leer(K_PESTANA, sessionStorage)) {
     await cerrarSesion();
     return null;
@@ -123,7 +137,11 @@ export async function restaurarSesion(): Promise<AdminUser | null> {
 
 /** Avisa cuando la sesión cambia (p. ej. se cerró desde otra pestaña). */
 export function alCambiarSesion(cb: (user: AdminUser | null) => void): () => void {
-  const { data } = supabase.auth.onAuthStateChange((_evento, sesion) => {
+  const { data } = supabase.auth.onAuthStateChange((evento, sesion) => {
+    if (evento === 'SIGNED_OUT') {
+      borrar(K_INICIO);
+      borrar(K_ACTIVIDAD);
+    }
     cb(sesion?.user ? aAdminUser(sesion.user) : null);
   });
   return () => data.subscription.unsubscribe();
