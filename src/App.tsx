@@ -43,7 +43,7 @@ import { NuevaClave } from './components/NuevaClave';
 import { playNewOrderSound } from './utils/audioNotification';
 
 const STORAGE_KEY_ORDERS = 'logiperu_orders_v1';
-const STORAGE_KEY_THEME = 'logiperu_theme_v1';
+const STORAGE_KEY_THEME = 'logiperu_theme_v2'; // v2: el modo claro es el predeterminado (ya no sigue al sistema)
 const STORAGE_KEY_CUSTOMERS = 'logiperu_customers_v1';
 const STORAGE_KEY_SHIPPING_CONFIG = 'logiperu_shipping_config_v1';
 const STORAGE_KEY_SHALOM_AGENCIES = 'logiperu_shalom_agencies_v2';
@@ -52,37 +52,14 @@ const STORAGE_KEY_MARVISUR_AGENCIES = 'logiperu_marvisur_agencies_v1';
 const STORAGE_KEY_STORE_SETTINGS = 'logiperu_store_settings_v1';
 
 export default function App() {
-  // Theme state: por defecto depende del navegador / sistema (prefers-color-scheme) si no hay preferencia guardada
+  // Tema: SIEMPRE claro por defecto; solo se usa el oscuro si la persona lo eligió con el botón de tema
   const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY_THEME);
-      if (saved !== null) {
-        return saved === 'dark';
-      }
-      // Detectar preferencia del navegador/sistema
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
-
-  // Escuchar cambios de tema del sistema si no se fijó preferencia manual
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      const saved = localStorage.getItem(STORAGE_KEY_THEME);
-      if (saved === null) {
-        setIsDark(e.matches);
-      }
-    };
     try {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
+      return localStorage.getItem(STORAGE_KEY_THEME) === 'dark';
     } catch {
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
+      return false;
     }
-  }, []);
+  });
 
   // Helper to determine initial view based on URL pathname (/pedidos vs /)
   const getInitialView = (): 'cliente' | 'admin' => {

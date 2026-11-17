@@ -241,3 +241,18 @@ html.dark .label-mono {
   animation: amoreResalte 2.8s ease-out 1;
 }
 @media (prefers-reduced-motion: reduce) { .amore-resaltada { animation: none; } }
+
+/* Contraste del modo oscuro: fondo más profundo, textos secundarios más claros y bordes visibles */
+:root.dark {
+  color: #FBF3EE;
+  background-color: #0F0A09;
+  --color-zinc-200: #F0E4DC;
+  --color-zinc-300: #E6D8CE;
+  --color-zinc-400: #CDBBB1;
+  --color-zinc-500: #B9A89E;
+  --color-zinc-600: #A08F85;
+}
+:root.dark .border-white\/5 { border-color: rgba(255, 255, 255, 0.13) !important; }
+:root.dark .border-white\/10 { border-color: rgba(255, 255, 255, 0.2) !important; }
+:root.dark .border-white\/20 { border-color: rgba(255, 255, 255, 0.3) !important; }
+:root.dark ::placeholder { color: #B9A89E; opacity: 1; }

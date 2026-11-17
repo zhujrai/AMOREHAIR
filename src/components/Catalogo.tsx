@@ -43,6 +43,8 @@ const D_BOLSA = 'M6 8h12l-1 12H7L6 8zm3 0V6a3 3 0 0 1 6 0v2';
 const D_CHECK = 'M5 12.5l4.2 4.2L19 7';
 const D_MAS = 'M12 5v14M5 12h14';
 const D_X = 'M6 6l12 12M18 6L6 18';
+const D_LUNA = 'M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.8 6.8 0 0 0 9.7 9.7z';
+const D_SOL = 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4';
 const D_WSP = 'M3 21l1.6-4.7A8.5 8.5 0 1 1 8 19.6L3 21zm5.6-12.3c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.8 1.9c.1.2 0 .4-.1.6l-.5.7c-.1.2-.2.3 0 .6.5.9 1.4 1.8 2.5 2.3.3.1.5.1.6-.1l.7-.9c.2-.2.4-.2.6-.1l1.8.9c.3.1.4.3.4.5 0 .8-.6 1.5-1.4 1.7-1 .3-2.5.1-4.2-.9-1.6-1-3-2.5-3.7-4.1-.4-1-.4-2 .2-2.8z';
 
 /** Miniatura cuadrada recortada de la misma foto (solo el producto, sin sus vecinos). */
@@ -72,12 +74,11 @@ const ESTILOS = `
   font-family: ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; touch-action:manipulation; overscroll-behavior-y:contain;
 }
-@media (prefers-color-scheme: dark) {
-  .cat { --bg:#120D0C; --surface:#1C1411; --ink:#F6EDE7; --muted:#A8958C; --linea:rgba(255,255,255,.09); --hueco:#2A1F1B; --vidrio:rgba(28,20,17,.62); --sombra:0 18px 40px -20px rgba(0,0,0,.8); }
-}
+.cat.oscuro { --bg:#0D0807; --surface:#211815; --ink:#FFF7F2; --muted:#CDBBB1; --linea:rgba(255,255,255,.17); --hueco:#352722; --vidrio:rgba(44,32,27,.74); --sombra:0 18px 40px -20px rgba(0,0,0,.85); }
 .cat button, .cat input, .cat select, .cat textarea { font-family: inherit; }
 .cat input, .cat select { font-size:16px; } /* evita el zoom automático de iOS al enfocar */
 .cat .vidrio { background:var(--vidrio); backdrop-filter:blur(16px) saturate(1.5); -webkit-backdrop-filter:blur(16px) saturate(1.5); border:1px solid rgba(255,255,255,.32); }
+.cat.oscuro .vidrio { border-color:rgba(255,255,255,.2); }
 .cat .tarjeta { background:var(--surface); border:1px solid var(--linea); box-shadow:var(--sombra); }
 .cat .sin-barra::-webkit-scrollbar { display:none; } .cat .sin-barra { scrollbar-width:none; }
 @keyframes catPulso { 0%,100% { stroke-opacity:.5 } 50% { stroke-opacity:1 } }
@@ -105,6 +106,16 @@ export const Catalogo: React.FC = () => {
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
   const [enviando, setEnviando] = useState(false);
+  // Tema: claro por defecto; la elección se recuerda en este teléfono
+  const [oscuro, setOscuro] = useState<boolean>(() => {
+    try { return localStorage.getItem('amore_tema_catalogo') === 'oscuro'; } catch { return false; }
+  });
+  const cambiarTema = () => {
+    setOscuro((v) => {
+      try { localStorage.setItem('amore_tema_catalogo', v ? 'claro' : 'oscuro'); } catch {}
+      return !v;
+    });
+  };
   const cestaRef = useRef<HTMLElement | null>(null);
   const toque = useRef<{ x: number; y: number } | null>(null);
 
@@ -317,7 +328,7 @@ export const Catalogo: React.FC = () => {
   /* ---------- Estados de carga / error ---------- */
   if (cargando) {
     return (
-      <div className="cat">
+      <div className={`cat${oscuro ? ' oscuro' : ''}`}>
         <style>{ESTILOS}</style>
         <div className="mx-auto max-w-md px-4 pt-6">
           <div className="esqueleto h-5 w-24 rounded-full" />
@@ -332,7 +343,7 @@ export const Catalogo: React.FC = () => {
   }
   if (!activa) {
     return (
-      <div className="cat flex items-center justify-center px-8 text-center text-sm" style={{ color: 'var(--muted)' }}>
+      <div className={`cat${oscuro ? ' oscuro' : ''} flex items-center justify-center px-8 text-center text-sm`} style={{ color: 'var(--muted)' }}>
         <style>{ESTILOS}</style>
         {error || 'Catálogo no disponible.'}
       </div>
@@ -344,7 +355,7 @@ export const Catalogo: React.FC = () => {
   const irACesta = () => cestaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
-    <div className="cat">
+    <div className={`cat${oscuro ? ' oscuro' : ''}`}>
       <style>{ESTILOS}</style>
 
       {/* Encabezado mínimo */}
@@ -353,6 +364,15 @@ export const Catalogo: React.FC = () => {
           <p className="text-[19px] font-semibold tracking-[0.34em]" style={{ fontFamily: "ui-serif, Georgia, 'Times New Roman', serif" }}>AMORE</p>
           <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.28em]" style={{ color: 'var(--muted)' }}>Hair style studio</p>
         </div>
+        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={cambiarTema}
+          aria-label={oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          className="vidrio flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
+        >
+          <Icono d={oscuro ? D_SOL : D_LUNA} />
+        </button>
         <button
           type="button"
           onClick={irACesta}
@@ -364,6 +384,7 @@ export const Catalogo: React.FC = () => {
             <span key={cantidadTotal} className="pop absolute -right-0.5 -top-0.5 flex h-[19px] min-w-[19px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white boton-acento">{cantidadTotal}</span>
           )}
         </button>
+        </div>
       </header>
 
       <main className="mx-auto max-w-md px-4 pb-40 md:max-w-4xl md:grid md:grid-cols-[1fr_360px] md:gap-8">
@@ -524,34 +545,40 @@ export const Catalogo: React.FC = () => {
                     {g.lineas.map(({ pieza, prod, sel, rutina }, i) => {
                       const pres = presentaciones[prod.id] || [];
                       return (
-                        <li key={pieza.id} className="entra flex items-center gap-3 px-3 py-3" style={{ borderTop: i ? '1px solid var(--linea)' : 'none' }}>
+                        <li key={pieza.id} className="entra flex gap-3 px-3 py-3" style={{ borderTop: i ? '1px solid var(--linea)' : 'none' }}>
                           <Miniatura foto={rutina.foto_url} zona={pieza.zona} ancho={rutina.ancho_foto || 1000} alto={rutina.alto_foto || 1333} />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-[14px] font-semibold leading-tight">{prod.nombre}</p>
-                            {pres.length > 1 ? (
-                              <select
-                                value={sel.presentacionId}
-                                onChange={(e) => cambiar(prod.id, { presentacionId: e.target.value })}
-                                className="mt-1 max-w-full rounded-full py-1 pl-2.5 pr-2 text-[13px] font-medium"
-                                style={{ background: 'var(--hueco)', color: 'var(--ink)', border: 'none' }}
-                                aria-label={`Tamaño de ${prod.nombre}`}
-                              >
-                                {pres.map((x) => (
-                                  <option key={x.id} value={x.id}>{x.etiqueta}{x.precio_sugerido != null ? ` · ref. ${dinero(x.precio_sugerido)}` : ''}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <p className="mt-0.5 text-[13px]" style={{ color: 'var(--muted)' }}>{pres[0]?.etiqueta}{pres[0]?.precio_sugerido != null && ` · ref. ${dinero(pres[0].precio_sugerido)}`}</p>
-                            )}
+                            {/* Nombre completo (puede ocupar 2 líneas) y botón de quitar */}
+                            <div className="flex items-start justify-between gap-1">
+                              <p className="text-[14px] font-semibold leading-snug" style={{ overflowWrap: 'anywhere' }}>{prod.nombre}</p>
+                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => alternar(pieza)} className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center" style={{ color: 'var(--muted)' }}>
+                                <Icono d={D_X} className="h-4 w-4" />
+                              </button>
+                            </div>
+                            {/* Tamaño y cantidad en su propia línea */}
+                            <div className="mt-1 flex items-center justify-between gap-2">
+                              {pres.length > 1 ? (
+                                <select
+                                  value={sel.presentacionId}
+                                  onChange={(e) => cambiar(prod.id, { presentacionId: e.target.value })}
+                                  className="min-w-0 max-w-[58%] rounded-full py-1.5 pl-3 pr-2 text-[13px] font-medium"
+                                  style={{ background: 'var(--hueco)', color: 'var(--ink)', border: 'none' }}
+                                  aria-label={`Tamaño de ${prod.nombre}`}
+                                >
+                                  {pres.map((x) => (
+                                    <option key={x.id} value={x.id}>{x.etiqueta}{x.precio_sugerido != null ? ` · ref. ${dinero(x.precio_sugerido)}` : ''}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span className="min-w-0 text-[13px]" style={{ color: 'var(--muted)' }}>{pres[0]?.etiqueta}{pres[0]?.precio_sugerido != null && ` · ref. ${dinero(pres[0].precio_sugerido)}`}</span>
+                              )}
+                              <div className="flex shrink-0 items-center rounded-full" style={{ background: 'var(--hueco)' }}>
+                                <button type="button" aria-label="Menos" onClick={() => { cambiar(prod.id, { cantidad: Math.max(1, sel.cantidad - 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">−</button>
+                                <span className="w-4 text-center text-[14px] font-semibold tabular-nums">{sel.cantidad}</span>
+                                <button type="button" aria-label="Más" onClick={() => { cambiar(prod.id, { cantidad: Math.min(9, sel.cantidad + 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">+</button>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center rounded-full" style={{ background: 'var(--hueco)' }}>
-                            <button type="button" aria-label="Menos" onClick={() => { cambiar(prod.id, { cantidad: Math.max(1, sel.cantidad - 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">−</button>
-                            <span className="w-4 text-center text-[14px] font-semibold tabular-nums">{sel.cantidad}</span>
-                            <button type="button" aria-label="Más" onClick={() => { cambiar(prod.id, { cantidad: Math.min(9, sel.cantidad + 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">+</button>
-                          </div>
-                          <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => alternar(pieza)} className="flex h-9 w-8 cursor-pointer items-center justify-center" style={{ color: 'var(--muted)' }}>
-                            <Icono d={D_X} className="h-4 w-4" />
-                          </button>
                         </li>
                       );
                     })}
