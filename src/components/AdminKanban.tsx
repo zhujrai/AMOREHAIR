@@ -110,6 +110,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   onUpdateMarvisurAgencies,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroFecha, setFiltroFecha] = useState<'todas' | 'hoy' | 'atrasados'>('todas');
   const [courierFilter, setCourierFilter] = useState<'todos' | ShippingType>('todos');
   const [selectedLabelOrder, setSelectedLabelOrder] = useState<Order | null>(null);
   const [batchOrdersToPrint, setBatchOrdersToPrint] = useState<Order[]>([]);
@@ -201,9 +202,12 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
         (order.agency?.name && order.agency.name.toLowerCase().includes(term)) ||
         (order.deliveryDistrict && order.deliveryDistrict.toLowerCase().includes(term));
 
-      return matchCourier && matchSearch;
+      const f = formatFechaCorta(order.dispatchDate).estado;
+      const abierto = order.status === 'nuevos' || order.status === 'empacados';
+      const matchFecha = filtroFecha === 'todas' || (filtroFecha === 'hoy' ? f === 'hoy' : abierto && (f === 'ayer' || f === 'pasado'));
+      return matchCourier && matchSearch && matchFecha;
     });
-  }, [activeOrders, courierFilter, searchTerm]);
+  }, [activeOrders, courierFilter, searchTerm, filtroFecha]);
 
   // Group by Kanban columns with exact stage colors & support backgrounds
   const columns: Array<{
@@ -381,6 +385,32 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             />
           </div>
+
+          {/* Filtro por urgencia de fecha */}
+          {(() => {
+            const abiertos = activeOrders.filter((o) => o.status === 'nuevos' || o.status === 'empacados');
+            const hoy = activeOrders.filter((o) => formatFechaCorta(o.dispatchDate).estado === 'hoy').length;
+            const atrasados = abiertos.filter((o) => { const e = formatFechaCorta(o.dispatchDate).estado; return e === 'ayer' || e === 'pasado'; }).length;
+            const chip = (valor: 'hoy' | 'atrasados', etiqueta: string, n: number, activo: string) => (
+              <button
+                key={valor}
+                id={`filter-fecha-${valor}`}
+                type="button"
+                onClick={() => setFiltroFecha(filtroFecha === valor ? 'todas' : valor)}
+                aria-pressed={filtroFecha === valor}
+                title={filtroFecha === valor ? 'Quitar filtro' : `Mostrar solo: ${etiqueta.toLowerCase()}`}
+                className={`px-2.5 py-1.5 rounded-lg font-semibold whitespace-nowrap cursor-pointer text-xs transition-colors ${filtroFecha === valor ? activo : n > 0 ? 'bg-[#FBF4F0] text-[#6B5A55] border border-[#EADCD3] dark:bg-zinc-900 dark:text-zinc-300 dark:border-white/10' : 'bg-transparent text-[#B8A8A2] border border-transparent'}`}
+              >
+                {etiqueta} {n}
+              </button>
+            );
+            return (
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {chip('hoy', 'Hoy', hoy, 'bg-amber-500 text-white')}
+                {chip('atrasados', 'Atrasados', atrasados, 'bg-rose-600 text-white')}
+              </div>
+            );
+          })()}
 
           {/* Courier Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar py-0.5">

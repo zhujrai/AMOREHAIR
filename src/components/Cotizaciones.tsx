@@ -358,7 +358,7 @@ export const Cotizaciones: React.FC = () => {
             <article key={c.id} className="space-y-3 rounded-2xl border border-[#EADCD3] bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-bold">{c.id}</span>
-                <span className="text-xs text-[#8A7A76]">{hace(c.created_at)}</span>
+                <span className={c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000 ? 'rounded-md bg-rose-500/15 px-1.5 text-xs font-bold text-rose-700' : 'text-xs text-[#8A7A76]'}>{hace(c.created_at)}{c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000 ? ' · sin atender' : ''}</span>
                 {c.ref && <span className="rounded bg-[#F6E8E1] px-1.5 py-0.5 font-mono text-[11px] text-[#8E4F3E]">{c.ref}</span>}
                 {c.pedido_id && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">Tarjeta {c.pedido_id}</span>}
                 <select

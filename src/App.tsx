@@ -500,10 +500,11 @@ export default function App() {
       if (currentView === 'cliente') {
         document.title = `${brandName} • Formulario de Envíos`;
       } else {
-        document.title = `${brandName} • Panel Administrativo`;
+        const pendientes = orders.filter((o) => !o.isDeleted && o.status === 'nuevos').length + cotizacionesNuevas;
+        document.title = `${pendientes > 0 ? `(${pendientes}) ` : ''}${brandName} • Panel Administrativo`;
       }
     }
-  }, [currentView, storeSettings.storeName]);
+  }, [currentView, storeSettings.storeName, orders, cotizacionesNuevas]);
 
   // Sync theme with document class & localStorage
   useEffect(() => {
