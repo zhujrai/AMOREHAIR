@@ -1,10 +1,10 @@
 {
-  "buildCommand": "vite build",
+  "buildCommand": "vite build && node scripts/generar-vistas-previas.mjs",
   "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/pedidos", "destination": "/pedidos.html" },
+    { "source": "/catalogo", "destination": "/catalogo.html" },
+    { "source": "/catalogo/(.*)", "destination": "/catalogo.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
