@@ -27,6 +27,7 @@ import {
   Share2,
   Check,
   Settings2,
+  SlidersHorizontal,
   Camera,
   Image as ImageIcon,
   Edit3,
@@ -129,6 +130,8 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   }, [focoPedidoId]);
   const [filtroFecha, setFiltroFecha] = useState<'todas' | 'hoy' | 'atrasados'>('todas');
   const [courierFilter, setCourierFilter] = useState<'todos' | ShippingType>('todos');
+  // En celular la barra de filtros y acciones va plegada tras el botón "Filtros"
+  const [filtrosMovil, setFiltrosMovil] = useState(false);
   const [selectedLabelOrder, setSelectedLabelOrder] = useState<Order | null>(null);
   const [batchOrdersToPrint, setBatchOrdersToPrint] = useState<Order[]>([]);
   const [selectedForPrintIds, setSelectedForPrintIds] = useState<string[]>([]);
@@ -410,7 +413,8 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
         {/* Left: Search & Courier Filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
           {/* Search */}
-          <div className="relative w-full sm:w-64 lg:w-72 flex-shrink-0" title="Cliente, DNI, teléfono o código...">
+          <div className="flex items-center gap-2 sm:contents">
+          <div className="relative min-w-0 flex-1 sm:flex-none sm:w-64 lg:w-72" title="Cliente, DNI, teléfono o código...">
             <Search className="w-4 h-4 text-[#6B5A55] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               id="kanban-search-input"
@@ -425,6 +429,20 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                   : 'bg-[#FBF4F0] border-[#EADCD3] text-[#1F1613] placeholder-[#6B5A55]/70 focus:border-[#A8634F] focus:bg-white'
               }`}
             />
+          </div>
+          <button
+            type="button"
+            id="filtros-movil-btn"
+            onClick={() => setFiltrosMovil((v) => !v)}
+            aria-expanded={filtrosMovil}
+            aria-label="Filtros y más acciones"
+            data-tip="Filtros y más"
+            className={`relative flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-bold cursor-pointer sm:hidden ${filtrosMovil ? 'border-[#A8634F] bg-[#A8634F] text-white' : isDark ? 'border-white/10 bg-zinc-900 text-zinc-200' : 'border-[#EADCD3] bg-white text-[#6B5A55]'}`}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span>Filtros</span>
+            {(filtroFecha !== 'todas' || courierFilter !== 'todos') && !filtrosMovil && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-rose-500" aria-hidden="true" />}
+          </button>
           </div>
 
           {/* Filtro por urgencia de fecha */}
@@ -446,7 +464,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               </button>
             );
             return (
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className={`${filtrosMovil ? 'flex' : 'max-sm:hidden sm:flex'} items-center gap-1.5 flex-shrink-0`}>
                 {chip('hoy', 'Hoy', hoy, 'bg-amber-500 text-white')}
                 {chip('atrasados', 'Atrasados', atrasados, 'bg-rose-600 text-white')}
               </div>
@@ -454,7 +472,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
           })()}
 
           {/* Courier Filter Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar py-0.5">
+          <div className={`${filtrosMovil ? 'flex' : 'max-sm:hidden sm:flex'} items-center gap-1.5 overflow-x-auto text-xs no-scrollbar py-0.5`}>
             <span className="text-[11px] font-semibold text-[#6B5A55] dark:text-zinc-400 pr-0.5 flex items-center gap-1 flex-shrink-0">
               <Filter className="w-3.5 h-3.5" />
             </span>
@@ -551,7 +569,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
         </div>
 
         {/* Right: Action Buttons */}
-        <div className="flex items-center gap-1.5 self-end lg:self-auto flex-wrap">
+        <div className={`${filtrosMovil || selectedForPrintIds.length > 0 ? 'flex' : 'max-sm:hidden sm:flex'} items-center gap-1.5 self-end lg:self-auto flex-wrap`}>
           {/* BOTÓN IMPRIMIR SELECCIONADOS */}
           {selectedForPrintIds.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#FBF1DC] dark:bg-amber-950/40 border border-[#DFBF8B]/30 px-2.5 py-1 rounded-lg">

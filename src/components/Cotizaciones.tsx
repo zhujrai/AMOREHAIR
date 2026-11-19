@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../utils/dbApi';
 import { useEscapeCierra } from '../utils/useEscapeCierra';
+import { restaurarSesion } from '../utils/auth';
 import { Inbox, MessagesSquare, PackageCheck, Search, RefreshCw, Archive, Maximize2, MessageCircle, ChevronLeft, ChevronRight, XCircle, Undo2, X } from 'lucide-react';
 import type { Order } from '../types';
 import { dinero } from '../utils/cobro';
@@ -32,6 +33,8 @@ interface Cotizacion {
   etiquetas: string[] | null;
   pedido_id: string | null;
   motivo_descarte?: string | null;
+  gestionado_por?: string | null;
+  gestionado_en?: string | null;
   updated_at?: string | null;
 }
 
@@ -42,9 +45,9 @@ const ESTADOS = [
   { valor: 'descartada', etiqueta: 'Descartada' },
 ];
 const COLUMNAS = [
-  { estado: 'nueva', titulo: 'Por revisar', corto: 'Revisar', ayuda: 'Cotizaciones nuevas: fija el precio y respóndele a la clienta', icono: <Inbox className="h-4 w-4" />, fondo: 'bg-[#F6E8E1]' },
-  { estado: 'en_conversacion', titulo: 'En negociación', corto: 'Negociación', ayuda: 'Ya tienen precio y se está conversando con la clienta', icono: <MessagesSquare className="h-4 w-4" />, fondo: 'bg-[#FBF1DC]' },
-  { estado: 'cerrada', titulo: 'Pedido confirmado', corto: 'Confirmado', ayuda: 'La clienta aceptó: ya existe su tarjeta en el tablero de Pedidos', icono: <PackageCheck className="h-4 w-4" />, fondo: 'bg-[#ECFDF5]' },
+  { estado: 'nueva', titulo: 'Por revisar', corto: 'Por revisar', ayuda: 'Cotizaciones nuevas: fija el precio y respóndele a la clienta', icono: <Inbox className="h-4 w-4" />, fondo: 'bg-[#F6E8E1]' },
+  { estado: 'en_conversacion', titulo: 'En negociación', corto: 'En negociación', ayuda: 'Ya tienen precio y se está conversando con la clienta', icono: <MessagesSquare className="h-4 w-4" />, fondo: 'bg-[#FBF1DC]' },
+  { estado: 'cerrada', titulo: 'Pedido confirmado', corto: 'Pedido confirmado', ayuda: 'La clienta aceptó: ya existe su tarjeta en el tablero de Pedidos', icono: <PackageCheck className="h-4 w-4" />, fondo: 'bg-[#ECFDF5]' },
 ];
 const MOTIVOS_DESCARTE = ['Sin respuesta de la clienta', 'Le pareció caro', 'Compró en otro lado', 'Duplicada', 'Cambió de idea / ya no lo necesita', 'Otro'];
 const MAX_CONFIRMADAS = 6; // la columna "Pedido confirmado" muestra solo las más recientes; el resto vive en el Archivo
@@ -201,6 +204,10 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
     return () => window.clearInterval(intervalo);
   }, [cargar]);
 
+  // Quién hace los cambios de etapa: se guarda solo la ÚLTIMA gestión (sin historial, para no llenar la base)
+  const [quien, setQuien] = useState('');
+  useEffect(() => { restaurarSesion().then((u) => setQuien(u?.name || '')); }, []);
+
   const avisar = (texto: string, ms = 2200) => {
     setAviso(texto);
     window.setTimeout(() => setAviso(''), ms);
@@ -208,9 +215,11 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
 
   // Actualiza la pantalla al instante y guarda en segundo plano; si falla, vuelve a leer lo guardado
   const guardar = async (c: Cotizacion, cambios: Partial<Cotizacion>, mensaje = 'Guardado') => {
+    const ahora = new Date().toISOString();
+    if (cambios.estado && cambios.estado !== c.estado) { cambios = { ...cambios, gestionado_por: quien || null, gestionado_en: ahora }; }
     setCotizaciones((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...cambios } : x)));
     avisar(mensaje, 1400);
-    const { error: e } = await supabase.from('consultas').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', c.id);
+    const { error: e } = await supabase.from('consultas').update({ ...cambios, updated_at: ahora }).eq('id', c.id);
     if (e) {
       setError('No se pudo guardar el cambio.');
       await cargar();
@@ -361,7 +370,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
     if (v.venta.trim() !== '' && venta === null) return setError('El precio de venta debe ser un número válido.');
     if (venta === null || venta <= 0) { setError('Para confirmar el pedido indica el precio de venta.'); document.getElementById(`venta-${c.id}`)?.focus(); return; }
     const actualizada = { ...c, precio_final: venta, motivo_ajuste: v.motivo.trim() || null, notas: v.notas.trim() || null };
-    const ok = await guardar(c, { precio_final: venta, motivo_ajuste: actualizada.motivo_ajuste, notas: actualizada.notas }, 'Guardado');
+    const ok = await guardar(c, { precio_final: venta, motivo_ajuste: actualizada.motivo_ajuste, notas: actualizada.notas, ...(c.estado === 'nueva' ? { estado: 'en_conversacion' } : {}) }, 'Guardado');
     if (!ok) return;
     const falta = faltaParaConfirmar(actualizada);
     if (falta) {
@@ -564,8 +573,8 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
       {/* Móvil: pestañas de etapa con contador (una columna a la vez) */}
       <div className="flex gap-1 md:hidden" role="tablist" aria-label="Etapa">
         {COLUMNAS.map((col) => (
-          <button key={col.estado} type="button" role="tab" aria-selected={pestana === col.estado} onClick={() => setPestana(col.estado)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-extrabold cursor-pointer transition-colors ${pestana === col.estado ? 'bg-[#A8634F] text-white' : 'bg-[#F6E8E1] text-[#8E4F3E] dark:bg-white/10 dark:text-zinc-200'}`}>
-            {col.icono}<span>{col.corto}</span><span className="opacity-80">{porEstado(col.estado).length}</span>
+          <button key={col.estado} type="button" role="tab" aria-selected={pestana === col.estado} onClick={() => setPestana(col.estado)} className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-2 text-[11px] font-extrabold cursor-pointer transition-colors ${pestana === col.estado ? 'bg-[#A8634F] text-white' : 'bg-[#F6E8E1] text-[#8E4F3E] dark:bg-white/10 dark:text-zinc-200'}`}>
+            <span className="hidden min-[400px]:inline">{col.icono}</span><span className="text-center leading-tight">{col.corto}</span><span className="opacity-80">{porEstado(col.estado).length}</span>
           </button>
         ))}
       </div>
@@ -585,7 +594,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
               onDrop={(e) => { e.preventDefault(); const c = cotizaciones.find((x) => x.id === arrastrada); setSobre(null); setArrastrada(null); if (c) mover(c, col.estado); }}
               className={`${pestana === col.estado ? 'block' : 'hidden'} md:block min-h-[200px] rounded-2xl bg-[#F6E8E1]/60 p-2 transition-colors dark:bg-white/5 ${sobre === col.estado ? 'ring-2 ring-[#A8634F] ring-offset-2' : ''}`}
             >
-              <div className="mb-2 flex items-center gap-2 px-1.5 pt-1" title={col.ayuda}>
+              <div className="mb-2 hidden items-center gap-2 px-1.5 pt-1 md:flex" title={col.ayuda}>
                 <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-[#8E4F3E] ${col.fondo}`}>{col.icono}</span>
                 <h3 className="flex-1 truncate text-sm font-extrabold">{col.titulo}</h3>
                 <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-bold text-[#6B5A55] dark:bg-white/10 dark:text-zinc-200">{todas.length}</span>
@@ -757,6 +766,12 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
                   ) : <p className="text-xs text-[#8A7A76]">Indica el precio de venta para poder enviarla.</p>}
                   <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace copiado')} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]" title="La clienta abre el enlace y llena ella misma sus datos de envío">Enlace para que ella complete sus datos</button>
                 </div>
+                {c.estado !== 'descartada' && !c.pedido_id && !pedidosPorConsulta[c.id] && (
+                  <p className="text-[11px] leading-snug text-[#6B5A55]">
+                    <b>Dos formas de cerrar el pedido:</b> (1) la clienta te da sus datos por chat y tú pulsas <b>Confirmar pedido</b>; (2) le envías el enlace y ella llena sus datos: el pedido aparece solo en Pedidos y esta cotización pasa a <b>Pedido confirmado</b>.
+                  </p>
+                )}
+                {c.gestionado_por && c.gestionado_en && <p className="text-[11px] text-[#8A7A76]">Última gestión: {c.gestionado_por} · {hace(c.gestionado_en)}</p>}
                 {tel && (
                   <div className="flex flex-wrap items-center gap-1.5" aria-label="Respuestas rápidas">
                     <span className="text-[10px] font-black uppercase tracking-wide text-[#8A7A76]">Respuestas rápidas</span>

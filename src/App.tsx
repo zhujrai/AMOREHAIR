@@ -138,6 +138,8 @@ export default function App() {
   // Contador de cotizaciones nuevas del catálogo (solo con sesión de administrador)
   const [cotizacionesNuevas, setCotizacionesNuevas] = useState(0);
   const [stockAgotados, setStockAgotados] = useState(0);
+  const [stockPoco, setStockPoco] = useState(0);
+  const [avisoStockOculto, setAvisoStockOculto] = useState(() => { try { return sessionStorage.getItem('amore-aviso-stock') === '1'; } catch { return false; } });
   useEffect(() => {
     if (!isAdminAuthenticated) {
       setCotizacionesNuevas(0);
@@ -148,8 +150,13 @@ export default function App() {
       try {
         const { count } = await supabase.from('consultas').select('*', { count: 'exact', head: true }).eq('estado', 'nueva');
         if (activo) setCotizacionesNuevas(count ?? 0);
-        const ag = await supabase.from('presentaciones').select('*', { count: 'exact', head: true }).eq('stock_modo', 'cantidad').eq('stock_cantidad', 0);
-        if (activo && !ag.error) setStockAgotados(ag.count ?? 0);
+        // Stock individual por tamaño: 0 = agotado; 1 a 3 = por agotarse (lo que está en modo "∞ Hay" no alerta)
+        const bajo = await supabase.from('presentaciones').select('stock_cantidad').eq('stock_modo', 'cantidad').lte('stock_cantidad', 3);
+        if (activo && !bajo.error) {
+          const filas = (bajo.data || []) as { stock_cantidad: number }[];
+          setStockAgotados(filas.filter((f) => f.stock_cantidad <= 0).length);
+          setStockPoco(filas.filter((f) => f.stock_cantidad > 0).length);
+        }
       } catch {}
     };
     contar();
@@ -780,11 +787,21 @@ export default function App() {
           storeSettings={storeSettings}
           cotizacionesNuevas={cotizacionesNuevas}
           stockAgotados={stockAgotados}
+          stockPoco={stockPoco}
           seccion={seccion}
           onCambiarSeccion={cambiarSeccion}
           rolPersonal={rolPersonal}
           onUpdateStoreSettings={handleUpdateStoreSettings}
         />
+      )}
+
+      {/* Aviso de stock bajo en la pantalla principal (se puede ocultar durante la sesión) */}
+      {isAdminAuthenticated && !avisoStockOculto && stockAgotados + stockPoco > 0 && currentView === 'admin' && (
+        <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#EADCD3] bg-[#FBF1DC] px-3 py-1.5 text-xs font-semibold text-[#6B4A12] sm:px-5">
+          <span>Stock: {stockAgotados > 0 && <b className="text-[#B3322E]">{stockAgotados} agotado{stockAgotados === 1 ? '' : 's'}</b>}{stockAgotados > 0 && stockPoco > 0 && ' · '}{stockPoco > 0 && <b>{stockPoco} por agotarse</b>}</span>
+          <a href="/stock" className="font-extrabold text-[#A8634F] underline">Ver stock</a>
+          <button type="button" aria-label="Ocultar aviso" data-tip="Ocultar aviso" onClick={() => { setAvisoStockOculto(true); try { sessionStorage.setItem('amore-aviso-stock', '1'); } catch { /* sin almacenamiento */ } }} className="ml-auto cursor-pointer rounded-md px-1.5 text-base leading-none hover:bg-black/5">×</button>
+        </div>
       )}
 
       {/* Main Content Router */}

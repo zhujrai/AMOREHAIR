@@ -40,6 +40,8 @@ interface NavbarProps {
   rolPersonal?: 'admin' | 'asesor';
   /** Presentaciones con stock en 0 (aviso en el enlace Stock) */
   stockAgotados?: number;
+  /** Presentaciones con 1 a 3 unidades (por agotarse) */
+  stockPoco?: number;
   /** Tablero visible dentro del panel */
   seccion?: SeccionPanel;
   onCambiarSeccion?: (s: SeccionPanel) => void;
@@ -97,6 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   cotizacionesNuevas = 0,
   rolPersonal = 'asesor',
   stockAgotados = 0,
+  stockPoco = 0,
   seccion = 'pedidos',
   onCambiarSeccion,
 }) => {
@@ -228,7 +231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <IconBtn id="navbar-clientes-copy-btn" isDark={isDark} tip={copiado === 'clientes' ? '¡Enlace copiado!' : 'Copiar enlace del formulario de clientes'} onClick={() => copiarEnlace('clientes')} activo={copiado === 'clientes'} className="hidden sm:inline-flex">
                   {copiado === 'clientes' ? <Check className="h-4 w-4" /> : <ClipboardList className="h-4 w-4 text-[#A8634F]" />}
                 </IconBtn>
-                <IconBtn id="navbar-stock-btn" isDark={isDark} href="/stock" tip="Stock de productos" badge={stockAgotados} badgeClase="bg-[#D9534F]">
+                <IconBtn id="navbar-stock-btn" isDark={isDark} href="/stock" tip={stockAgotados + stockPoco > 0 ? `Stock: ${stockAgotados} agotados, ${stockPoco} por agotarse` : 'Stock de productos'} badge={stockAgotados + stockPoco} badgeClase={stockAgotados > 0 ? 'bg-[#D9534F]' : 'bg-[#E0A12B]'}>
                   <Boxes className="h-4 w-4 text-[#A8634F]" />
                 </IconBtn>
               </>
