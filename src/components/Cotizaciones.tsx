@@ -3,7 +3,8 @@ import { supabase } from '../utils/dbApi';
 import { useEscapeCierra } from '../utils/useEscapeCierra';
 import { restaurarSesion } from '../utils/auth';
 import { Inbox, MessagesSquare, PackageCheck, Search, RefreshCw, Archive, Maximize2, MessageCircle, ChevronLeft, ChevronRight, XCircle, Undo2, X } from 'lucide-react';
-import type { Order } from '../types';
+import type { Order, ShippingMethodsConfig, ShippingType } from '../types';
+import { getCutoffHourByShippingType, getNext4DispatchDates } from '../utils/formatters';
 import { dinero } from '../utils/cobro';
 import { KitResaltado } from './KitResaltado';
 import { generarImagenCotizacion } from '../utils/imagenCotizacion';
@@ -111,6 +112,9 @@ function enlaceDespacho(c: Cotizacion): string {
   const params = new URLSearchParams();
   if (c.ref) params.set('ref', c.ref);
   params.set('c', c.id);
+  if ((c.nombre || '').trim()) params.set('n', c.nombre!.trim().slice(0, 80));
+  const tel = normalizarTel(c.telefono || '');
+  if (/^9\d{8}$/.test(tel)) params.set('t', tel);
   params.set('items', c.seleccion.map(lineaTexto).join('; ').slice(0, 300));
   return `${window.location.origin}/pedidos?${params.toString()}`;
 }
@@ -129,6 +133,41 @@ function mensajeCotizacion(c: Cotizacion): string {
   );
 }
 
+/** Buscador de productos: escribe parte del nombre o la marca y toca el resultado (sin acentos ni mayúsculas) */
+const sinAcentos = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const BuscadorProducto: React.FC<{ productos: { id: string; nombre: string; marca: string }[]; onElegir: (id: string) => void }> = ({ productos, onElegir }) => {
+  const [q, setQ] = useState('');
+  const [abierto, setAbierto] = useState(false);
+  const palabras = sinAcentos(q).split(/\s+/).filter(Boolean);
+  const res = productos.filter((p) => { const h = sinAcentos(`${p.nombre} ${p.marca}`); return palabras.every((w) => h.includes(w)); }).slice(0, 30);
+  return (
+    <div className="relative">
+      <input
+        value={q}
+        onChange={(e) => { setQ(e.target.value); setAbierto(true); }}
+        onFocus={() => setAbierto(true)}
+        onBlur={() => window.setTimeout(() => setAbierto(false), 150)}
+        placeholder="+ Buscar y agregar un producto…"
+        aria-label="Buscar producto para agregar"
+        className="w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm"
+      />
+      {abierto && (
+        <ul className="absolute left-0 right-0 z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#EADCD3] bg-white py-1 shadow-lg">
+          {res.length === 0 && <li className="px-3 py-2 text-xs text-[#8A7A76]">Sin resultados</li>}
+          {res.map((p) => (
+            <li key={p.id}>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { onElegir(p.id); setQ(''); setAbierto(false); }} className="flex w-full cursor-pointer flex-col px-3 py-1.5 text-left hover:bg-[#F6E8E1]">
+                <span className="text-sm font-semibold">{p.nombre}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-[#A8634F]">{p.marca}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 const Mini: React.FC<{ tip: string; onClick?: () => void; href?: string; tono?: string; children: React.ReactNode }> = ({ tip, onClick, href, tono = 'text-[#6B5A55] hover:bg-[#F6E8E1] dark:text-zinc-300 dark:hover:bg-white/10', children }) => {
   const clase = `flex h-8 w-8 items-center justify-center rounded-lg cursor-pointer transition-colors ${tono}`;
   return href
@@ -144,16 +183,18 @@ interface CotizacionesProps {
   onVerPedido?: (idPedido: string) => void;
   /** Cantidad de cotizaciones "Por revisar" (alimenta el contador del selector) */
   onNuevas?: (n: number) => void;
+  /** Medios de envío habilitados (los mismos que ve la clienta en el formulario de despachos) */
+  shippingConfig?: ShippingMethodsConfig;
 }
 
 /** Deja solo los 9 dígitos del celular: admite +51, 51, espacios, guiones y paréntesis */
-const normalizarTel = (raw: string): string => {
+function normalizarTel(raw: string): string {
   let d = (raw || '').replace(/\D/g, '');
   if (d.length === 11 && d.startsWith('51')) d = d.slice(2);
   return d;
-};
+}
 
-export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFocoAtendido, onVerPedido, onNuevas }) => {
+export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFocoAtendido, onVerPedido, onNuevas, shippingConfig }) => {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
   const [filtro, setFiltro] = useState('nueva');
   const [busqueda, setBusqueda] = useState('');
@@ -183,7 +224,12 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
   const [rutinasFoto, setRutinasFoto] = useState<RutinaFoto[]>([]);
   const [piezasDB, setPiezasDB] = useState<PiezaDB[]>([]);
   const [nombres, setNombres] = useState<Record<string, string>>({}); // nombre de producto -> id (cotizaciones antiguas sin producto_id)
-  const [envio, setEnvio] = useState({ medio: 'por_confirmar', fecha: hoyISO(), dni: '' });
+  const [envio, setEnvio] = useState({ medio: 'por_confirmar', fecha: hoyISO(), dni: '', cod: false });
+  // Mismas reglas que el formulario de despachos: medios habilitados y fechas según la hora de corte de cada medio
+  const mediosActivos = MEDIOS.filter((m) => m.valor === 'por_confirmar' || (shippingConfig as unknown as Record<string, boolean> | undefined)?.[m.valor] !== false);
+  const tipoEnvio = (m: string): ShippingType | null => (m === 'por_confirmar' ? null : (m as ShippingType));
+  const fechasEnvio = (m: string) => getNext4DispatchDates(getCutoffHourByShippingType(tipoEnvio(m)), tipoEnvio(m));
+  const elegirMedio = (m: string) => setEnvio((p) => ({ ...p, medio: m, cod: false, fecha: fechasEnvio(m)[0]?.dateStr || p.fecha }));
 
   const cargar = useCallback(async () => {
     const { data, error: e } = await supabase.from('consultas').select('*').order('created_at', { ascending: false }).limit(200);
@@ -461,7 +507,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
       items_description: items,
       notes: `Cotización ${c.id}${c.motivo_ajuste ? `: ${c.motivo_ajuste}` : ''}${porConfirmar ? ' · Medio de envío por confirmar con la clienta' : ''}`,
       whatsapp_sent: false,
-      is_cash_on_delivery: false,
+      is_cash_on_delivery: envio.cod && (envio.medio === 'delivery_lima' || envio.medio === 'tienda'),
       subtotal_amount: venta,
       delivery_fee: flete > 0 ? flete : null,
       total_amount: venta + flete,
@@ -724,12 +770,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
                       );
                     })}
                   </ul>
-                  <select value="" onChange={(e) => { if (e.target.value) agregarProducto(e.target.value); }} className="w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm" aria-label="Agregar producto">
-                    <option value="">+ Agregar un producto…</option>
-                    {Array.from(new Set(productosDB.map((x) => x.marca))).map((m) => (
-                      <optgroup key={m} label={m}>{productosDB.filter((x) => x.marca === m).map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}</optgroup>
-                    ))}
-                  </select>
+                  <BuscadorProducto productos={productosDB} onElegir={agregarProducto} />
                   <div className="flex gap-2">
                     <button type="button" onClick={() => guardarEdicion(c)} className="rounded-xl bg-[#2B1D1A] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#A8634F] transition-colors">Guardar cambios</button>
                     <button type="button" onClick={() => setEditando(null)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer">Cancelar</button>
@@ -842,14 +883,23 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
           <p className="text-xs text-[#6B5A55]">{confirmando.nombre} · total productos {dinero(confirmando.precio_final ?? 0)}. Se creará la tarjeta en el tablero de Pedidos; el flete y los datos de envío se completan allí cuando la clienta los indique.</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">Medio de envío
-              <select value={envio.medio} onChange={(e) => setEnvio((p) => ({ ...p, medio: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case">
-                {MEDIOS.map((m) => <option key={m.valor} value={m.valor}>{m.etiqueta}</option>)}
+              <select value={envio.medio} onChange={(e) => elegirMedio(e.target.value)} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case">
+                {mediosActivos.map((m) => <option key={m.valor} value={m.valor}>{m.etiqueta}</option>)}
               </select>
             </label>
             <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">Fecha de despacho
-              <input type="date" value={envio.fecha} onChange={(e) => setEnvio((p) => ({ ...p, fecha: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case" />
+              <select value={envio.fecha} onChange={(e) => setEnvio((p) => ({ ...p, fecha: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case">
+                {!fechasEnvio(envio.medio).some((d) => d.dateStr === envio.fecha) && <option value={envio.fecha}>{envio.fecha}</option>}
+                {fechasEnvio(envio.medio).map((d) => <option key={d.dateStr} value={d.dateStr}>{d.displayWeekday} {d.displayDay}{d.badge ? ` · ${d.badge}` : ''}</option>)}
+              </select>
             </label>
           </div>
+          {(envio.medio === 'delivery_lima' || envio.medio === 'tienda') && shippingConfig?.deliveryLimaCashOnDeliveryEnabled !== false && (
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-[#6B5A55]">
+              <input type="checkbox" checked={envio.cod} onChange={(e) => setEnvio((p) => ({ ...p, cod: e.target.checked }))} className="h-4 w-4" />
+              {envio.medio === 'tienda' ? 'Paga al recoger' : 'Contraentrega (paga al recibir)'}
+            </label>
+          )}
           <p className="text-[11px] text-[#8A7A76]">Si la clienta prefiere llenar sus datos ella misma, envíale el enlace de confirmación desde el detalle (no hace falta confirmar aquí).</p>
           {error && <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
           <div className="flex justify-end gap-2">

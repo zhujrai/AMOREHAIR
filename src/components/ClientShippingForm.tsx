@@ -65,6 +65,14 @@ function leerParametro(nombre: string): string {
 function itemsDesdeEnlace(): string {
   return leerParametro('items').replace(/[\u0000-\u001F<>]/g, '').trim().slice(0, 300);
 }
+function nombreDesdeEnlace(): string {
+  return leerParametro('n').replace(/[\u0000-\u001F<>]/g, '').trim().slice(0, 80);
+}
+function telefonoDesdeEnlace(): string {
+  let d = leerParametro('t').replace(/\D/g, '');
+  if (d.length === 11 && d.startsWith('51')) d = d.slice(2);
+  return /^9\d{8}$/.test(d) ? d : '';
+}
 function consultaDesdeEnlace(): string | undefined {
   const c = leerParametro('c').trim().toUpperCase();
   return /^CO-\d{1,9}$/.test(c) ? c : undefined;
@@ -91,8 +99,8 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
   isDbConnected = true,
 }) => {
   // Form State
-  const [phone, setPhone] = useState('');
-  const [customerName, setCustomerName] = useState('');
+  const [phone, setPhone] = useState(() => telefonoDesdeEnlace());
+  const [customerName, setCustomerName] = useState(() => nombreDesdeEnlace());
   const [documentType, setDocumentType] = useState<'DNI' | 'CE'>('DNI');
   const [documentNumber, setDocumentNumber] = useState('');
   const [shippingType, setShippingType] = useState<ShippingType | null>(null);

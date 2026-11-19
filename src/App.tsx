@@ -848,6 +848,7 @@ export default function App() {
             onFocoAtendido={() => setFocoCotizacion(null)}
             onVerPedido={verPedido}
             onNuevas={setCotizacionesNuevas}
+            shippingConfig={shippingConfig}
           />
         ) : (
           <AdminKanban
