@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../utils/dbApi';
-import { restaurarSesion } from '../utils/auth';
+import { useEscapeCierra } from '../utils/useEscapeCierra';
+import { Inbox, MessagesSquare, PackageCheck, Search, RefreshCw, Archive, Maximize2, MessageCircle, ChevronLeft, ChevronRight, XCircle, Undo2, X } from 'lucide-react';
+import type { Order } from '../types';
 import { dinero } from '../utils/cobro';
 import { KitResaltado } from './KitResaltado';
 import { generarImagenCotizacion } from '../utils/imagenCotizacion';
@@ -29,14 +31,23 @@ interface Cotizacion {
   notas: string | null;
   etiquetas: string[] | null;
   pedido_id: string | null;
+  motivo_descarte?: string | null;
+  updated_at?: string | null;
 }
 
 const ESTADOS = [
-  { valor: 'nueva', etiqueta: 'Nuevas' },
-  { valor: 'en_conversacion', etiqueta: 'En conversación' },
-  { valor: 'cerrada', etiqueta: 'En el tablero' },
-  { valor: 'descartada', etiqueta: 'Descartadas' },
+  { valor: 'nueva', etiqueta: 'Por revisar' },
+  { valor: 'en_conversacion', etiqueta: 'En negociación' },
+  { valor: 'cerrada', etiqueta: 'Pedido confirmado' },
+  { valor: 'descartada', etiqueta: 'Descartada' },
 ];
+const COLUMNAS = [
+  { estado: 'nueva', titulo: 'Por revisar', corto: 'Revisar', ayuda: 'Cotizaciones nuevas: fija el precio y respóndele a la clienta', icono: <Inbox className="h-4 w-4" />, fondo: 'bg-[#F6E8E1]' },
+  { estado: 'en_conversacion', titulo: 'En negociación', corto: 'Negociación', ayuda: 'Ya tienen precio y se está conversando con la clienta', icono: <MessagesSquare className="h-4 w-4" />, fondo: 'bg-[#FBF1DC]' },
+  { estado: 'cerrada', titulo: 'Pedido confirmado', corto: 'Confirmado', ayuda: 'La clienta aceptó: ya existe su tarjeta en el tablero de Pedidos', icono: <PackageCheck className="h-4 w-4" />, fondo: 'bg-[#ECFDF5]' },
+];
+const MOTIVOS_DESCARTE = ['Sin respuesta de la clienta', 'Le pareció caro', 'Compró en otro lado', 'Duplicada', 'Cambió de idea / ya no lo necesita', 'Otro'];
+const MAX_CONFIRMADAS = 6; // la columna "Pedido confirmado" muestra solo las más recientes; el resto vive en el Archivo
 
 interface RutinaFoto { id: string; nombre: string; foto_url: string; ancho_foto: number | null; alto_foto: number | null }
 interface PiezaDB { rutina_id: string; producto_id: string; zona: ZonaCatalogo }
@@ -44,6 +55,7 @@ interface PiezaDB { rutina_id: string; producto_id: string; zona: ZonaCatalogo }
 const ETIQUETAS = ['duda de precio', 'pide descuento', 'compara marcas', 'cliente frecuente', 'urgente', 'cambió productos', 'sin respuesta'];
 
 const MEDIOS = [
+  { valor: 'por_confirmar', etiqueta: 'Por confirmar (lo define la clienta)' },
   { valor: 'shalom', etiqueta: 'Shalom (agencia)' },
   { valor: 'marvisur', etiqueta: 'Marvisur (agencia)' },
   { valor: 'olva', etiqueta: 'Olva' },
@@ -114,17 +126,45 @@ function mensajeCotizacion(c: Cotizacion): string {
   );
 }
 
-export const Cotizaciones: React.FC = () => {
-  const [listo, setListo] = useState(false);
-  const [admin, setAdmin] = useState(false);
+const Mini: React.FC<{ tip: string; onClick?: () => void; href?: string; tono?: string; children: React.ReactNode }> = ({ tip, onClick, href, tono = 'text-[#6B5A55] hover:bg-[#F6E8E1] dark:text-zinc-300 dark:hover:bg-white/10', children }) => {
+  const clase = `flex h-8 w-8 items-center justify-center rounded-lg cursor-pointer transition-colors ${tono}`;
+  return href
+    ? <a href={href} target="_blank" rel="noreferrer" data-tip={tip} aria-label={tip} onClick={(e) => e.stopPropagation()} className={clase}>{children}</a>
+    : <button type="button" data-tip={tip} aria-label={tip} onClick={(e) => { e.stopPropagation(); onClick?.(); }} className={clase}>{children}</button>;
+};
+
+interface CotizacionesProps {
+  orders: Order[];
+  /** Cotización a abrir (viene de un salto desde una tarjeta de pedido) */
+  focoId?: string | null;
+  onFocoAtendido?: () => void;
+  onVerPedido?: (idPedido: string) => void;
+  /** Cantidad de cotizaciones "Por revisar" (alimenta el contador del selector) */
+  onNuevas?: (n: number) => void;
+}
+
+export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFocoAtendido, onVerPedido, onNuevas }) => {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
   const [filtro, setFiltro] = useState('nueva');
   const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [edicion, setEdicion] = useState<Record<string, { venta: string; flete: string; motivo: string; notas: string }>>({});
-  const [pasando, setPasando] = useState<string | null>(null);
-  const [pedidosPorConsulta, setPedidosPorConsulta] = useState<Record<string, { id: string; status: string }>>({});
+  // El pedido enlazado de cada cotización sale de los pedidos ya cargados en el panel (se actualiza en vivo)
+  const pedidosPorConsulta = useMemo(() => {
+    const m: Record<string, { id: string; status: string }> = {};
+    orders.forEach((o) => { if (o.consultaId && !o.isDeleted) m[o.consultaId] = { id: o.id, status: o.status }; });
+    return m;
+  }, [orders]);
+  const [detalleId, setDetalleId] = useState<string | null>(null);
+  const [pestana, setPestana] = useState('nueva');
+  const [arrastrada, setArrastrada] = useState<string | null>(null);
+  const [sobre, setSobre] = useState<string | null>(null);
+  const [descartando, setDescartando] = useState<Cotizacion | null>(null);
+  const [motivoSel, setMotivoSel] = useState('');
+  const [motivoOtro, setMotivoOtro] = useState('');
+  const [confirmando, setConfirmando] = useState<Cotizacion | null>(null);
+  const [archivo, setArchivo] = useState<null | 'descartada' | 'cerrada'>(null);
   // Edición de productos de una cotización (antes de pasarla al tablero, o incluso después)
   const [productosDB, setProductosDB] = useState<{ id: string; marca: string; nombre: string }[]>([]);
   const [presDB, setPresDB] = useState<Record<string, { id: string; etiqueta: string; precio_sugerido: number | null }[]>>({});
@@ -133,7 +173,7 @@ export const Cotizaciones: React.FC = () => {
   const [rutinasFoto, setRutinasFoto] = useState<RutinaFoto[]>([]);
   const [piezasDB, setPiezasDB] = useState<PiezaDB[]>([]);
   const [nombres, setNombres] = useState<Record<string, string>>({}); // nombre de producto -> id (cotizaciones antiguas sin producto_id)
-  const [envio, setEnvio] = useState({ medio: 'shalom', fecha: hoyISO(), dni: '' });
+  const [envio, setEnvio] = useState({ medio: 'por_confirmar', fecha: hoyISO(), dni: '' });
 
   const cargar = useCallback(async () => {
     const { data, error: e } = await supabase.from('consultas').select('*').order('created_at', { ascending: false }).limit(200);
@@ -146,27 +186,19 @@ export const Cotizaciones: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    restaurarSesion().then((u) => {
-      setAdmin(Boolean(u));
-      setListo(true);
-      if (u) {
-        cargar();
-        supabase.from('orders').select('id,status,raw_data').not('raw_data->>consultaId', 'is', null).limit(500).then(({ data }) => {
-          const m: Record<string, { id: string; status: string }> = {};
-          (data || []).forEach((o: { id: string; status: string; raw_data?: { consultaId?: string } }) => { if (o.raw_data?.consultaId) m[o.raw_data.consultaId] = { id: o.id, status: o.status }; });
-          setPedidosPorConsulta(m);
-        });
-        supabase.from('rutinas').select('id,nombre,foto_url,ancho_foto,alto_foto').then(({ data }) => setRutinasFoto((data || []) as RutinaFoto[]));
-        supabase.from('productos').select('id,nombre').then(({ data }) => setNombres(Object.fromEntries((data || []).map((p: { id: string; nombre: string }) => [p.nombre, p.id]))));
-        supabase.from('presentaciones').select('id,producto_id,etiqueta,precio_sugerido,orden').order('orden').then(({ data }) => {
-          const m: Record<string, { id: string; etiqueta: string; precio_sugerido: number | null }[]> = {};
-          (data || []).forEach((x: { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null }) => { (m[x.producto_id] ||= []).push({ id: x.id, etiqueta: x.etiqueta, precio_sugerido: x.precio_sugerido }); });
-          setPresDB(m);
-        });
-        supabase.from('productos').select('id,marca,nombre').order('marca').order('nombre').then(({ data }) => setProductosDB((data || []) as { id: string; marca: string; nombre: string }[]));
-        supabase.from('rutina_piezas').select('rutina_id,producto_id,zona').then(({ data }) => setPiezasDB((data || []) as PiezaDB[]));
-      }
+    cargar();
+    supabase.from('rutinas').select('id,nombre,foto_url,ancho_foto,alto_foto').then(({ data }) => setRutinasFoto((data || []) as RutinaFoto[]));
+    supabase.from('productos').select('id,nombre').then(({ data }) => setNombres(Object.fromEntries((data || []).map((p: { id: string; nombre: string }) => [p.nombre, p.id]))));
+    supabase.from('presentaciones').select('id,producto_id,etiqueta,precio_sugerido,orden').order('orden').then(({ data }) => {
+      const m: Record<string, { id: string; etiqueta: string; precio_sugerido: number | null }[]> = {};
+      (data || []).forEach((x: { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null }) => { (m[x.producto_id] ||= []).push({ id: x.id, etiqueta: x.etiqueta, precio_sugerido: x.precio_sugerido }); });
+      setPresDB(m);
     });
+    supabase.from('productos').select('id,marca,nombre').order('marca').order('nombre').then(({ data }) => setProductosDB((data || []) as { id: string; marca: string; nombre: string }[]));
+    supabase.from('rutina_piezas').select('rutina_id,producto_id,zona').then(({ data }) => setPiezasDB((data || []) as PiezaDB[]));
+    // Llegan cotizaciones nuevas del catálogo en cualquier momento: se refresca sola cada 30 s
+    const intervalo = window.setInterval(() => { if (!document.hidden) cargar(); }, 30000);
+    return () => window.clearInterval(intervalo);
   }, [cargar]);
 
   const avisar = (texto: string, ms = 2200) => {
@@ -314,27 +346,77 @@ export const Cotizaciones: React.FC = () => {
     }
   };
 
-  const pasarAlTablero = async (c: Cotizacion) => {
+  /** Lo que falta para poder confirmar el pedido (null = todo listo) */
+  const faltaParaConfirmar = (c: Cotizacion): string | null => {
+    if (!((c.precio_final ?? 0) > 0)) return 'Para confirmar el pedido indica el precio de venta y guárdalo.';
+    if ((c.nombre || '').trim().length < 2) return 'Falta el nombre de la clienta (edítalo en "Editar productos y datos").';
+    if (!/^9\d{8}$/.test((c.telefono || '').replace(/\D/g, '').replace(/^51/, ''))) return 'Falta el WhatsApp de la clienta (9 dígitos, empieza con 9).';
+    return null;
+  };
+
+  const intentarConfirmar = (c: Cotizacion) => {
+    const falta = faltaParaConfirmar(c);
+    if (falta) {
+      setError(falta);
+      setDetalleId(c.id);
+      window.setTimeout(() => document.getElementById(`venta-${c.id}`)?.focus(), 80);
+      return;
+    }
+    setError('');
+    setConfirmando(c);
+  };
+
+  /** Reglas del tablero: una cotización se mueve entre etapas; confirmar crea el pedido y descartar pide motivo */
+  const mover = (c: Cotizacion, destino: string) => {
+    if (destino === c.estado) return;
+    if (c.estado === 'cerrada') { setError('Esa cotización ya está confirmada: su seguimiento continúa en el tablero de Pedidos.'); return; }
+    if (destino === 'descartada') { setError(''); setMotivoSel(''); setMotivoOtro(''); setDescartando(c); return; }
+    if (destino === 'cerrada') { intentarConfirmar(c); return; }
+    setError('');
+    guardar(c, { estado: destino, ...(c.estado === 'descartada' ? { motivo_descarte: null } : {}) }, destino === 'nueva' ? 'Devuelta a Por revisar' : 'Pasó a En negociación');
+  };
+
+  const descartar = async () => {
+    if (!descartando) return;
+    const motivo = motivoSel === 'Otro' ? motivoOtro.trim() : motivoSel;
+    if (!motivo) { setError('Elige el motivo del descarte (si es "Otro", escríbelo).'); return; }
+    setError('');
+    await guardar(descartando, { estado: 'descartada', motivo_descarte: motivo }, `Cotización ${descartando.id} descartada`);
+    if (detalleId === descartando.id) setDetalleId(null);
+    setDescartando(null);
+  };
+
+  /** Crea el pedido enlazado (una sola vez) y deja la cotización en "Pedido confirmado" */
+  const crearPedido = async (c: Cotizacion) => {
+    const falta = faltaParaConfirmar(c);
+    if (falta) return setError(falta);
+    setError('');
     const venta = c.precio_final ?? 0;
     const flete = c.flete ?? 0;
-    if (venta <= 0) { setError('Antes de pasarla al tablero indica el precio de venta y guárdalo.'); document.getElementById(`venta-${c.id}`)?.focus(); return; }
-    setError('');
+    // Evita duplicados: si la clienta ya confirmó por su enlace (o alguien más lo hizo), solo se enlaza
+    const { data: previo } = await supabase.from('orders').select('id').eq('raw_data->>consultaId', c.id).limit(1);
+    if (previo && previo.length > 0) {
+      await guardar(c, { estado: 'cerrada', pedido_id: previo[0].id }, `Ya existía el pedido ${previo[0].id}: enlazado`);
+      setConfirmando(null);
+      return;
+    }
     const { data: id, error: eId } = await supabase.rpc('siguiente_pedido_id');
     if (eId || typeof id !== 'string') return setError('No se pudo obtener el número de pedido.');
     const ahora = new Date().toISOString();
     const items = c.seleccion.map(lineaTexto).join('; ').slice(0, 900);
+    const porConfirmar = envio.medio === 'por_confirmar';
     const { error: eO } = await supabase.from('orders').insert([{
       id,
       created_at: ahora,
       dispatch_date: envio.fecha,
       status: 'nuevos',
       customer_name: c.nombre?.trim() || `Cliente ${c.id}`,
-      customer_phone: (c.telefono || '').slice(-9),
+      customer_phone: (c.telefono || '').replace(/\D/g, '').slice(-9),
       document_type: 'DNI',
       document_number: envio.dni.trim(),
-      shipping_type: envio.medio,
+      shipping_type: porConfirmar ? 'shalom' : envio.medio,
       items_description: items,
-      notes: `Cotización ${c.id}${c.motivo_ajuste ? `: ${c.motivo_ajuste}` : ''}`,
+      notes: `Cotización ${c.id}${c.motivo_ajuste ? `: ${c.motivo_ajuste}` : ''}${porConfirmar ? ' · Medio de envío por confirmar con la clienta' : ''}`,
       whatsapp_sent: false,
       is_cash_on_delivery: false,
       subtotal_amount: venta,
@@ -342,12 +424,12 @@ export const Cotizaciones: React.FC = () => {
       total_amount: venta + flete,
       is_deleted: false,
       previous_status: 'nuevos',
-      raw_data: { consultaId: c.id, sourceRef: c.ref || undefined, itemsDescription: items },
+      raw_data: { consultaId: c.id, sourceRef: c.ref || undefined, itemsDescription: items, ...(porConfirmar ? { medioPorConfirmar: true } : {}) },
       updated_at: ahora,
     }]);
     if (eO) return setError('No se pudo crear la tarjeta del tablero: ' + eO.message);
-    await guardar(c, { estado: 'cerrada', pedido_id: id }, `Tarjeta ${id} creada en el tablero`);
-    setPasando(null);
+    await guardar(c, { estado: 'cerrada', pedido_id: id }, `Pedido ${id} creado y enlazado`);
+    setConfirmando(null);
   };
 
   useEffect(() => {
@@ -358,67 +440,175 @@ export const Cotizaciones: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cotizaciones, pedidosPorConsulta]);
 
-  const conteo = useMemo(() => {
-    const m: Record<string, number> = {};
-    cotizaciones.forEach((c) => { m[c.estado] = (m[c.estado] || 0) + 1; });
-    return m;
-  }, [cotizaciones]);
-  // Con texto en el buscador se busca en todas las etapas (nombre, teléfono, código, origen, notas, etiquetas y productos)
-  const termino = busqueda.trim().toLowerCase();
-  const visibles = termino
-    ? cotizaciones.filter((c) => [c.id, c.nombre, c.telefono, c.ref, c.notas, c.pedido_id, ...(c.etiquetas || []), ...c.seleccion.map((l) => l.producto)].some((x) => (x || '').toString().toLowerCase().includes(termino)))
-    : cotizaciones.filter((c) => c.estado === filtro);
 
-  if (!listo) return <div className="min-h-screen flex items-center justify-center text-sm text-[#8A7A76] bg-[#FBF4F0]">Verificando sesión…</div>;
-  if (!admin) {
+  // Estadísticas y filtrado
+  const termino = busqueda.trim().toLowerCase();
+  const coincide = (c: Cotizacion) => [c.id, c.nombre, c.telefono, c.ref, c.notas, c.pedido_id, c.motivo_descarte, ...(c.etiquetas || []), ...c.seleccion.map((l) => l.producto)].some((x) => (x || '').toString().toLowerCase().includes(termino));
+  const filtradas = termino ? cotizaciones.filter(coincide) : cotizaciones;
+  const porEstado = (e: string) => filtradas.filter((c) => c.estado === e);
+  const descartadas = cotizaciones.filter((c) => c.estado === 'descartada');
+  const confirmadasTodas = cotizaciones.filter((c) => c.estado === 'cerrada');
+  const detalle = cotizaciones.find((c) => c.id === detalleId) || null;
+
+  useEffect(() => { onNuevas?.(cotizaciones.filter((c) => c.estado === 'nueva').length); }, [cotizaciones, onNuevas]);
+  // Salto desde una tarjeta de pedido: abre esa cotización
+  useEffect(() => {
+    if (focoId && cotizaciones.some((c) => c.id === focoId)) {
+      setDetalleId(focoId);
+      onFocoAtendido?.();
+    }
+  }, [focoId, cotizaciones, onFocoAtendido]);
+
+  useEscapeCierra(Boolean(detalle) && !descartando && !confirmando, () => { setDetalleId(null); setError(''); });
+  useEscapeCierra(Boolean(descartando), () => setDescartando(null));
+  useEscapeCierra(Boolean(confirmando), () => setConfirmando(null));
+  useEscapeCierra(archivo !== null, () => setArchivo(null));
+
+  const sinAtender = (c: Cotizacion) => c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000;
+
+  const tarjeta = (c: Cotizacion) => {
+    const tel = (c.telefono || '').replace(/^51/, '');
+    const pedido = c.pedido_id || pedidosPorConsulta[c.id]?.id;
+    const unidades = c.seleccion.reduce((s, l) => s + l.cantidad, 0);
+    const rutinas = agruparRutina(c.seleccion).map(([r]) => r).filter((r) => r && r !== 'Otros').slice(0, 2).join(' · ');
+    const idx = COLUMNAS.findIndex((x) => x.estado === c.estado);
+    const anterior = idx > 0 ? COLUMNAS[idx - 1] : null;
+    const siguiente = idx >= 0 && idx < COLUMNAS.length - 1 ? COLUMNAS[idx + 1] : null;
+    const total = (c.precio_final ?? 0) + (c.flete ?? 0);
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-6 text-center text-sm bg-[#FBF4F0] text-[#2B1D1A]">
-        <p>Esta página es solo para administradores.</p>
-        <a href="/" className="font-bold text-[#A8634F] underline">Iniciar sesión en el panel</a>
-      </div>
+      <article
+        key={c.id}
+        id={`cot-card-${c.id}`}
+        draggable={c.estado !== 'cerrada'}
+        onDragStart={(e) => { e.dataTransfer.setData('text/plain', c.id); e.dataTransfer.effectAllowed = 'move'; setArrastrada(c.id); }}
+        onDragEnd={() => { setArrastrada(null); setSobre(null); }}
+        className={`rounded-xl border border-[#EADCD3] bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#2A1E1A] dark:text-white ${arrastrada === c.id ? 'opacity-40' : ''} ${c.estado !== 'cerrada' ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      >
+        <div role="button" tabIndex={0} onClick={() => setDetalleId(c.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetalleId(c.id); } }} className="cursor-pointer space-y-1.5" aria-label={`Abrir cotización ${c.id}`}>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[13px] font-black">{c.id}</span>
+            <span className={sinAtender(c) ? 'rounded-md bg-rose-500/15 px-1.5 text-[11px] font-bold text-rose-700' : 'text-[11px] text-[#8A7A76]'}>{hace(c.created_at)}{sinAtender(c) ? ' · sin atender' : ''}</span>
+            {c.ref && <span className="rounded bg-[#F6E8E1] px-1.5 font-mono text-[10px] text-[#8E4F3E]">{c.ref}</span>}
+          </div>
+          <p className="truncate text-sm font-bold">{c.nombre || 'Sin nombre'}</p>
+          <p className="line-clamp-2 text-xs leading-snug text-[#6B5A55] dark:text-zinc-300">{unidades} {unidades === 1 ? 'producto' : 'productos'}{rutinas ? ` · ${rutinas}` : ''}</p>
+          <div className="flex items-center justify-between gap-2">
+            {total > 0
+              ? <span className="text-sm font-black">{dinero(total)}</span>
+              : c.estado === 'cerrada' ? <span /> : <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-300">Precio por definir</span>}
+            {pedido && <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">{pedido}</span>}
+          </div>
+        </div>
+        <div className="mt-2 flex items-center gap-0.5 border-t border-[#EADCD3]/70 pt-1.5 dark:border-white/10">
+          <Mini tip="Abrir detalle" onClick={() => setDetalleId(c.id)}><Maximize2 className="h-4 w-4" /></Mini>
+          {tel && <Mini tip="Escribir por WhatsApp" href={`https://wa.me/51${tel}`} tono="text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"><MessageCircle className="h-4 w-4" /></Mini>}
+          <span className="flex-1" />
+          {c.estado === 'cerrada' ? (
+            pedido && onVerPedido ? <Mini tip={`Ver pedido ${pedido}`} onClick={() => onVerPedido(pedido)} tono="text-emerald-700 hover:bg-emerald-500/10"><PackageCheck className="h-4 w-4" /></Mini> : null
+          ) : (
+            <>
+              {anterior && <Mini tip={`Devolver a ${anterior.titulo}`} onClick={() => mover(c, anterior.estado)}><ChevronLeft className="h-4 w-4" /></Mini>}
+              {siguiente && <Mini tip={siguiente.estado === 'cerrada' ? 'Confirmar pedido' : `Pasar a ${siguiente.titulo}`} onClick={() => mover(c, siguiente.estado)} tono="text-[#A8634F] hover:bg-[#F6E8E1]"><ChevronRight className="h-4 w-4" /></Mini>}
+              <Mini tip="Descartar" onClick={() => mover(c, 'descartada')} tono="text-rose-600 hover:bg-rose-500/10"><XCircle className="h-4 w-4" /></Mini>
+            </>
+          )}
+        </div>
+      </article>
     );
-  }
+  };
+
+  const modal = (cerrar: () => void, ancho: string, hijos: React.ReactNode, z = 'z-40') => (
+    <div className={`fixed inset-0 ${z} flex items-end justify-center bg-black/45 sm:items-center sm:p-4`} onMouseDown={(e) => { if (e.target === e.currentTarget) cerrar(); }}>
+      <div role="dialog" aria-modal="true" className={`max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-[#FBF4F0] text-[#2B1D1A] shadow-2xl sm:rounded-2xl ${ancho}`}>{hijos}</div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#FBF4F0] text-[#2B1D1A]">
-      <header className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-[#EADCD3]">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <a href="/" className="text-xs font-bold text-[#A8634F] hover:underline">← Tablero</a>
-          <h1 className="flex-1 text-base font-extrabold">Cotizaciones</h1>
-          <button type="button" onClick={cargar} className="rounded-xl border border-[#EADCD3] px-3 py-1.5 text-xs font-bold hover:bg-[#FBF4F0] cursor-pointer">Actualizar</button>
+    <div className="mx-auto w-full max-w-[1500px] px-2.5 py-3 sm:px-5 sm:py-4 space-y-3">
+      {/* Barra: búsqueda y acciones con iconos */}
+      <div className="flex items-center gap-2 rounded-xl border border-[#EADCD3] bg-white p-2.5 shadow-2xs dark:border-white/10 dark:bg-[#2A1E1A]">
+        <div className="relative min-w-0 flex-1 sm:max-w-sm" title="Nombre, teléfono, código, producto o nota">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B5A55]" />
+          <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar cotización…" aria-label="Buscar cotizaciones" className="w-full rounded-lg border border-[#EADCD3] bg-[#FBF4F0] py-2 pl-9 pr-3 text-sm placeholder:text-[#8A7A76] focus:border-[#A8634F] focus:bg-white focus:outline-none dark:border-white/10 dark:bg-[#1F1613] dark:text-white" />
         </div>
-        <div className="max-w-3xl mx-auto px-4 pb-2">
-          <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre, teléfono, código, producto o nota…" aria-label="Buscar cotizaciones" className="w-full rounded-xl bg-[#F6E8E1]/70 px-3 py-2 text-sm placeholder:text-[#8A7A76]" />
-        </div>
-        <div className="max-w-3xl mx-auto px-4 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
-          {ESTADOS.map((e) => (
-            <button
-              key={e.valor}
-              type="button"
-              onClick={() => setFiltro(e.valor)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold cursor-pointer transition-colors ${
-                filtro === e.valor ? 'bg-[#A8634F] text-white' : 'bg-[#F6E8E1] text-[#8E4F3E] hover:bg-[#F3DDD3]'
-              }`}
-            >
-              {e.etiqueta} <span className="opacity-80">{conteo[e.valor] || 0}</span>
-            </button>
-          ))}
-        </div>
-      </header>
+        <span className="flex-1 hidden sm:block" />
+        <button type="button" onClick={cargar} data-tip="Actualizar" aria-label="Actualizar" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#EADCD3] bg-white text-[#6B5A55] cursor-pointer hover:bg-[#FBF4F0] dark:border-white/10 dark:bg-[#2A1E1A] dark:text-zinc-200"><RefreshCw className="h-4 w-4" /></button>
+        <button type="button" onClick={() => setArchivo('descartada')} data-tip="Archivo: descartadas y confirmadas" aria-label="Archivo de cotizaciones" className="tip-der relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#EADCD3] bg-white text-[#6B5A55] cursor-pointer hover:bg-[#FBF4F0] dark:border-white/10 dark:bg-[#2A1E1A] dark:text-zinc-200">
+          <Archive className="h-4 w-4" />
+          {descartadas.length + Math.max(0, confirmadasTodas.length - MAX_CONFIRMADAS) > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#6B5A55] px-1 text-[9px] font-black text-white">{descartadas.length + Math.max(0, confirmadasTodas.length - MAX_CONFIRMADAS)}</span>}
+        </button>
+      </div>
 
-      <main className="max-w-3xl mx-auto p-4 space-y-3">
-        {aviso && <div className="fixed top-3 right-3 z-20 max-w-xs rounded-xl bg-[#2B1D1A] px-3 py-2 text-xs font-semibold text-white shadow-lg">{aviso}</div>}
-        {error && <p className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-700">{error}</p>}
-        {visibles.length === 0 && !error && <p className="py-8 text-center text-sm text-[#8A7A76]">{termino ? 'Sin resultados para esa búsqueda.' : 'No hay cotizaciones en esta etapa.'}</p>}
+      {aviso && <div className="fixed right-3 top-20 z-[60] max-w-xs rounded-xl bg-[#2B1D1A] px-3 py-2 text-xs font-semibold text-white shadow-lg">{aviso}</div>}
+      {error && !detalle && !confirmando && !descartando && <p className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-700">{error}</p>}
 
-        {visibles.map((c) => {
-          const v = valores(c);
-          const venta = num(v.venta) ?? 0;
-          const flete = c.flete ?? 0; // el flete se define luego, en la tarjeta, cuando se conoce el destino
-          const total = venta + flete;
-          const tel = (c.telefono || '').replace(/^51/, '');
+      {/* Móvil: pestañas de etapa con contador (una columna a la vez) */}
+      <div className="flex gap-1 md:hidden" role="tablist" aria-label="Etapa">
+        {COLUMNAS.map((col) => (
+          <button key={col.estado} type="button" role="tab" aria-selected={pestana === col.estado} onClick={() => setPestana(col.estado)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-extrabold cursor-pointer transition-colors ${pestana === col.estado ? 'bg-[#A8634F] text-white' : 'bg-[#F6E8E1] text-[#8E4F3E] dark:bg-white/10 dark:text-zinc-200'}`}>
+            {col.icono}<span>{col.corto}</span><span className="opacity-80">{porEstado(col.estado).length}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tablero */}
+      <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-3">
+        {COLUMNAS.map((col) => {
+          const todas = porEstado(col.estado);
+          const lista = col.estado === 'cerrada' && !termino ? [...todas].sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()).slice(0, MAX_CONFIRMADAS) : todas;
+          const ocultas = todas.length - lista.length;
           return (
-            <article key={c.id} className="space-y-3 rounded-2xl border border-[#EADCD3] bg-white p-4 shadow-sm">
+            <section
+              key={col.estado}
+              id={`cot-col-${col.estado}`}
+              onDragOver={(e) => { if (arrastrada) { e.preventDefault(); setSobre(col.estado); } }}
+              onDragLeave={() => setSobre((s) => (s === col.estado ? null : s))}
+              onDrop={(e) => { e.preventDefault(); const c = cotizaciones.find((x) => x.id === arrastrada); setSobre(null); setArrastrada(null); if (c) mover(c, col.estado); }}
+              className={`${pestana === col.estado ? 'block' : 'hidden'} md:block min-h-[200px] rounded-2xl bg-[#F6E8E1]/60 p-2 transition-colors dark:bg-white/5 ${sobre === col.estado ? 'ring-2 ring-[#A8634F] ring-offset-2' : ''}`}
+            >
+              <div className="mb-2 flex items-center gap-2 px-1.5 pt-1" title={col.ayuda}>
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-[#8E4F3E] ${col.fondo}`}>{col.icono}</span>
+                <h3 className="flex-1 truncate text-sm font-extrabold">{col.titulo}</h3>
+                <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-bold text-[#6B5A55] dark:bg-white/10 dark:text-zinc-200">{todas.length}</span>
+              </div>
+              <div className="space-y-2.5">
+                {lista.length === 0 && <p className="px-2 py-8 text-center text-xs text-[#8A7A76]">{termino ? 'Sin resultados.' : col.estado === 'nueva' ? 'No hay cotizaciones por revisar.' : col.estado === 'en_conversacion' ? 'Nada en negociación.' : 'Aún no hay pedidos confirmados.'}</p>}
+                {lista.map(tarjeta)}
+                {ocultas > 0 && <button type="button" onClick={() => setArchivo('cerrada')} className="w-full rounded-xl py-2 text-xs font-bold text-[#A8634F] cursor-pointer hover:bg-white/60">Ver {ocultas} más en el archivo</button>}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Zona para soltar y descartar (solo aparece mientras se arrastra una tarjeta) */}
+      {arrastrada && (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setSobre('descartada'); }}
+          onDragLeave={() => setSobre(null)}
+          onDrop={(e) => { e.preventDefault(); const c = cotizaciones.find((x) => x.id === arrastrada); setSobre(null); setArrastrada(null); if (c) mover(c, 'descartada'); }}
+          className={`fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-2xl border-2 border-dashed px-6 py-4 text-sm font-extrabold shadow-xl ${sobre === 'descartada' ? 'border-rose-600 bg-rose-600 text-white' : 'border-rose-400 bg-white text-rose-600'}`}
+        >
+          <XCircle className="h-5 w-5" /> Suelta aquí para descartar
+        </div>
+      )}
+
+      {/* Detalle de la cotización */}
+      {detalle && (() => {
+        const c = detalle;
+        const v = valores(c);
+        const venta = num(v.venta) ?? 0;
+        const flete = c.flete ?? 0;
+        const total = venta + flete;
+        const tel = (c.telefono || '').replace(/^51/, '');
+        return modal(() => { setDetalleId(null); setError(''); }, 'sm:max-w-3xl', (
+          <div className="space-y-3 p-4">
+            <div className="flex items-center gap-2">
+              <h2 className="flex-1 text-base font-extrabold">Cotización {c.id}</h2>
+              <button type="button" onClick={() => { setDetalleId(null); setError(''); }} data-tip="Cerrar" aria-label="Cerrar" className="tip-der flex h-8 w-8 items-center justify-center rounded-lg text-[#6B5A55] cursor-pointer hover:bg-[#F6E8E1]"><X className="h-5 w-5" /></button>
+            </div>
+            {error && <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
+            <div className="space-y-3 rounded-2xl border border-[#EADCD3] bg-white p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-bold">{c.id}</span>
                 <span className={c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000 ? 'rounded-md bg-rose-500/15 px-1.5 text-xs font-bold text-rose-700' : 'text-xs text-[#8A7A76]'}>{hace(c.created_at)}{c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000 ? ' · sin atender' : ''}</span>
@@ -426,7 +616,7 @@ export const Cotizaciones: React.FC = () => {
                 {(c.pedido_id || pedidosPorConsulta[c.id]) && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">{pedidosPorConsulta[c.id] && !c.pedido_id ? 'Pedido confirmado' : 'Tarjeta'} {c.pedido_id || pedidosPorConsulta[c.id].id}</span>}
                 <select
                   value={c.estado}
-                  onChange={(e) => guardar(c, { estado: e.target.value }, 'Estado actualizado')}
+                  onChange={(e) => mover(c, e.target.value)}
                   className="ml-auto rounded-xl border border-[#EADCD3] px-2 py-1 text-xs font-semibold"
                   aria-label="Estado"
                 >
@@ -434,6 +624,7 @@ export const Cotizaciones: React.FC = () => {
                 </select>
               </div>
 
+              {c.estado === 'descartada' && <p className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">Descartada{c.motivo_descarte ? `: ${c.motivo_descarte}` : ''}</p>}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 <span className="font-bold">{c.nombre || 'Sin nombre'}</span>
                 {tel && (
@@ -545,8 +736,11 @@ export const Cotizaciones: React.FC = () => {
                 )}
                 {venta > 0 && (<button type="button" onClick={() => compartirImagen(c, venta)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Cotización en imagen</button>)}
                 <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace para confirmar pedido copiado')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Enlace para confirmar pedido</button>
-                {!c.pedido_id && !pedidosPorConsulta[c.id] && (
-                  <button type="button" onClick={() => setPasando(pasando === c.id ? null : c.id)} className="ml-auto rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Pasar al tablero</button>
+                {!c.pedido_id && !pedidosPorConsulta[c.id] && c.estado !== 'descartada' && (
+                  <button type="button" onClick={() => intentarConfirmar({ ...c, precio_final: num(v.venta) ?? c.precio_final })} className="ml-auto rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Confirmar pedido</button>
+                )}
+                {(c.pedido_id || pedidosPorConsulta[c.id]) && onVerPedido && (
+                  <button type="button" onClick={() => onVerPedido((c.pedido_id || pedidosPorConsulta[c.id]?.id) as string)} className="ml-auto rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-emerald-700">Ver pedido {c.pedido_id || pedidosPorConsulta[c.id]?.id}</button>
                 )}
               </div>
 
@@ -558,37 +752,87 @@ export const Cotizaciones: React.FC = () => {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        ));
+      })()}
 
-              {pasando === c.id && (
-                <div className="space-y-2.5 rounded-xl border border-dashed border-[#DFBF8B] bg-[#FBF1DC]/50 p-3">
-                  <p className="text-xs font-bold text-[#2B1D1A]">Crear la tarjeta en el tablero ahora (completarás el resto en su detalle)</p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">
-                      Medio de envío
-                      <select value={envio.medio} onChange={(e) => setEnvio((p) => ({ ...p, medio: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case">
-                        {MEDIOS.map((m) => <option key={m.valor} value={m.valor}>{m.etiqueta}</option>)}
-                      </select>
-                    </label>
-                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">
-                      Fecha de despacho
-                      <input type="date" value={envio.fecha} onChange={(e) => setEnvio((p) => ({ ...p, fecha: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case" />
-                    </label>
-                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">
-                      DNI (opcional)
-                      <input value={envio.dni} onChange={(e) => setEnvio((p) => ({ ...p, dni: e.target.value }))} inputMode="numeric" className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case" />
-                    </label>
+      {/* Descartar: motivo obligatorio */}
+      {descartando && modal(() => setDescartando(null), 'sm:max-w-md', (
+        <div className="space-y-3 p-4">
+          <h2 className="text-base font-extrabold">Descartar {descartando.id}</h2>
+          <p className="text-xs text-[#6B5A55]">Quedará en el archivo (se puede restaurar). El motivo ayuda a entender por qué no se concretan las ventas.</p>
+          <div className="grid gap-1.5" role="radiogroup" aria-label="Motivo">
+            {MOTIVOS_DESCARTE.map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={motivoSel === m} onClick={() => setMotivoSel(m)} className={`rounded-xl border px-3 py-2 text-left text-sm font-semibold cursor-pointer ${motivoSel === m ? 'border-[#A8634F] bg-[#F6E8E1]' : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0]'}`}>{m}</button>
+            ))}
+          </div>
+          {motivoSel === 'Otro' && <input autoFocus value={motivoOtro} onChange={(e) => setMotivoOtro(e.target.value)} placeholder="Escribe el motivo" className="w-full rounded-xl border border-[#EADCD3] bg-white px-3 py-2 text-sm" />}
+          {error && <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setDescartando(null)} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer">Cancelar</button>
+            <button type="button" onClick={descartar} className="rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-rose-700">Descartar cotización</button>
+          </div>
+        </div>
+      ), 'z-[55]')}
+
+      {/* Confirmar pedido: crea la tarjeta enlazada */}
+      {confirmando && modal(() => setConfirmando(null), 'sm:max-w-lg', (
+        <div className="space-y-3 p-4">
+          <h2 className="text-base font-extrabold">Confirmar pedido de {confirmando.id}</h2>
+          <p className="text-xs text-[#6B5A55]">{confirmando.nombre} · total productos {dinero(confirmando.precio_final ?? 0)}. Se creará la tarjeta en el tablero de Pedidos; el flete y los datos de envío se completan allí cuando la clienta los indique.</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">Medio de envío
+              <select value={envio.medio} onChange={(e) => setEnvio((p) => ({ ...p, medio: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case">
+                {MEDIOS.map((m) => <option key={m.valor} value={m.valor}>{m.etiqueta}</option>)}
+              </select>
+            </label>
+            <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">Fecha de despacho
+              <input type="date" value={envio.fecha} onChange={(e) => setEnvio((p) => ({ ...p, fecha: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2 py-2 text-sm font-semibold normal-case" />
+            </label>
+          </div>
+          <p className="text-[11px] text-[#8A7A76]">Si la clienta prefiere llenar sus datos ella misma, envíale el enlace de confirmación desde el detalle (no hace falta confirmar aquí).</p>
+          {error && <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setConfirmando(null)} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer">Cancelar</button>
+            <button type="button" onClick={() => crearPedido(confirmando)} className="rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Crear pedido</button>
+          </div>
+        </div>
+      ), 'z-[55]')}
+
+      {/* Archivo: descartadas y confirmadas antiguas (fuera del flujo para no llenar la pantalla) */}
+      {archivo && modal(() => setArchivo(null), 'sm:max-w-2xl', (
+        <div className="space-y-3 p-4">
+          <div className="flex items-center gap-2">
+            <h2 className="flex-1 text-base font-extrabold">Archivo de cotizaciones</h2>
+            <button type="button" onClick={() => setArchivo(null)} data-tip="Cerrar" aria-label="Cerrar" className="tip-der flex h-8 w-8 items-center justify-center rounded-lg text-[#6B5A55] cursor-pointer hover:bg-[#F6E8E1]"><X className="h-5 w-5" /></button>
+          </div>
+          <div className="flex gap-1.5" role="tablist">
+            {([['descartada', 'Descartadas', descartadas.length], ['cerrada', 'Pedido confirmado', confirmadasTodas.length]] as const).map(([k, tx, n]) => (
+              <button key={k} type="button" role="tab" aria-selected={archivo === k} onClick={() => setArchivo(k)} className={`rounded-full px-3 py-1.5 text-xs font-bold cursor-pointer ${archivo === k ? 'bg-[#A8634F] text-white' : 'bg-[#F6E8E1] text-[#8E4F3E]'}`}>{tx} {n}</button>
+            ))}
+          </div>
+          <ul className="space-y-2">
+            {(archivo === 'descartada' ? descartadas : confirmadasTodas).filter((c) => !termino || coincide(c)).map((c) => {
+              const pedido = c.pedido_id || pedidosPorConsulta[c.id]?.id;
+              return (
+                <li key={c.id} className="flex items-center gap-2 rounded-xl border border-[#EADCD3] bg-white p-2.5">
+                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => { setArchivo(null); setDetalleId(c.id); }}>
+                    <p className="truncate text-sm font-bold"><span className="font-mono">{c.id}</span> · {c.nombre || 'Sin nombre'}</p>
+                    <p className="truncate text-xs text-[#6B5A55]">{hace(c.created_at)}{c.estado === 'descartada' && c.motivo_descarte ? ` · ${c.motivo_descarte}` : ''}{pedido ? ` · pedido ${pedido}` : ''}</p>
                   </div>
-                  <p className="text-[11px] text-[#8A7A76]">Usa esta opción <b>o</b> el enlace de despacho (si la clienta completa el formulario llegará otra tarjeta; evita duplicados eligiendo solo una).</p>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => pasarAlTablero({ ...c, precio_final: num(v.venta) })} className="rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Crear tarjeta</button>
-                    <button type="button" onClick={() => setPasando(null)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer">Cancelar</button>
-                  </div>
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </main>
+                  {c.estado === 'descartada' ? (
+                    <button type="button" onClick={() => mover(c, 'nueva')} data-tip="Restaurar a Por revisar" aria-label="Restaurar" className="tip-der flex h-8 w-8 items-center justify-center rounded-lg text-[#A8634F] cursor-pointer hover:bg-[#F6E8E1]"><Undo2 className="h-4 w-4" /></button>
+                  ) : pedido && onVerPedido ? (
+                    <button type="button" onClick={() => { setArchivo(null); onVerPedido(pedido); }} data-tip={`Ver pedido ${pedido}`} aria-label="Ver pedido" className="tip-der flex h-8 w-8 items-center justify-center rounded-lg text-emerald-700 cursor-pointer hover:bg-emerald-500/10"><PackageCheck className="h-4 w-4" /></button>
+                  ) : null}
+                </li>
+              );
+            })}
+            {(archivo === 'descartada' ? descartadas : confirmadasTodas).length === 0 && <li className="py-6 text-center text-sm text-[#8A7A76]">Nada por aquí todavía.</li>}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 };

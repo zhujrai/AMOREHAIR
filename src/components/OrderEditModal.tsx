@@ -221,6 +221,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
       documentType,
       documentNumber: documentNumber.trim(),
       shippingType,
+      medioPorConfirmar: undefined, // al guardar con validación completa, el medio queda definido
       dispatchDate: dispatchDate || order.dispatchDate,
       trackingNumber: trackingNumber.trim() || undefined,
       itemsDescription: itemsDescription.trim() || 'Rutina personalizada',

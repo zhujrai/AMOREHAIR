@@ -16,7 +16,8 @@ import {
   OLVA_AGENCIES,
   MARVISUR_AGENCIES
 } from './data/agencies';
-import { Navbar } from './components/Navbar';
+import { Navbar, SeccionPanel } from './components/Navbar';
+import { Cotizaciones } from './components/Cotizaciones';
 import { ClientShippingForm } from './components/ClientShippingForm';
 import { SuccessSummaryModal } from './components/SuccessSummaryModal';
 import { AdminKanban } from './components/AdminKanban';
@@ -75,6 +76,12 @@ export default function App() {
 
   // Current view state: 'admin' (by default on /) or 'cliente' (on /pedidos)
   const [currentView, setCurrentView] = useState<'cliente' | 'admin'>(getInitialView);
+
+  // Tablero visible dentro del panel: Pedidos (/) o Cotizaciones (/cotizaciones)
+  const seccionDesdeRuta = (): SeccionPanel => (/^\/(cotizaciones|consultas)\/?$/.test(window.location.pathname.toLowerCase()) ? 'cotizaciones' : 'pedidos');
+  const [seccion, setSeccion] = useState<SeccionPanel>(seccionDesdeRuta);
+  const [focoCotizacion, setFocoCotizacion] = useState<string | null>(null);
+  const [focoPedido, setFocoPedido] = useState<string | null>(null);
 
   // Autenticación de administradores con Supabase Auth (sesión real, renovada automáticamente)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
@@ -467,6 +474,7 @@ export default function App() {
   // Sync browser path and hash changes (e.g. forward/back buttons, manual URL changes)
   useEffect(() => {
     const handleLocationChange = () => {
+      setSeccion(seccionDesdeRuta());
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
       if (path.startsWith('/pedidos') || hash === '#pedidos' || hash === '#cliente') {
@@ -487,11 +495,20 @@ export default function App() {
   // Update browser URL and view state
   const navigateToView = (view: 'cliente' | 'admin') => {
     setCurrentView(view);
-    const targetPath = view === 'cliente' ? '/pedidos' : '/';
+    const targetPath = view === 'cliente' ? '/pedidos' : seccion === 'cotizaciones' ? '/cotizaciones' : '/';
     if (typeof window !== 'undefined' && window.location.pathname !== targetPath) {
       window.history.pushState({ view }, '', targetPath);
     }
   };
+
+  const cambiarSeccion = (s: SeccionPanel) => {
+    setSeccion(s);
+    const ruta = s === 'cotizaciones' ? '/cotizaciones' : '/';
+    if (window.location.pathname !== ruta) window.history.pushState({ view: 'admin' }, '', ruta);
+  };
+  // Saltos entre tableros: la tarjeta de pedido y la cotización se enlazan en ambos sentidos
+  const verPedido = (id: string) => { setFocoPedido(id); cambiarSeccion('pedidos'); };
+  const verCotizacion = (id: string) => { setFocoCotizacion(id); cambiarSeccion('cotizaciones'); };
 
   // Sync document title dynamically
   useEffect(() => {
@@ -763,6 +780,8 @@ export default function App() {
           storeSettings={storeSettings}
           cotizacionesNuevas={cotizacionesNuevas}
           stockAgotados={stockAgotados}
+          seccion={seccion}
+          onCambiarSeccion={cambiarSeccion}
           rolPersonal={rolPersonal}
           onUpdateStoreSettings={handleUpdateStoreSettings}
         />
@@ -805,8 +824,19 @@ export default function App() {
             storeSettings={storeSettings}
             isDark={isDark}
           />
+        ) : seccion === 'cotizaciones' ? (
+          <Cotizaciones
+            orders={orders}
+            focoId={focoCotizacion}
+            onFocoAtendido={() => setFocoCotizacion(null)}
+            onVerPedido={verPedido}
+            onNuevas={setCotizacionesNuevas}
+          />
         ) : (
           <AdminKanban
+            focoPedidoId={focoPedido}
+            onFocoAtendido={() => setFocoPedido(null)}
+            onAbrirCotizacion={verCotizacion}
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onUpdateOrder={handleUpdateOrder}

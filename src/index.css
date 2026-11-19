@@ -271,3 +271,13 @@ html.dark .label-mono {
 
 /* Rótulo: al imprimir toma su medida real en mm */
 @media print { .rotulo-impreso { width: var(--mm-w) !important; max-width: none !important; margin: 0 auto !important; } }
+
+/* Ayuda breve al pasar el cursor o enfocar un botón con icono (en táctil basta el aria-label y el título) */
+[data-tip] { position: relative; }
+[data-tip]:hover::after, [data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; background: #2B1D1A; color: #fff; font-size: 11px; font-weight: 600; line-height: 1;
+  padding: 5px 8px; border-radius: 8px; z-index: 70; pointer-events: none; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+[data-tip].tip-der:hover::after, [data-tip].tip-der:focus-visible::after { left: auto; right: 0; transform: none; }
+[data-tip].tip-izq:hover::after, [data-tip].tip-izq:focus-visible::after { left: 0; transform: none; }

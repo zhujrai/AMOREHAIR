@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
-import { 
-  Sun, 
-  Moon, 
-  Truck, 
-  LogOut, 
-  ArrowLeft, 
-  Share2, 
-  Check, 
-  Camera
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Sun,
+  Moon,
+  Truck,
+  LogOut,
+  ArrowLeft,
+  Share2,
+  Check,
+  Camera,
+  Boxes,
+  MessageSquareText,
+  PackageCheck,
+  BookOpen,
+  ClipboardList,
+  ExternalLink,
 } from 'lucide-react';
 import { StoreSettings, AdminUser } from '../types';
 import { getBrandLogo } from '../utils/formatters';
 import { LogoUploadModal } from './LogoUploadModal';
 import { ShareFormModal } from './ShareFormModal';
+
+export type SeccionPanel = 'pedidos' | 'cotizaciones';
 
 interface NavbarProps {
   currentView: 'cliente' | 'admin';
@@ -27,12 +35,51 @@ interface NavbarProps {
   totalOrdersCount?: number;
   storeSettings: StoreSettings;
   onUpdateStoreSettings?: (newSettings: StoreSettings) => void;
-  /** Cotizaciones nuevas del catálogo sin atender (contador del enlace) */
+  /** Cotizaciones nuevas del catálogo sin atender (contador del selector) */
   cotizacionesNuevas?: number;
   rolPersonal?: 'admin' | 'asesor';
   /** Presentaciones con stock en 0 (aviso en el enlace Stock) */
   stockAgotados?: number;
+  /** Tablero visible dentro del panel */
+  seccion?: SeccionPanel;
+  onCambiarSeccion?: (s: SeccionPanel) => void;
 }
+
+/** Botón de icono con ayuda breve (tooltip) */
+const IconBtn: React.FC<{
+  tip: string;
+  onClick?: () => void;
+  href?: string;
+  isDark: boolean;
+  activo?: boolean;
+  badge?: number;
+  badgeClase?: string;
+  alinear?: 'der' | 'izq';
+  id?: string;
+  className?: string;
+  children: React.ReactNode;
+}> = ({ tip, onClick, href, isDark, activo, badge = 0, badgeClase = 'bg-[#A8634F]', alinear, id, className = '', children }) => {
+  const base = `relative inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-colors cursor-pointer ${alinear === 'der' ? 'tip-der' : alinear === 'izq' ? 'tip-izq' : ''} ${
+    activo
+      ? 'border-[#A8634F] bg-[#A8634F] text-white'
+      : isDark
+        ? 'border-white/10 bg-[#2A1E1A] text-zinc-200 hover:bg-zinc-800'
+        : 'border-[#EADCD3] bg-white text-[#1F1613] hover:bg-[#FBF4F0]'
+  } ${className}`;
+  const contenido = (
+    <>
+      {children}
+      {badge > 0 && (
+        <span className={`absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-black text-white ${badgeClase}`}>{badge}</span>
+      )}
+    </>
+  );
+  return href ? (
+    <a id={id} href={href} data-tip={tip} aria-label={tip} className={base}>{contenido}</a>
+  ) : (
+    <button id={id} type="button" onClick={onClick} data-tip={tip} aria-label={tip} className={base}>{contenido}</button>
+  );
+};
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
@@ -50,38 +97,106 @@ export const Navbar: React.FC<NavbarProps> = ({
   cotizacionesNuevas = 0,
   rolPersonal = 'asesor',
   stockAgotados = 0,
+  seccion = 'pedidos',
+  onCambiarSeccion,
 }) => {
   const [showLogoModal, setShowLogoModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [copiado, setCopiado] = useState<'catalogo' | 'clientes' | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const brandLogo = getBrandLogo(isDark, storeSettings);
-
   const isClientView = currentView === 'cliente';
+  const enAdmin = currentView === 'admin' && isAdminAuthenticated;
+
+  // El menú del usuario se cierra al tocar fuera o con Esc
+  useEffect(() => {
+    if (!menuAbierto) return;
+    const fuera = (e: MouseEvent | TouchEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuAbierto(false); };
+    const tecla = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuAbierto(false); };
+    document.addEventListener('mousedown', fuera);
+    document.addEventListener('touchstart', fuera);
+    document.addEventListener('keydown', tecla);
+    return () => { document.removeEventListener('mousedown', fuera); document.removeEventListener('touchstart', fuera); document.removeEventListener('keydown', tecla); };
+  }, [menuAbierto]);
+
+  const copiarEnlace = async (tipo: 'catalogo' | 'clientes') => {
+    const texto = tipo === 'catalogo'
+      ? `Arma tu rutina aquí: ${window.location.origin}/catalogo`
+      : `Registra los datos de entrega aquí: ${window.location.origin}/pedidos`;
+    try {
+      await navigator.clipboard.writeText(texto);
+    } catch {
+      const t = document.createElement('textarea');
+      t.value = texto;
+      document.body.appendChild(t);
+      t.select();
+      document.execCommand('copy');
+      document.body.removeChild(t);
+    }
+    setCopiado(tipo);
+    window.setTimeout(() => setCopiado(null), 1800);
+  };
+
+  const iniciales = ((adminUser?.email || 'A').split('@')[0].slice(0, 2) || 'A').toUpperCase();
+  const itemMenu = `flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-semibold cursor-pointer ${isDark ? 'text-zinc-200 hover:bg-white/10' : 'text-[#1F1613] hover:bg-[#FBF4F0]'}`;
+
+  // Selector Pedidos | Cotizaciones (cada uno con su contador)
+  const selector = (
+    <div role="tablist" aria-label="Tablero" className={`inline-flex items-center gap-0.5 rounded-xl border p-0.5 ${isDark ? 'border-white/10 bg-[#2A1E1A]' : 'border-[#EADCD3] bg-[#FBF4F0]'}`}>
+      {([
+        { id: 'pedidos' as const, texto: 'Pedidos', icono: <PackageCheck className="h-4 w-4" />, n: pendingCount, ayuda: 'Tablero de pedidos y despachos' },
+        { id: 'cotizaciones' as const, texto: 'Cotizaciones', icono: <MessageSquareText className="h-4 w-4" />, n: cotizacionesNuevas, ayuda: 'Tablero de cotizaciones del catálogo' },
+      ]).map((s) => (
+        <button
+          key={s.id}
+          id={`seccion-${s.id}-btn`}
+          role="tab"
+          aria-selected={seccion === s.id}
+          type="button"
+          onClick={() => onCambiarSeccion?.(s.id)}
+          title={s.ayuda}
+          className={`flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-extrabold transition-colors cursor-pointer ${
+            seccion === s.id
+              ? 'bg-[#A8634F] text-white shadow-sm'
+              : isDark ? 'text-zinc-300 hover:bg-white/10' : 'text-[#6B5A55] hover:bg-white'
+          }`}
+        >
+          {s.icono}
+          <span>{s.texto}</span>
+          {s.n > 0 && (
+            <span className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-black ${seccion === s.id ? 'bg-white text-[#A8634F]' : 'bg-[#A8634F] text-white'}`}>{s.n}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <header className={`${
       isClientView ? 'relative z-20' : 'sticky top-0 z-30'
     } transition-colors duration-200 border-b ${
-      isDark 
-        ? 'border-white/10 bg-[#161419]/95 text-white' 
+      isDark
+        ? 'border-white/10 bg-[#161419]/95 text-white'
         : 'border-[#EADCD3] bg-white/95 text-[#1F1613]'
     } backdrop-blur-md shadow-2xs`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16">
-          
-          {/* Left: Brand / System Label & Logo */}
-          <div className="flex items-center gap-2.5 sm:gap-4">
-            <div 
-              className="flex items-center cursor-pointer select-none py-0" 
+        <div className="flex items-center justify-between gap-2 h-14 sm:h-16">
+
+          {/* Marca y, en escritorio, el selector de tableros */}
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
+            <div
+              className="flex items-center cursor-pointer select-none py-0 min-w-0"
               onClick={isClientView ? onNavigateToClient : onNavigateToAdmin}
-              title={isClientView ? "AMORE SALON - Formulario de Envíos" : "AMORE SALON - Panel Administrativo"}
+              title={isClientView ? 'AMORE SALON - Formulario de Envíos' : 'AMORE SALON - Panel Administrativo'}
             >
               {brandLogo ? (
-                <div className="relative flex items-center h-12 sm:h-14 overflow-hidden">
+                <div className="relative flex items-center h-11 sm:h-14 overflow-hidden">
                   <img
                     src={brandLogo}
                     alt={storeSettings.storeName || 'AMORE SALON'}
-                    className="h-14 sm:h-16 w-auto max-w-[230px] sm:max-w-[300px] object-cover scale-y-[1.18] scale-x-[1.05] p-0 m-0 transition-transform"
+                    className="h-12 sm:h-16 w-auto max-w-[150px] sm:max-w-[260px] object-cover scale-y-[1.18] scale-x-[1.05] p-0 m-0 transition-transform"
                     referrerPolicy="no-referrer"
                   />
                 </div>
@@ -95,128 +210,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            <div className={`hidden sm:flex items-center gap-2 pl-3 border-l ${isDark ? 'border-white/10' : 'border-[#EADCD3]'}`}>
-              <span className="font-mono-meta text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-[#6B5A55] dark:text-zinc-300 font-extrabold">
-                {currentView === 'admin' ? 'TABLERO DE DESPACHOS' : 'FORMULARIO DE ENVÍOS'}
+            {enAdmin && <div className="hidden md:block">{selector}</div>}
+            {isClientView && (
+              <span className="hidden sm:inline font-mono-meta text-[11px] uppercase tracking-[0.14em] text-[#6B5A55] dark:text-zinc-300 font-extrabold pl-3 border-l border-[#EADCD3] dark:border-white/10">
+                Formulario de envíos
               </span>
-              {currentView === 'admin' && isAdminAuthenticated && (
-                <span className="text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-[#F6E8E1] text-[#A8634F] dark:bg-[#A8634F]/30 dark:text-rose-200 border border-[#A8634F]/20">
-                  {totalOrdersCount ?? pendingCount} pedidos
-                </span>
-              )}
-              {currentView === 'cliente' && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 text-[#6B5A55] dark:text-zinc-400 font-mono">
-                  /pedidos
-                </span>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Right Header Controls */}
+          {/* Controles de la derecha: solo iconos, con ayuda al pasar el cursor */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            
-            {/* If Admin is logged in, show View Client Form button, status badge, Logo button, Share Link button, and Logout */}
-            {currentView === 'admin' && isAdminAuthenticated && (
+            {enAdmin && (
               <>
-                {/* Botón Ver Formulario Cliente (/pedidos) */}
-                <button
-                  id="navbar-view-client-form-btn"
-                  onClick={onNavigateToClient}
-                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-                    isDark
-                      ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-zinc-200'
-                      : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'
-                  }`}
-                  title="Ver Formulario de Clientes (/pedidos)"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-[#A8634F]" />
-                  <span>Form pedidos</span>
-                </button>
-
-                {/* Bandeja de cotizaciones del catálogo (/cotizaciones) */}
-                <a
-                  id="navbar-consultas-btn"
-                  href="/cotizaciones"
-                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-                    isDark
-                      ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-zinc-200'
-                      : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'
-                  }`}
-                  title="Cotizaciones del catálogo"
-                >
-                  <span>Cotizaciones</span>
-                  {cotizacionesNuevas > 0 && (
-                    <span className="min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#A8634F] text-white text-[10px] font-black">
-                      {cotizacionesNuevas}
-                    </span>
-                  )}
-                </a>
-
-                {/* Stock (vista gráfica) */}
-                <a
-                  id="navbar-stock-btn"
-                  href="/stock"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${isDark ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-zinc-200' : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'}`}
-                  title="Stock de productos"
-                >
-                  <span>Stock</span>
-                  {stockAgotados > 0 && (<span className="min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#D9534F] text-white text-[10px] font-black" title={`${stockAgotados} presentaciones agotadas`}>{stockAgotados}</span>)}
-                </a>
-
-                {/* Botón Espacio para Logo de la Marca */}
-                <button
-                  id="navbar-edit-logo-btn"
-                  onClick={() => setShowLogoModal(true)}
-                  className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
-                    isDark
-                      ? 'border-white/10 bg-[#2A1E1A] hover:bg-zinc-800 text-white'
-                      : 'border-[#EADCD3] bg-white hover:bg-[#FBF4F0] text-[#1F1613]'
-                  }`}
-                  title="Configurar logo de la empresa y datos del remitente"
-                >
-                  <Camera className="w-3.5 h-3.5 text-[#A8634F]" />
-                  <span>Logo</span>
-                </button>
-
-                <div className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs ${
-                  isDark
-                    ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-300'
-                    : 'border-[#ECFDF5] bg-[#ECFDF5] text-[#10B981]'
-                }`}>
-                  <div className="w-2 h-2 rounded-full bg-[#10B981]" />
-                  <span className="font-mono text-[11px] font-bold truncate max-w-[140px] sm:max-w-[200px]" title={adminUser?.email || 'Administrador'}>
-                    {adminUser?.email ? adminUser.email.split('@')[0] : 'ADMIN'}
-                  </span>
-                  {adminUser?.role === 'superadmin' && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#FBF1DC] text-[#CFA24A] border border-[#DFBF8B]/30">
-                      SUPER
-                    </span>
-                  )}
-                  <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#F6E8E1] text-[#8E4F3E] uppercase">{rolPersonal === 'admin' ? 'Admin' : 'Asesor'}</span>
-                  {pendingCount > 0 && (
-                    <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#A8634F] text-white" title={`${pendingCount} pedidos nuevos pendientes`}>
-                      {pendingCount}
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  id="admin-logout-btn"
-                  onClick={onLogout}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs ${
-                    isDark
-                      ? 'bg-[#2A1E1A] hover:bg-red-950/40 text-zinc-300 hover:text-red-400 border-white/10 hover:border-red-500/30'
-                      : 'bg-white hover:bg-rose-50 text-[#6B5A55] hover:text-rose-700 border-[#EADCD3] hover:border-rose-300'
-                  }`}
-                  title={`Cerrar Sesión (${adminUser?.email || 'Admin'})`}
-                >
-                  <LogOut className="w-3.5 h-3.5 stroke-[2.2]" />
-                  <span>Salir</span>
-                </button>
+                <IconBtn id="navbar-catalogo-copy-btn" isDark={isDark} tip={copiado === 'catalogo' ? '¡Enlace copiado!' : 'Copiar enlace del catálogo'} onClick={() => copiarEnlace('catalogo')} activo={copiado === 'catalogo'} className="hidden sm:inline-flex">
+                  {copiado === 'catalogo' ? <Check className="h-4 w-4" /> : <BookOpen className="h-4 w-4 text-[#A8634F]" />}
+                </IconBtn>
+                <IconBtn id="navbar-clientes-copy-btn" isDark={isDark} tip={copiado === 'clientes' ? '¡Enlace copiado!' : 'Copiar enlace del formulario de clientes'} onClick={() => copiarEnlace('clientes')} activo={copiado === 'clientes'} className="hidden sm:inline-flex">
+                  {copiado === 'clientes' ? <Check className="h-4 w-4" /> : <ClipboardList className="h-4 w-4 text-[#A8634F]" />}
+                </IconBtn>
+                <IconBtn id="navbar-stock-btn" isDark={isDark} href="/stock" tip="Stock de productos" badge={stockAgotados} badgeClase="bg-[#D9534F]">
+                  <Boxes className="h-4 w-4 text-[#A8634F]" />
+                </IconBtn>
               </>
             )}
 
-            {/* If in Client view, offer button to go to Admin Panel */}
             {currentView === 'cliente' && (
               <button
                 id="header-goto-admin-btn"
@@ -232,7 +249,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* If on Admin login screen, offer button back to public client form */}
             {currentView === 'admin' && !isAdminAuthenticated && (
               <button
                 id="back-to-client-header-btn"
@@ -249,40 +265,67 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Share Form Button (Visible in both Client and Admin views, right next to Theme Switcher) */}
-            <button
-              id="navbar-share-form-btn"
-              type="button"
-              onClick={() => setShowShareModal(true)}
-              className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center transition-all cursor-pointer shadow-2xs ${
-                isDark
-                  ? 'bg-zinc-900/90 hover:bg-zinc-800 border-white/10 text-white hover:border-blue-500/40'
-                  : 'bg-white hover:bg-zinc-100 border-[#EADCD3] text-[#1F1613] hover:border-blue-500/40'
-              }`}
-              title="Compartir / Copiar enlace del formulario de envíos"
-              aria-label="Compartir formulario"
-            >
-              <Share2 className="w-4 h-4 text-blue-500 stroke-[2.2]" />
-            </button>
+            {/* Compartir (en el panel vive dentro del menú de usuario en móvil) */}
+            <IconBtn id="navbar-share-form-btn" isDark={isDark} tip="Compartir el formulario de envíos" onClick={() => setShowShareModal(true)} className={enAdmin ? 'hidden md:inline-flex' : ''} alinear="der">
+              <Share2 className="h-4 w-4 text-blue-500" />
+            </IconBtn>
 
-            {/* Dark / Light Mode Switcher */}
-            <button
-              id="theme-toggle-btn"
-              type="button"
-              onClick={() => setIsDark(!isDark)}
-              className={`p-2 rounded-xl border transition-all duration-150 cursor-pointer shadow-2xs ${
-                isDark
-                  ? 'border-white/10 bg-[#A8634F] hover:bg-[#8E4F3E] text-amber-400'
-                  : 'border-[#EADCD3] bg-white hover:bg-zinc-100 text-[#1F1613]'
-              }`}
-              title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
-              aria-label="Cambiar tema"
-            >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#1F1613]" />}
-            </button>
+            <IconBtn id="theme-toggle-btn" isDark={isDark} tip={isDark ? 'Modo claro' : 'Modo oscuro'} onClick={() => setIsDark(!isDark)} alinear={enAdmin ? undefined : 'der'}>
+              {isDark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
+            </IconBtn>
+
+            {/* Usuario: iniciales y menú (rol, logo, formulario, salir) */}
+            {enAdmin && (
+              <div className="relative" ref={menuRef}>
+                <button
+                  id="navbar-user-btn"
+                  type="button"
+                  onClick={() => setMenuAbierto((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={menuAbierto}
+                  aria-label="Menú de usuario"
+                  data-tip={menuAbierto ? undefined : `${adminUser?.email || 'Cuenta'} · ${rolPersonal === 'admin' ? 'Administrador' : 'Asesor'}`}
+                  className="tip-der relative flex h-9 w-9 items-center justify-center rounded-full bg-[#A8634F] text-[11px] font-black text-white cursor-pointer hover:bg-[#8E4F3E] transition-colors"
+                >
+                  {iniciales}
+                </button>
+                {menuAbierto && (
+                  <div role="menu" className={`absolute right-0 top-11 z-50 w-64 rounded-xl border p-1.5 shadow-xl ${isDark ? 'border-white/15 bg-[#1B191E]' : 'border-[#EADCD3] bg-white'}`}>
+                    <div className="px-3 py-2">
+                      <p className="truncate text-[13px] font-bold" title={adminUser?.email}>{adminUser?.email || 'Administrador'}</p>
+                      <span className="mt-1 inline-block rounded-full bg-[#F6E8E1] px-2 py-0.5 text-[10px] font-black uppercase text-[#8E4F3E]">{rolPersonal === 'admin' ? 'Administrador' : 'Asesor de ventas'}</span>
+                    </div>
+                    <div className={`my-1 h-px ${isDark ? 'bg-white/10' : 'bg-[#EADCD3]'}`} />
+                    <button type="button" role="menuitem" className={`${itemMenu} sm:hidden`} onClick={() => { setMenuAbierto(false); copiarEnlace('catalogo'); }}>
+                      <BookOpen className="h-4 w-4 text-[#A8634F]" /> Copiar enlace del catálogo
+                    </button>
+                    <button type="button" role="menuitem" className={`${itemMenu} sm:hidden`} onClick={() => { setMenuAbierto(false); copiarEnlace('clientes'); }}>
+                      <ClipboardList className="h-4 w-4 text-[#A8634F]" /> Copiar enlace de clientes
+                    </button>
+                    <button type="button" role="menuitem" className={`${itemMenu} md:hidden`} onClick={() => { setMenuAbierto(false); setShowShareModal(true); }}>
+                      <Share2 className="h-4 w-4 text-blue-500" /> Compartir formulario
+                    </button>
+                    <button type="button" role="menuitem" className={itemMenu} onClick={() => { setMenuAbierto(false); onNavigateToClient(); }}>
+                      <ExternalLink className="h-4 w-4 text-[#A8634F]" /> Ver formulario de clientes
+                    </button>
+                    <button id="navbar-edit-logo-btn" type="button" role="menuitem" className={itemMenu} onClick={() => { setMenuAbierto(false); setShowLogoModal(true); }}>
+                      <Camera className="h-4 w-4 text-[#A8634F]" /> Logo y datos del remitente
+                    </button>
+                    <div className={`my-1 h-px ${isDark ? 'bg-white/10' : 'bg-[#EADCD3]'}`} />
+                    <button id="admin-logout-btn" type="button" role="menuitem" className={`${itemMenu} !text-rose-600`} onClick={() => { setMenuAbierto(false); onLogout(); }}>
+                      <LogOut className="h-4 w-4" /> Cerrar sesión
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-
         </div>
+
+        {/* En el móvil el selector va en su propia fila, a todo lo ancho */}
+        {enAdmin && (
+          <div className="pb-2 md:hidden [&>div]:flex [&>div]:w-full [&_button]:flex-1 [&_button]:justify-center">{selector}</div>
+        )}
       </div>
 
       {/* Modal para Compartir Formulario */}

@@ -67,6 +67,11 @@ interface AdminKanbanProps {
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
   onUpdateOrder?: (order: Order) => void;
   onMarkSeen?: (orderId: string) => void;
+  /** Pedido a localizar (viene de un salto desde una cotización) */
+  focoPedidoId?: string | null;
+  onFocoAtendido?: () => void;
+  /** Abre la cotización enlazada en su tablero */
+  onAbrirCotizacion?: (consultaId: string) => void;
   rolPersonal?: 'admin' | 'asesor';
   onDeleteOrder: (orderId: string) => void;
   onRestoreOrder?: (order: Order) => void;
@@ -91,6 +96,9 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   onUpdateOrderStatus,
   onUpdateOrder,
   onMarkSeen,
+  focoPedidoId,
+  onFocoAtendido,
+  onAbrirCotizacion,
   rolPersonal = 'asesor',
   onDeleteOrder,
   onRestoreOrder,
@@ -110,6 +118,15 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
   onUpdateMarvisurAgencies,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  useEffect(() => {
+    if (focoPedidoId) {
+      setSearchTerm(focoPedidoId);
+      setCourierFilter('todos');
+      setFiltroFecha('todas');
+      onFocoAtendido?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focoPedidoId]);
   const [filtroFecha, setFiltroFecha] = useState<'todas' | 'hoy' | 'atrasados'>('todas');
   const [courierFilter, setCourierFilter] = useState<'todos' | ShippingType>('todos');
   const [selectedLabelOrder, setSelectedLabelOrder] = useState<Order | null>(null);
@@ -440,10 +457,9 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto text-xs no-scrollbar py-0.5">
             <span className="text-[11px] font-semibold text-[#6B5A55] dark:text-zinc-400 pr-0.5 flex items-center gap-1 flex-shrink-0">
               <Filter className="w-3.5 h-3.5" />
-              Courier:
             </span>
 
-            <button
+            <button data-tip="Todos los medios" aria-label="Todos los medios"
               id="filter-courier-todos"
               onClick={() => setCourierFilter('todos')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap cursor-pointer text-xs ${
@@ -454,10 +470,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                     : 'bg-[#FBF4F0] text-[#6B5A55] hover:text-[#1F1613] border border-[#EADCD3] hover:bg-zinc-100'
               }`}
             >
-              Todos ({orders.length})
+              <span>Todos</span> <span className="opacity-70">{orders.length}</span>
             </button>
 
-            <button
+            <button data-tip="Shalom" aria-label="Shalom"
               id="filter-courier-shalom"
               onClick={() => setCourierFilter('shalom')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
@@ -469,10 +485,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             >
               <Building2 className={`w-3.5 h-3.5 ${courierFilter === 'shalom' ? 'text-white' : 'text-[#A8634F]'}`} />
-              Shalom
+              <span className="hidden 2xl:inline">Shalom</span>
             </button>
 
-            <button
+            <button data-tip="Marvisur" aria-label="Marvisur"
               id="filter-courier-marvisur"
               onClick={() => setCourierFilter('marvisur')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
@@ -484,10 +500,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             >
               <Truck className={`w-3.5 h-3.5 ${courierFilter === 'marvisur' ? 'text-white' : 'text-[#4E8F96]'}`} />
-              Marvisur
+              <span className="hidden 2xl:inline">Marvisur</span>
             </button>
 
-            <button
+            <button data-tip="Olva" aria-label="Olva"
               id="filter-courier-olva"
               onClick={() => setCourierFilter('olva')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
@@ -499,10 +515,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             >
               <Truck className={`w-3.5 h-3.5 ${courierFilter === 'olva' ? 'text-white' : 'text-[#CFA24A]'}`} />
-              Olva
+              <span className="hidden 2xl:inline">Olva</span>
             </button>
 
-            <button
+            <button data-tip="Delivery Lima" aria-label="Delivery Lima"
               id="filter-courier-delivery"
               onClick={() => setCourierFilter('delivery_lima')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
@@ -514,10 +530,10 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             >
               <Bike className={`w-3.5 h-3.5 ${courierFilter === 'delivery_lima' ? 'text-white' : 'text-[#4E8F96]'}`} />
-              Delivery Lima
+              <span className="hidden 2xl:inline">Delivery Lima</span>
             </button>
 
-            <button
+            <button data-tip="Retiro en Local Amore" aria-label="Retiro en Local Amore"
               id="filter-courier-tienda"
               onClick={() => setCourierFilter('tienda')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer text-xs ${
@@ -529,7 +545,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               }`}
             >
               <Store className={`w-3.5 h-3.5 ${courierFilter === 'tienda' ? 'text-white' : 'text-[#10B981]'}`} />
-              Local Amore
+              <span className="hidden 2xl:inline">Local Amore</span>
             </button>
           </div>
         </div>
@@ -592,40 +608,6 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
               </button>
             ))}
           </div>
-
-          <button
-            id="copy-link-catalogo-btn"
-            type="button"
-            onClick={() => copiarEnlace('catalogo')}
-            className={`px-2.5 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
-              enlaceCopiado === 'catalogo'
-                ? 'bg-[#10B981] border-[#10B981] text-white'
-                : isDark
-                  ? 'bg-zinc-900 border-white/10 text-zinc-200 hover:bg-zinc-800'
-                  : 'bg-white border-[#EADCD3] text-[#1F1613] hover:bg-[#FBF4F0]'
-            }`}
-            title="Copiar el enlace del catálogo para enviarlo a la clienta"
-          >
-            <span>{enlaceCopiado === 'catalogo' ? '¡Copiado!' : 'Catálogo'}</span>
-            {enlaceCopiado === 'catalogo' ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 stroke-[2]" />}
-          </button>
-
-          <button
-            id="copy-link-clientes-btn"
-            type="button"
-            onClick={() => copiarEnlace('clientes')}
-            className={`px-2.5 py-2 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
-              enlaceCopiado === 'clientes'
-                ? 'bg-[#10B981] border-[#10B981] text-white'
-                : isDark
-                  ? 'bg-zinc-900 border-white/10 text-zinc-200 hover:bg-zinc-800'
-                  : 'bg-white border-[#EADCD3] text-[#1F1613] hover:bg-[#FBF4F0]'
-            }`}
-            title="Copiar el enlace del formulario de despacho para enviarlo a la clienta"
-          >
-            <span>{enlaceCopiado === 'clientes' ? '¡Copiado!' : 'Clientes'}</span>
-            {enlaceCopiado === 'clientes' ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 stroke-[2]" />}
-          </button>
 
           {/* PAPELERA DE RECICLAJE */}
           <button
@@ -863,7 +845,8 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                               className="w-3.5 h-3.5 rounded text-[#A8634F] accent-[#A8634F] cursor-pointer flex-shrink-0"
                               title="Seleccionar para imprimir rótulo"
                             />
-                            {order.consultaId && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#F6E8E1] text-[#8E4F3E] dark:bg-white/10 dark:text-[#DFBF8B] leading-none flex-shrink-0" title="Viene de la cotización del catálogo">{order.consultaId}</span>)}
+                            {order.consultaId && (<button type="button" onClick={(e) => { e.stopPropagation(); onAbrirCotizacion?.(order.consultaId as string); }} className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#F6E8E1] text-[#8E4F3E] dark:bg-white/10 dark:text-[#DFBF8B] leading-none flex-shrink-0 cursor-pointer hover:bg-[#EBCFC3]" data-tip={`Ver cotización ${order.consultaId}`} aria-label={`Ver cotización ${order.consultaId}`}>{order.consultaId}</button>)}
+                            {order.medioPorConfirmar && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300 leading-none flex-shrink-0" title="El medio de envío aún no está definido: confírmalo con la clienta">Envío por confirmar</span>)}
                             {order.status === 'nuevos' && !order.seenAt && (<span className="new-pulso text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#A8634F] text-white leading-none flex-shrink-0">New</span>)}
                             <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded-md bg-[#FBF4F0] dark:bg-zinc-800 text-[#1F1613] dark:text-zinc-100 border border-[#EADCD3] dark:border-zinc-700 whitespace-nowrap flex-shrink-0 leading-none select-all">
                               #{order.id}

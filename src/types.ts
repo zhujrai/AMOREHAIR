@@ -80,6 +80,8 @@ export interface Order {
   deletedAt?: string; // ISO string when deleted
   previousStatus?: OrderStatus; // Status before being moved to trash
   sourceRef?: string; // Código del enlace/video de origen (?ref=AMR_049)
+  /** El medio de envío se asignó de forma provisional al confirmar la cotización: falta definirlo con la clienta */
+  medioPorConfirmar?: boolean;
   consultaId?: string; // Consulta del catálogo de la que viene el pedido (?c=CO-1)
   seenAt?: string; // Primera vez que alguien del equipo abrió la tarjeta (si falta: es "New")
   amountPaid?: number; // Adelanto / monto ya pagado (el saldo por cobrar = total − pagado)
