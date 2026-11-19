@@ -72,7 +72,7 @@ const saludo = (c: Cotizacion) => `Hola${c.nombre ? ` ${c.nombre.trim().split(' 
 const RESPUESTAS: { etiqueta: string; texto: (c: Cotizacion) => string }[] = [
   { etiqueta: 'Saludo', texto: (c) => `${saludo(c)} 💖 soy de Amore Salon. Vi tu cotización ${c.id}, ¿te ayudo con alguna duda?` },
   { etiqueta: 'Seguimiento', texto: (c) => `${saludo(c)} 🌸 ¿pudiste revisar tu cotización ${c.id}? Quedo atenta para ayudarte a completar tu pedido.` },
-  { etiqueta: 'Enviar enlace de pedido', texto: (c) => `${saludo(c)} ✨ para confirmar tu pedido completa tus datos de envío aquí:\n${enlaceDespacho(c)}` },
+  { etiqueta: 'Enviar enlace de pedido', texto: (c) => textoEnlace(c) },
   { etiqueta: 'Disponibilidad', texto: (c) => `${saludo(c)} 💖 ya revisé la disponibilidad de tu cotización ${c.id}: todo lo que elegiste está listo para enviarse.` },
 ];
 
@@ -433,8 +433,12 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
     const venta = num(v.venta);
     if (v.venta.trim() !== '' && venta === null) return setError('El precio de venta debe ser un número válido.');
     if (venta === null || venta <= 0) { setError('Para confirmar el pedido indica el precio de venta.'); document.getElementById(`venta-${c.id}`)?.focus(); return; }
-    const datos: { nombre?: string; telefono?: string } = {};
+    const datos: { nombre?: string; telefono?: string; seleccion?: LineaSel[]; total_sugerido?: number | null } = {};
     if (editando === c.id) {
+      const lineasEd = borrador.lineas.filter((l) => l.cantidad > 0);
+      if (lineasEd.length === 0) return setError('La cotización debe tener al menos un producto.');
+      datos.seleccion = lineasEd;
+      datos.total_sugerido = lineasEd.every((l) => l.precio_sugerido != null) ? lineasEd.reduce((s, l) => s + (l.precio_sugerido as number) * l.cantidad, 0) : null;
       const tel = normalizarTel(borrador.telefono);
       if (borrador.nombre.trim().length < 2) return setError('El nombre de la clienta es obligatorio.');
       if (!/^9\d{8}$/.test(tel)) return setError('El WhatsApp debe tener 9 dígitos y empezar con 9 (puedes escribirlo con +51 o espacios).');
