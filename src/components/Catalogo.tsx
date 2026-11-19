@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../utils/dbApi';
 import { trazoContorno, ZonaCatalogo } from '../utils/contornos';
+import { useEscapeCierra } from '../utils/useEscapeCierra';
 
 /**
  * Catálogo por escenas — diseño móvil primero (iPhone y Android), minimalista.
@@ -17,7 +18,7 @@ const TEXTO_KIT = 'Lleva el kit completo y pide tu descuento exclusivo: tu aseso
 
 type Zona = ZonaCatalogo;
 interface Presentacion { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null; orden: number; stock_modo?: string; stock_cantidad?: number }
-interface Producto { id: string; marca: string; nombre: string; tipo: string | null; disponible: boolean }
+interface Producto { id: string; marca: string; linea?: string | null; nombre: string; tipo: string | null; disponible: boolean }
 interface Pieza { id: number; rutina_id: string; producto_id: string; presentacion_foto_id: string | null; zona: Zona; orden: number }
 interface Rutina { id: string; nombre: string; descripcion: string | null; foto_url: string; ancho_foto: number | null; alto_foto: number | null; orden?: number }
 interface ItemSel { presentacionId: string; cantidad: number }
@@ -45,6 +46,8 @@ const D_BOLSA = 'M6 8h12l-1 12H7L6 8zm3 0V6a3 3 0 0 1 6 0v2';
 const D_CHECK = 'M5 12.5l4.2 4.2L19 7';
 const D_MAS = 'M12 5v14M5 12h14';
 const D_X = 'M6 6l12 12M18 6L6 18';
+const D_REJILLA = 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z';
+const D_BUSCAR = 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm9 16l-4-4';
 const D_LUNA = 'M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.8 6.8 0 0 0 9.7 9.7z';
 const D_SOL = 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4';
 const D_WSP = 'M3 21l1.6-4.7A8.5 8.5 0 1 1 8 19.6L3 21zm5.6-12.3c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.8 1.9c.1.2 0 .4-.1.6l-.5.7c-.1.2-.2.3 0 .6.5.9 1.4 1.8 2.5 2.3.3.1.5.1.6-.1l.7-.9c.2-.2.4-.2.6-.1l1.8.9c.3.1.4.3.4.5 0 .8-.6 1.5-1.4 1.7-1 .3-2.5.1-4.2-.9-1.6-1-3-2.5-3.7-4.1-.4-1-.4-2 .2-2.8z';
@@ -70,13 +73,15 @@ const Miniatura: React.FC<{ foto: string; zona: Zona; ancho: number; alto: numbe
 
 const ESTILOS = `
 .cat {
-  --bg:#FAF6F2; --surface:#FFFFFF; --ink:#1F1613; --muted:#8A7A76; --linea:rgba(31,22,19,.08); --hueco:#F1E7E0;
-  --acento:#A8634F; --acento2:#C68173; --oro:#DFBF8B; --vidrio:rgba(255,255,255,.66); --sombra:0 18px 40px -22px rgba(70,38,26,.45);
-  background:var(--bg); color:var(--ink); min-height:100vh; min-height:100dvh;
+  --bg:#F7F1EB; --surface:#FFFFFF; --ink:#241814; --muted:#7B6963; --linea:rgba(36,24,20,.08); --hueco:#EFE5DC;
+  --acento:#AE5B45; --acento2:#D48B77; --oro:#E4C690; --vidrio:rgba(255,255,255,.7); --sombra:0 20px 44px -24px rgba(80,40,26,.5);
+  background:radial-gradient(900px 460px at 92% -6%, rgba(228,198,144,.42), transparent 62%), radial-gradient(760px 420px at -12% 6%, rgba(212,139,119,.28), transparent 58%), var(--bg); background-attachment:fixed;
+  color:var(--ink); min-height:100vh; min-height:100dvh;
   font-family: ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; touch-action:manipulation; overscroll-behavior-y:contain;
 }
-.cat.oscuro { --bg:#0D0807; --surface:#211815; --ink:#FFF7F2; --muted:#CDBBB1; --linea:rgba(255,255,255,.17); --hueco:#352722; --vidrio:rgba(44,32,27,.74); --sombra:0 18px 40px -20px rgba(0,0,0,.85); }
+.cat.oscuro { --bg:#0F0908; --surface:#1B1311; --ink:#FFF7F2; --muted:#CDBBB1; --linea:rgba(255,255,255,.16); --hueco:#2E221E; --vidrio:rgba(40,29,25,.76); --sombra:0 20px 44px -22px rgba(0,0,0,.9);
+  background:radial-gradient(900px 460px at 92% -6%, rgba(174,91,69,.30), transparent 62%), radial-gradient(760px 420px at -12% 6%, rgba(228,198,144,.12), transparent 58%), var(--bg); background-attachment:fixed; }
 .cat button, .cat input, .cat select, .cat textarea { font-family: inherit; }
 .cat input, .cat select { font-size:16px; } /* evita el zoom automático de iOS al enfocar */
 .cat .vidrio { background:var(--vidrio); backdrop-filter:blur(16px) saturate(1.5); -webkit-backdrop-filter:blur(16px) saturate(1.5); border:1px solid rgba(255,255,255,.32); }
@@ -101,6 +106,17 @@ const ESTILOS = `
 @keyframes catBarrido { from { transform:translateX(-130%) skewX(-18deg); opacity:1; } to { transform:translateX(330%) skewX(-18deg); opacity:.9; } }
 .cat .barrido { position:absolute; top:0; bottom:0; left:0; width:42%; pointer-events:none; mix-blend-mode:screen; background:linear-gradient(90deg,transparent,rgba(255,236,190,.65),transparent); animation:catBarrido 1.15s cubic-bezier(.3,.7,.2,1) both; }
 .cat .recomendado { background:linear-gradient(135deg,#F6DDA3,#DFBF8B); color:#4A2E22; box-shadow:0 6px 14px -6px rgba(120,80,30,.7); }
+.cat .titulo-grad { background:linear-gradient(115deg,var(--ink) 35%,var(--acento) 105%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.cat .chip { display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 15px; border-radius:999px; font-size:13px; font-weight:650; white-space:nowrap; cursor:pointer; color:var(--ink); background:var(--vidrio); border:1px solid var(--linea); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:all .25s cubic-bezier(.2,.8,.2,1); flex:0 0 auto; }
+.cat .chip:active { transform:scale(.96); }
+.cat .chip-on { background:linear-gradient(135deg,var(--acento2),var(--acento)); color:#fff; border-color:transparent; box-shadow:0 10px 22px -10px rgba(174,91,69,.85); }
+.cat .chip-n { display:inline-flex; align-items:center; justify-content:center; min-width:19px; height:19px; padding:0 5px; border-radius:999px; font-size:10.5px; font-weight:800; background:var(--hueco); color:var(--acento); }
+.cat .chip-on .chip-n { background:rgba(255,255,255,.28); color:#fff; }
+.cat .linea-card { position:relative; flex:0 0 auto; width:78px; cursor:pointer; text-align:center; scroll-snap-align:start; }
+.cat .linea-foto { display:block; overflow:hidden; border-radius:20px; transition:all .3s cubic-bezier(.2,.8,.2,1); }
+.cat .hoja-fondo { position:fixed; inset:0; z-index:40; background:rgba(15,9,8,.55); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); animation:catEntra .25s both; }
+.cat .hoja { position:fixed; left:0; right:0; bottom:0; z-index:41; margin:0 auto; max-width:640px; max-height:88dvh; display:flex; flex-direction:column; border-radius:30px 30px 0 0; background:var(--bg); box-shadow:0 -24px 60px -20px rgba(0,0,0,.5); animation:catSube .32s cubic-bezier(.2,.8,.2,1) both; padding-bottom:env(safe-area-inset-bottom); }
+@keyframes catSube { from { transform:translateY(40px); opacity:0 } to { transform:none; opacity:1 } }
 @media (prefers-reduced-motion: reduce) { .cat * { animation:none !important; transition:none !important; } }
 `;
 
@@ -126,6 +142,14 @@ export const Catalogo: React.FC = () => {
       return !v;
     });
   };
+  const [marcaFiltro, setMarcaFiltro] = useState<string>('todas');
+  const [verTodas, setVerTodas] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  useEscapeCierra(verTodas, () => setVerTodas(false));
+  // El carrusel de líneas se centra en la línea activa (también al cargar la página)
+  useEffect(() => { if (!cargando && activaId) window.setTimeout(() => document.getElementById(`linea-${activaId}`)?.scrollIntoView({ inline: 'center', block: 'nearest' }), 80); }, [cargando, activaId]);
+  // La fila de marcas sigue a la marca activa
+  useEffect(() => { document.getElementById(`marca-${marcaFiltro}`)?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }, [marcaFiltro]);
   const [despachoUrl, setDespachoUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!despachoUrl) return;
@@ -207,13 +231,37 @@ export const Catalogo: React.FC = () => {
     try { localStorage.setItem(CLAVE_CESTA, JSON.stringify(seleccion)); } catch {}
   }, [seleccion, cargando]);
 
+  // Marca de cada rutina (por sus productos) y listas para el selector de líneas
+  const marcaPorRutina = useMemo(() => {
+    const m: Record<string, string> = {};
+    rutinas.forEach((r) => {
+      const pz = piezas.find((p) => p.rutina_id === r.id && productos[p.producto_id]);
+      m[r.id] = pz ? productos[pz.producto_id].marca : 'Otras';
+    });
+    return m;
+  }, [rutinas, piezas, productos]);
+  const marcas = useMemo(() => {
+    const orden: string[] = [];
+    rutinas.forEach((r) => { const mk = marcaPorRutina[r.id]; if (mk && !orden.includes(mk)) orden.push(mk); });
+    return orden;
+  }, [rutinas, marcaPorRutina]);
+  const rutinasVisibles = useMemo(() => (marcaFiltro === 'todas' ? rutinas : rutinas.filter((r) => marcaPorRutina[r.id] === marcaFiltro)), [rutinas, marcaFiltro, marcaPorRutina]);
+  const textoRutina = useMemo(() => {
+    const m: Record<string, string> = {};
+    rutinas.forEach((r) => {
+      m[r.id] = [r.nombre, marcaPorRutina[r.id], ...piezas.filter((p) => p.rutina_id === r.id).map((p) => productos[p.producto_id]?.nombre || '')].join(' ').toLowerCase();
+    });
+    return m;
+  }, [rutinas, piezas, productos, marcaPorRutina]);
   const activa = rutinas.find((r) => r.id === activaId) || null;
-  const indiceActiva = rutinas.findIndex((r) => r.id === activaId);
+  const indiceActiva = rutinasVisibles.findIndex((r) => r.id === activaId);
   const piezasActiva = useMemo(() => piezas.filter((p) => p.rutina_id === activaId), [piezas, activaId]);
   const piezasOrdenadas = useMemo(() => [...piezasActiva].sort((a, b) => b.zona.w * b.zona.h - a.zona.w * a.zona.h), [piezasActiva]);
 
   const elegirRutina = (id: string) => {
     setActivaId(id);
+    if (marcaFiltro !== 'todas' && marcaPorRutina[id] && marcaPorRutina[id] !== marcaFiltro) setMarcaFiltro(marcaPorRutina[id]);
+    window.setTimeout(() => document.getElementById(`linea-${id}`)?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }), 60);
     try {
       const ref = refDelEnlace();
       window.history.replaceState(null, '', `/catalogo/${id}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`);
@@ -221,7 +269,7 @@ export const Catalogo: React.FC = () => {
   };
   const irA = (delta: number) => {
     const i = indiceActiva + delta;
-    if (i >= 0 && i < rutinas.length) { elegirRutina(rutinas[i].id); vibrar(6); }
+    if (i >= 0 && i < rutinasVisibles.length) { elegirRutina(rutinasVisibles[i].id); vibrar(6); }
   };
 
   const seleccionInicial = (p: Pieza): ItemSel => {
@@ -230,16 +278,30 @@ export const Catalogo: React.FC = () => {
     return { presentacionId: inicial?.id || '', cantidad: 1 };
   };
 
+  // Un producto puede aparecer dos veces en la foto (p. ej. shampoo de 1 L y de 400 ml): tocar el otro tamaño cambia el tamaño; tocar el elegido lo quita.
   const alternar = (p: Pieza) => {
     const prod = productos[p.producto_id];
     if (!prod || !prod.disponible) return;
     vibrar();
     setSeleccion((prev) => {
       const copia = { ...prev };
-      if (copia[p.producto_id]) delete copia[p.producto_id];
-      else copia[p.producto_id] = seleccionInicial(p);
+      const actual = copia[p.producto_id];
+      const variasEnFoto = piezas.filter((x) => x.rutina_id === p.rutina_id && x.producto_id === p.producto_id).length > 1;
+      if (actual) {
+        if (variasEnFoto && p.presentacion_foto_id && actual.presentacionId !== p.presentacion_foto_id && (presentaciones[p.producto_id] || []).some((x) => x.id === p.presentacion_foto_id)) {
+          copia[p.producto_id] = { ...actual, presentacionId: p.presentacion_foto_id };
+        } else delete copia[p.producto_id];
+      } else copia[p.producto_id] = seleccionInicial(p);
       return copia;
     });
+  };
+  const quitarProducto = (productoId: string) => { vibrar(); setSeleccion((prev) => { const c = { ...prev }; delete c[productoId]; return c; }); };
+  // ¿Esta pieza de la foto está elegida? (con dos tamaños del mismo producto, solo brilla el elegido)
+  const piezaMarcada = (p: Pieza): boolean => {
+    const sel = seleccion[p.producto_id];
+    if (!sel) return false;
+    const variasEnFoto = piezas.filter((x) => x.rutina_id === p.rutina_id && x.producto_id === p.producto_id).length > 1;
+    return !variasEnFoto || !p.presentacion_foto_id || sel.presentacionId === p.presentacion_foto_id;
   };
 
   const elegirTodoElKit = () => {
@@ -287,9 +349,11 @@ export const Catalogo: React.FC = () => {
   const cantidadTotal = lineas.reduce((s, l) => s + l.sel.cantidad, 0);
   const todosConPrecio = lineas.length > 0 && lineas.every((l) => l.pres?.precio_sugerido != null);
   const totalSugerido = todosConPrecio ? lineas.reduce((s, l) => s + (l.pres!.precio_sugerido as number) * l.sel.cantidad, 0) : null;
-  const disponiblesActiva = piezasActiva.filter((p) => productos[p.producto_id]?.disponible).length;
-  const elegidasActiva = piezasActiva.filter((p) => seleccion[p.producto_id]).length;
-  const cantidadPorRutina = (id: string) => piezas.filter((p) => p.rutina_id === id && seleccion[p.producto_id]).length;
+  const disponiblesActiva = Array.from(new Set(piezasActiva.filter((p) => productos[p.producto_id]?.disponible).map((p) => p.producto_id))).length;
+  const productosActiva = Array.from(new Set(piezasActiva.map((p) => p.producto_id)));
+  const elegidasActiva = productosActiva.filter((id) => seleccion[id]).length;
+  const cantidadPorRutina = (id: string) => new Set(piezas.filter((p) => p.rutina_id === id && seleccion[p.producto_id]).map((p) => p.producto_id)).size;
+  const cantidadPorMarca = (marca: string) => rutinas.filter((r) => marcaPorRutina[r.id] === marca).reduce((s, r) => s + cantidadPorRutina(r.id), 0);
 
   const consultar = async (destino: 'whatsapp' | 'despacho' = 'whatsapp') => {
     if (lineas.length === 0) return;
@@ -362,8 +426,8 @@ export const Catalogo: React.FC = () => {
         <div className="mx-auto max-w-md px-4 pt-6">
           <div className="esqueleto h-5 w-24 rounded-full" />
           <div className="esqueleto mt-6 h-8 w-56 rounded-xl" />
-          <div className="mt-5 grid grid-cols-[56px_1fr] gap-3">
-            <div className="space-y-2">{[0, 1, 2, 3].map((i) => <div key={i} className="esqueleto h-[68px] rounded-2xl" />)}</div>
+          <div className="mt-5 grid grid-cols-1 gap-3">
+            <div className="flex gap-2">{[0, 1, 2, 3].map((i) => <div key={i} className="esqueleto h-[38px] w-24 rounded-full" />)}</div>
             <div className="esqueleto aspect-[3/4] rounded-[28px]" />
           </div>
         </div>
@@ -419,44 +483,44 @@ export const Catalogo: React.FC = () => {
       <main className="mx-auto max-w-md px-4 pb-40 md:max-w-4xl md:grid md:grid-cols-[1fr_360px] md:gap-8">
         <div>
           <div className="px-1 pb-4 pt-5">
-            <h1 className="text-[28px] font-bold leading-[1.1] tracking-tight">Arma tu rutina</h1>
+            <h1 className="titulo-grad text-[30px] font-extrabold leading-[1.08] tracking-tight">Arma tu rutina</h1>
             <p className="mt-1.5 text-[14px] leading-snug" style={{ color: 'var(--muted)' }}>Toca los productos que quieres. Puedes combinar marcas.</p>
           </div>
 
-          <div className="grid grid-cols-[56px_1fr] gap-3">
-            {/* Carrusel vertical de rutinas */}
-            <nav aria-label="Rutinas" className="sin-barra sticky top-3 max-h-[74dvh] space-y-2.5 self-start overflow-y-auto py-1" style={{ scrollSnapType: 'y proximity' }}>
-              {rutinas.map((r) => {
-                const n = cantidadPorRutina(r.id);
-                const esActiva = r.id === activaId;
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => { elegirRutina(r.id); vibrar(6); }}
-                    aria-current={esActiva}
-                    aria-label={`${nombreCorto(r)}${n ? `, ${n} elegidos` : ''}`}
-                    className="relative block w-full cursor-pointer text-center"
-                    style={{ scrollSnapAlign: 'center' }}
-                  >
-                    <span
-                      className="block overflow-hidden rounded-[18px] transition-all duration-300"
-                      style={{
-                        boxShadow: esActiva ? '0 0 0 2px var(--surface), 0 0 0 4px var(--acento)' : '0 0 0 1px var(--linea)',
-                        opacity: esActiva ? 1 : 0.62,
-                        transform: esActiva ? 'scale(1)' : 'scale(.94)',
-                      }}
-                    >
-                      <img src={r.foto_url} alt="" className="aspect-[3/4] w-full object-cover" draggable={false} loading="lazy" />
-                    </span>
-                    <span className="mt-1.5 block truncate text-[9.5px] font-semibold leading-tight" style={{ color: esActiva ? 'var(--ink)' : 'var(--muted)' }}>{nombreCorto(r)}</span>
-                    {n > 0 && (
-                      <span key={n} className="pop absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white boton-acento">{n}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
+          <div className="grid grid-cols-1 gap-3">
+            {/* Selector: marcas (chips) + líneas de la marca (carrusel horizontal) + hoja "Ver todas" */}
+            <div>
+              <div className="sin-barra -mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist" aria-label="Marcas">
+                {['todas', ...marcas].map((m) => {
+                  const activo = marcaFiltro === m;
+                  const n = m === 'todas' ? cantidadTotal : cantidadPorMarca(m);
+                  return (
+                    <button key={m} id={`marca-${m}`} type="button" role="tab" aria-selected={activo} onClick={() => { setMarcaFiltro(m); vibrar(6); const primera = (m === 'todas' ? rutinas : rutinas.filter((r) => marcaPorRutina[r.id] === m))[0]; if (primera && marcaPorRutina[activaId] !== m && m !== 'todas') elegirRutina(primera.id); }} className={`chip${activo ? ' chip-on' : ''}`}>
+                      {m === 'todas' ? 'Todas' : m}
+                      {n > 0 && <span className="chip-n">{n}</span>}
+                    </button>
+                  );
+                })}
+                <button type="button" onClick={() => { setBusqueda(''); setVerTodas(true); vibrar(8); }} className="chip" aria-label="Ver todas las líneas y buscar">
+                  <Icono d={D_REJILLA} className="h-4 w-4" /> Ver todas <span className="chip-n">{rutinas.length}</span>
+                </button>
+              </div>
+              <nav aria-label="Líneas" className="sin-barra -mx-4 mt-2.5 flex gap-2.5 overflow-x-auto px-4 pb-2 pt-1" style={{ scrollSnapType: 'x proximity' }}>
+                {rutinasVisibles.map((r) => {
+                  const n = cantidadPorRutina(r.id);
+                  const esActiva = r.id === activaId;
+                  return (
+                    <button key={r.id} id={`linea-${r.id}`} type="button" onClick={() => { elegirRutina(r.id); vibrar(6); }} aria-current={esActiva} aria-label={`${nombreCorto(r)}${n ? `, ${n} elegidos` : ''}`} className="linea-card">
+                      <span className="linea-foto" style={{ boxShadow: esActiva ? '0 0 0 2px var(--bg), 0 0 0 4px var(--acento)' : '0 0 0 1px var(--linea)', opacity: esActiva ? 1 : 0.7, transform: esActiva ? 'scale(1)' : 'scale(.95)' }}>
+                        <img src={r.foto_url} alt="" className="aspect-[3/4] w-full object-cover" draggable={false} loading="lazy" />
+                      </span>
+                      <span className="mt-1.5 line-clamp-2 block text-[10.5px] font-semibold leading-tight" style={{ color: esActiva ? 'var(--ink)' : 'var(--muted)' }}>{nombreCorto(r)}</span>
+                      {n > 0 && <span key={n} className="pop boton-acento absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">{n}</span>}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
 
             {/* Escena de la rutina activa */}
             <div className="min-w-0" onTouchStart={alTocar} onTouchEnd={alSoltar}>
@@ -474,7 +538,7 @@ export const Catalogo: React.FC = () => {
                   {piezasOrdenadas.map((p) => {
                     const prod = productos[p.producto_id];
                     if (!prod) return null;
-                    const marcado = Boolean(seleccion[p.producto_id]);
+                    const marcado = piezaMarcada(p);
                     const trazo = trazoContorno(p.zona, W, H);
                     const agotado = !prod.disponible;
                     return (
@@ -514,7 +578,7 @@ export const Catalogo: React.FC = () => {
                 {piezasActiva.map((p) => {
                   const prod = productos[p.producto_id];
                   if (!prod) return null;
-                  const marcado = Boolean(seleccion[p.producto_id]);
+                  const marcado = piezaMarcada(p);
                   return (
                     <span
                       key={`b-${p.id}-${marcado}`}
@@ -544,13 +608,9 @@ export const Catalogo: React.FC = () => {
                 )}
               </div>
 
-              {/* Puntos de paginación */}
-              {rutinas.length > 1 && (
-                <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden="true">
-                  {rutinas.map((r) => (
-                    <span key={r.id} className="h-1.5 rounded-full transition-all duration-300" style={{ width: r.id === activaId ? 18 : 6, background: r.id === activaId ? 'var(--acento)' : 'var(--linea)' }} />
-                  ))}
-                </div>
+              {/* Posición dentro de la marca */}
+              {rutinasVisibles.length > 1 && indiceActiva >= 0 && (
+                <p className="mt-3 text-center text-[12px] font-medium" style={{ color: 'var(--muted)' }}>{marcaPorRutina[activaId]} · {indiceActiva + 1} de {rutinasVisibles.length} · desliza para ver más</p>
               )}
             </div>
           </div>
@@ -589,7 +649,7 @@ export const Catalogo: React.FC = () => {
                             {/* Nombre completo (puede ocupar 2 líneas) y botón de quitar */}
                             <div className="flex items-start justify-between gap-1">
                               <p className="text-[14px] font-semibold leading-snug" style={{ overflowWrap: 'anywhere' }}>{prod.nombre}</p>
-                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => alternar(pieza)} className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center" style={{ color: 'var(--muted)' }}>
+                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => quitarProducto(prod.id)} className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center" style={{ color: 'var(--muted)' }}>
                                 <Icono d={D_X} className="h-4 w-4" />
                               </button>
                             </div>
@@ -697,6 +757,47 @@ export const Catalogo: React.FC = () => {
           <iframe src={despachoUrl} title="Formulario de despacho" className="min-h-0 w-full flex-1 border-0" />
         </div>
       )}
+      {verTodas && (() => {
+        const q = busqueda.trim().toLowerCase();
+        const lista = rutinas.filter((r) => !q || textoRutina[r.id]?.includes(q));
+        const porMarca = marcas.map((m) => ({ marca: m, items: lista.filter((r) => marcaPorRutina[r.id] === m) })).filter((g) => g.items.length > 0);
+        return (
+          <>
+            <div className="hoja-fondo" onClick={() => setVerTodas(false)} aria-hidden="true" />
+            <div className="hoja" role="dialog" aria-modal="true" aria-label="Todas las líneas">
+              <div className="flex items-center justify-between px-5 pb-2 pt-4">
+                <p className="text-[18px] font-bold tracking-tight">Todas las líneas</p>
+                <button type="button" onClick={() => setVerTodas(false)} aria-label="Cerrar" className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full" style={{ background: 'var(--hueco)' }}><Icono d={D_X} className="h-4 w-4" /></button>
+              </div>
+              <div className="px-5 pb-3">
+                <label className="flex h-12 items-center gap-2.5 rounded-2xl px-4" style={{ background: 'var(--surface)', border: '1px solid var(--linea)' }}>
+                  <span style={{ color: 'var(--muted)' }}><Icono d={D_BUSCAR} className="h-[18px] w-[18px]" /></span>
+                  <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Busca por marca, línea o producto…" aria-label="Buscar línea" className="min-w-0 flex-1 bg-transparent outline-none" style={{ color: 'var(--ink)' }} />
+                </label>
+              </div>
+              <div className="sin-barra overflow-y-auto px-5 pb-6">
+                {porMarca.length === 0 && <p className="py-10 text-center text-[14px]" style={{ color: 'var(--muted)' }}>No encontramos esa línea. Prueba con otra palabra.</p>}
+                <div className="grid grid-cols-3 gap-x-3 gap-y-4">
+                  {porMarca.flatMap((g) => g.items).map((r) => {
+                    const n = cantidadPorRutina(r.id);
+                    const esActiva = r.id === activaId;
+                    return (
+                      <button key={r.id} type="button" onClick={() => { setMarcaFiltro(marcaPorRutina[r.id]); elegirRutina(r.id); setVerTodas(false); vibrar(8); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="relative cursor-pointer text-center">
+                        <span className="block overflow-hidden rounded-[20px]" style={{ boxShadow: esActiva ? '0 0 0 2px var(--bg), 0 0 0 4px var(--acento)' : '0 0 0 1px var(--linea)' }}>
+                          <img src={r.foto_url} alt="" className="aspect-[3/4] w-full object-cover" loading="lazy" draggable={false} />
+                        </span>
+                        <span className="mt-1.5 block truncate text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: 'var(--acento)' }}>{marcaPorRutina[r.id]}</span>
+                        <span className="line-clamp-2 block text-[11.5px] font-semibold leading-tight">{nombreCorto(r)}</span>
+                        {n > 0 && <span className="boton-acento absolute -right-1 -top-1 flex h-[20px] min-w-[20px] items-center justify-center rounded-full px-1 text-[10.5px] font-bold text-white">{n}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };
