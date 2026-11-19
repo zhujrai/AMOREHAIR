@@ -507,7 +507,7 @@ export function buildWhatsAppMessage(order: Order, store: StoreSettings): string
   const shortDate = formatShortPeruvianDate(order.dispatchDate);
 
   const lines = [
-    `📦 REGISTRÉ NUEVO ENVÍO (${shippingHeaderType})`,
+    `📦 REGISTRÉ NUEVO ${order.shippingType === 'tienda' ? 'RECOJO' : 'ENVÍO'} (${shippingHeaderType})`,
     '',
     `👤 ${order.customerName}`,
     `📱 ${order.customerPhone}`,
@@ -515,7 +515,7 @@ export function buildWhatsAppMessage(order: Order, store: StoreSettings): string
     agencyOrLocationText,
     addressOrRefText,
     '',
-    `🚚 ${courierName}`,
+    `${order.shippingType === 'tienda' ? '🏪 Recojo en' : '🚚'} ${courierName}`,
     `📅 ${shortDate}`,
   ];
 

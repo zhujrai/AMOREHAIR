@@ -119,6 +119,17 @@ function enlaceDespacho(c: Cotizacion): string {
   return `${window.location.origin}/pedidos?${params.toString()}`;
 }
 
+/** Enlace personalizado + breve texto instructivo para que la asesora lo envíe a mano */
+function textoEnlace(c: Cotizacion): string {
+  return `Hola${c.nombre ? ` ${c.nombre.trim().split(' ')[0]}` : ''} ✨ para avanzar con tu pedido ${c.id}, completa tus datos en este enlace (tarda 1 minuto):
+${enlaceDespacho(c)}
+
+1) Revisa tu nombre y WhatsApp
+2) Elige cómo recibirlo: envío por agencia, delivery en Lima o recojo en nuestro local
+3) Completa tu DNI y dirección o agencia, y envía.
+Nosotras seguimos la coordinación por WhatsApp. 💛`;
+}
+
 /** Mensaje de cotización para WhatsApp: la clienta ve solo el TOTAL. */
 function mensajeCotizacion(c: Cotizacion): string {
   const venta = c.precio_final ?? 0;
@@ -820,7 +831,8 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
                       <button type="button" onClick={() => compartirImagen(c, venta)} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]">Compartir como imagen</button>
                     </>
                   ) : <p className="text-xs text-[#8A7A76]">Indica el precio de venta para poder enviarla.</p>}
-                  <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace copiado')} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]" title="La clienta abre el enlace y llena ella misma sus datos de envío">Enlace para que ella complete sus datos</button>
+                  <button type="button" onClick={() => copiar(textoEnlace(c), 'Enlace con instrucciones copiado')} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]" title="Copia el enlace personalizado (con su nombre y WhatsApp) y un texto corto para que lo pegues en el chat">Copiar enlace con instrucciones</button>
+                  <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Solo el enlace copiado')} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]" title="Solo el enlace personalizado, sin texto">Solo el enlace</button>
                 </div>
                 {c.estado !== 'descartada' && !c.pedido_id && !pedidosPorConsulta[c.id] && (
                   <p className="text-[11px] leading-snug text-[#6B5A55]">

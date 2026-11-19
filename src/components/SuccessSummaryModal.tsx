@@ -87,13 +87,14 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
     agencyText = `Distrito: ${order.deliveryDistrict || 'Lima Metropolitana'}`;
     addressText = `${order.deliveryAddress || ''}${order.deliveryReference ? `, Ref. ${order.deliveryReference}` : ''}`;
   } else {
-    shippingHeader = 'RETIRO EN SALÓN';
+    shippingHeader = 'RETIRO EN LOCAL AMORE';
     courierName = storeSettings.storeName || 'Amore Salon';
     agencyText = `Local: ${storeSettings.address || 'CyberPlaza - Lima Centro'}`;
     addressText = `Horario: ${storeSettings.openingHours || 'Lun - Sáb: 9am - 8pm'}`;
   }
 
   const shortDate = formatShortPeruvianDate(order.dispatchDate);
+  const esRecojo = order.shippingType === 'tienda';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
@@ -111,7 +112,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
               <Package className="w-5 h-5 stroke-[2.2]" />
             </div>
             <span className="font-mono-meta text-[11px] font-black tracking-[0.16em] uppercase text-[#6B5A55] dark:text-zinc-400">
-              FORMULARIO DE ENVÍO
+              {esRecojo ? 'FORMULARIO DE RECOJO' : 'FORMULARIO DE ENVÍO'}
             </span>
           </div>
 
@@ -135,7 +136,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
           </h2>
 
           <p className="text-xs sm:text-sm text-[#6B5A55] dark:text-zinc-300 font-medium max-w-xs mx-auto leading-relaxed mt-2">
-            Tu envío ha sido programado correctamente. Verifica los datos, continuaremos la coordinación por Whatsapp.
+            {esRecojo ? 'Tu recojo ha sido programado correctamente. Verifica' : 'Tu envío ha sido programado correctamente. Verifica'} los datos, continuaremos la coordinación por Whatsapp.
           </p>
         </div>
 
@@ -157,7 +158,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
           <div className="space-y-2.5 text-xs sm:text-[13px] font-medium leading-relaxed">
             <div className="flex items-center gap-2 font-black text-black dark:text-white">
               <span className="text-base flex-shrink-0">📦</span>
-              <span>REGISTRÉ NUEVO ENVÍO ({shippingHeader})</span>
+              <span>{esRecojo ? 'REGISTRÉ NUEVO RECOJO' : 'REGISTRÉ NUEVO ENVÍO'} ({shippingHeader})</span>
             </div>
 
             <div className="flex items-center gap-2 text-black dark:text-zinc-100 font-bold">
@@ -191,8 +192,8 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
 
             <div className="pt-1 space-y-2 border-t border-dashed border-[#EADCD3] dark:border-zinc-800">
               <div className="flex items-center gap-2 text-black dark:text-zinc-100 font-bold">
-                <span className="text-base flex-shrink-0">🚚</span>
-                <span>{courierName}</span>
+                <span className="text-base flex-shrink-0">{esRecojo ? '🏪' : '🚚'}</span>
+                <span>{esRecojo ? `Recojo en ${courierName}` : courierName}</span>
               </div>
 
               <div className="flex items-center gap-2 text-black dark:text-zinc-100 font-bold">
@@ -242,7 +243,7 @@ export const SuccessSummaryModal: React.FC<SuccessSummaryModalProps> = ({
           >
             {copied ? <Check className="w-4 h-4 stroke-[3]" /> : <Copy className="w-4 h-4 stroke-[2.5]" />}
             <span className={copied ? 'text-emerald-800 dark:text-emerald-300' : isDark ? 'text-white' : 'text-black'}>
-              {copied ? '¡Datos copiados al portapapeles!' : 'Copiar Resumen de Envío'}
+              {copied ? '¡Datos copiados al portapapeles!' : (esRecojo ? 'Copiar Resumen de Recojo' : 'Copiar Resumen de Envío')}
             </span>
           </button>
         </div>
