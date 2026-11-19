@@ -13,7 +13,7 @@ import type { ZonaCatalogo } from '../utils/contornos';
  * flete (el cliente solo ve el TOTAL), conversa por WhatsApp y, al aceptarse, la pasa al tablero como tarjeta.
  */
 
-interface LineaSel { producto_id?: string; producto: string; presentacion: string | null; cantidad: number; precio_sugerido: number | null; rutina?: string; marca?: string }
+interface LineaSel { presentacion_id?: string | null; producto_id?: string; producto: string; presentacion: string | null; cantidad: number; precio_sugerido: number | null; rutina?: string; marca?: string }
 interface Cotizacion {
   id: string;
   created_at: string;
@@ -125,6 +125,11 @@ export const Cotizaciones: React.FC = () => {
   const [edicion, setEdicion] = useState<Record<string, { venta: string; flete: string; motivo: string; notas: string }>>({});
   const [pasando, setPasando] = useState<string | null>(null);
   const [pedidosPorConsulta, setPedidosPorConsulta] = useState<Record<string, { id: string; status: string }>>({});
+  // Edición de productos de una cotización (antes de pasarla al tablero, o incluso después)
+  const [productosDB, setProductosDB] = useState<{ id: string; marca: string; nombre: string }[]>([]);
+  const [presDB, setPresDB] = useState<Record<string, { id: string; etiqueta: string; precio_sugerido: number | null }[]>>({});
+  const [editando, setEditando] = useState<string | null>(null);
+  const [borrador, setBorrador] = useState<{ lineas: LineaSel[]; nombre: string; telefono: string }>({ lineas: [], nombre: '', telefono: '' });
   const [rutinasFoto, setRutinasFoto] = useState<RutinaFoto[]>([]);
   const [piezasDB, setPiezasDB] = useState<PiezaDB[]>([]);
   const [nombres, setNombres] = useState<Record<string, string>>({}); // nombre de producto -> id (cotizaciones antiguas sin producto_id)
@@ -153,6 +158,12 @@ export const Cotizaciones: React.FC = () => {
         });
         supabase.from('rutinas').select('id,nombre,foto_url,ancho_foto,alto_foto').then(({ data }) => setRutinasFoto((data || []) as RutinaFoto[]));
         supabase.from('productos').select('id,nombre').then(({ data }) => setNombres(Object.fromEntries((data || []).map((p: { id: string; nombre: string }) => [p.nombre, p.id]))));
+        supabase.from('presentaciones').select('id,producto_id,etiqueta,precio_sugerido,orden').order('orden').then(({ data }) => {
+          const m: Record<string, { id: string; etiqueta: string; precio_sugerido: number | null }[]> = {};
+          (data || []).forEach((x: { id: string; producto_id: string; etiqueta: string; precio_sugerido: number | null }) => { (m[x.producto_id] ||= []).push({ id: x.id, etiqueta: x.etiqueta, precio_sugerido: x.precio_sugerido }); });
+          setPresDB(m);
+        });
+        supabase.from('productos').select('id,marca,nombre').order('marca').order('nombre').then(({ data }) => setProductosDB((data || []) as { id: string; marca: string; nombre: string }[]));
         supabase.from('rutina_piezas').select('rutina_id,producto_id,zona').then(({ data }) => setPiezasDB((data || []) as PiezaDB[]));
       }
     });
@@ -254,6 +265,44 @@ export const Cotizaciones: React.FC = () => {
     } catch (e) {
       if ((e as Error)?.name !== 'AbortError') setError('No se pudo generar la imagen (si la foto está en otro dominio, revisa permisos CORS).');
     }
+  };
+
+  const empezarEdicion = (c: Cotizacion) => {
+    setBorrador({ lineas: c.seleccion.map((l) => ({ ...l })), nombre: c.nombre || '', telefono: (c.telefono || '').replace(/^51/, '') });
+    setEditando(c.id);
+  };
+  const cambiarLinea = (i: number, cambios: Partial<LineaSel>) => setBorrador((b) => ({ ...b, lineas: b.lineas.map((l, k) => (k === i ? { ...l, ...cambios } : l)) }));
+  const agregarProducto = (productoId: string) => {
+    const prod = productosDB.find((x) => x.id === productoId);
+    if (!prod) return;
+    const pres = presDB[prod.id]?.[0];
+    const pieza = piezasDB.find((x) => x.producto_id === prod.id);
+    const rutina = rutinasFoto.find((r) => r.id === pieza?.rutina_id);
+    const nueva: LineaSel = { producto_id: prod.id, producto: prod.nombre, marca: prod.marca, rutina: rutina ? rutina.nombre.split('·')[0].trim() : undefined, presentacion: pres?.etiqueta ?? null, cantidad: 1, precio_sugerido: pres?.precio_sugerido ?? null };
+    (nueva as LineaSel & { presentacion_id?: string | null }).presentacion_id = pres?.id ?? null;
+    setBorrador((b) => ({ ...b, lineas: [...b.lineas, nueva] }));
+  };
+  const guardarEdicion = async (c: Cotizacion) => {
+    const lineas = borrador.lineas.filter((l) => l.cantidad > 0);
+    if (lineas.length === 0) return setError('La cotización debe tener al menos un producto (para anularla usa el estado "Descartadas").');
+    const tel = borrador.telefono.replace(/\D/g, '');
+    if (borrador.nombre.trim().length < 2) return setError('El nombre de la clienta es obligatorio.');
+    if (!/^9\d{8}$/.test(tel)) return setError('El WhatsApp debe tener 9 dígitos y empezar con 9.');
+    setError('');
+    const conPrecio = lineas.every((l) => l.precio_sugerido != null);
+    const total = conPrecio ? lineas.reduce((s, l) => s + (l.precio_sugerido as number) * l.cantidad, 0) : null;
+    const ok = await guardar(c, { seleccion: lineas, total_sugerido: total, nombre: borrador.nombre.trim(), telefono: tel }, 'Cotización actualizada');
+    if (!ok) return;
+    // Si la cotización ya es una tarjeta, actualiza también sus productos para que no queden desfasados
+    const idPedido = c.pedido_id || pedidosPorConsulta[c.id]?.id;
+    if (idPedido) {
+      const items = lineas.map(lineaTexto).join('; ').slice(0, 900);
+      const { data: fila } = await supabase.from('orders').select('raw_data').eq('id', idPedido).maybeSingle();
+      const raw = { ...((fila?.raw_data as Record<string, unknown>) || {}), itemsDescription: items };
+      const { error: eO } = await supabase.from('orders').update({ items_description: items, raw_data: raw, updated_at: new Date().toISOString() }).eq('id', idPedido);
+      avisar(eO ? 'Cotización guardada, pero no se pudo actualizar la tarjeta' : `Tarjeta ${idPedido} actualizada`, 3200);
+    }
+    setEditando(null);
   };
 
   const copiar = async (texto: string, ok: string) => {
@@ -406,6 +455,54 @@ export const Cotizaciones: React.FC = () => {
                 })}
                 {c.total_sugerido != null && <p className="text-xs text-[#8A7A76]">Total sugerido por catálogo: {dinero(Number(c.total_sugerido))}</p>}
               </div>
+
+              {/* Ajuste de la cotización: el equipo puede cambiar productos, tamaños, cantidades y datos de contacto */}
+              {c.estado !== 'descartada' && editando !== c.id && (
+                <button type="button" onClick={() => empezarEdicion(c)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Editar productos y datos</button>
+              )}
+              {editando === c.id && (
+                <div className="space-y-3 rounded-xl border border-dashed border-[#DFBF8B] bg-[#FBF1DC]/40 p-3">
+                  <p className="text-xs font-bold">Editar cotización {c.id}{(c.pedido_id || pedidosPorConsulta[c.id]) ? ' · también se actualizará su tarjeta' : ''}</p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">Nombre *<input value={borrador.nombre} onChange={(e) => setBorrador((b) => ({ ...b, nombre: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm font-semibold normal-case" /></label>
+                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">WhatsApp (9 dígitos) *<input value={borrador.telefono} onChange={(e) => setBorrador((b) => ({ ...b, telefono: e.target.value }))} inputMode="tel" className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm font-semibold normal-case" /></label>
+                  </div>
+                  <ul className="space-y-2">
+                    {borrador.lineas.map((l, i) => {
+                      const lista = (l.producto_id && presDB[l.producto_id]) || [];
+                      const actual = (l as LineaSel & { presentacion_id?: string | null }).presentacion_id;
+                      return (
+                        <li key={i} className="flex flex-wrap items-center gap-2 rounded-xl bg-white p-2">
+                          <span className="min-w-0 flex-1 basis-40 text-[13px] font-semibold leading-snug">{l.producto}</span>
+                          {lista.length > 1 ? (
+                            <select value={actual || lista.find((x) => x.etiqueta === l.presentacion)?.id || ''} onChange={(e) => { const pr = lista.find((x) => x.id === e.target.value); cambiarLinea(i, { presentacion: pr?.etiqueta ?? null, precio_sugerido: pr?.precio_sugerido ?? null, ...(pr ? ({ presentacion_id: pr.id } as Partial<LineaSel>) : {}) }); }} className="rounded-lg border border-[#EADCD3] px-2 py-1.5 text-xs font-semibold" aria-label="Tamaño">
+                              {lista.map((x) => <option key={x.id} value={x.id}>{x.etiqueta}</option>)}
+                            </select>
+                          ) : <span className="text-xs text-[#8A7A76]">{l.presentacion}</span>}
+                          <span className="flex items-center rounded-full bg-[#F6E8E1]">
+                            <button type="button" aria-label="Menos" onClick={() => cambiarLinea(i, { cantidad: Math.max(1, l.cantidad - 1) })} className="h-8 w-8 cursor-pointer text-lg leading-none">−</button>
+                            <span className="w-5 text-center text-sm font-bold tabular-nums">{l.cantidad}</span>
+                            <button type="button" aria-label="Más" onClick={() => cambiarLinea(i, { cantidad: Math.min(99, l.cantidad + 1) })} className="h-8 w-8 cursor-pointer text-lg leading-none">+</button>
+                          </span>
+                          <button type="button" aria-label={`Quitar ${l.producto}`} title="Quitar" onClick={() => setBorrador((b) => ({ ...b, lineas: b.lineas.filter((_, k) => k !== i) }))} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-[#8A7A76] hover:bg-[#F6E8E1]">
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <select value="" onChange={(e) => { if (e.target.value) agregarProducto(e.target.value); }} className="w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm" aria-label="Agregar producto">
+                    <option value="">+ Agregar un producto…</option>
+                    {Array.from(new Set(productosDB.map((x) => x.marca))).map((m) => (
+                      <optgroup key={m} label={m}>{productosDB.filter((x) => x.marca === m).map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}</optgroup>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => guardarEdicion(c)} className="rounded-xl bg-[#2B1D1A] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#A8634F] transition-colors">Guardar cambios</button>
+                    <button type="button" onClick={() => setEditando(null)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer">Cancelar</button>
+                  </div>
+                </div>
+              )}
 
               {/* Cotización de productos. El flete NO se calcula aquí: se agrega en la tarjeta cuando se sabe el destino */}
               <div className="grid grid-cols-2 gap-2">

@@ -12,7 +12,8 @@ import { useEscapeCierra } from '../utils/useEscapeCierra';
  */
 
 const WHATSAPP = '51940339934';
-const CLAVE_CESTA = 'amore_cesta_v1';
+const CLAVE_CESTA = 'amore_cesta_v2'; // v2: la cesta se guarda por pieza de la foto (v1 era por producto)
+const CLAVE_CESTA_V1 = 'amore_cesta_v1';
 // Logo de marca (Cloudinary: amore/marca). Claro: fondo casi blanco que se funde con el fondo; oscuro: versión dorada para modo oscuro.
 const LOGO_CLARO = 'https://res.cloudinary.com/gvwnzzml/image/upload/e_trim:12,f_auto,q_auto,c_limit,w_420/v1795066846/amore/marca/logo-horizontal-claro';
 const LOGO_OSCURO = 'https://res.cloudinary.com/gvwnzzml/image/upload/e_trim:12,f_auto,q_auto,c_limit,w_420/v1795066847/amore/marca/logo-horizontal-oscuro';
@@ -204,6 +205,9 @@ export const Catalogo: React.FC = () => {
       return !v;
     });
   };
+  const [errores, setErrores] = useState<{ nombre?: string; telefono?: string }>({});
+  const [registrada, setRegistrada] = useState<{ codigo: string; url: string } | null>(null);
+  useEscapeCierra(Boolean(registrada), () => setRegistrada(null));
   const [marcaFiltro, setMarcaFiltro] = useState<string>('todas');
   const [verTodas, setVerTodas] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -266,17 +270,29 @@ export const Catalogo: React.FC = () => {
         const idEnlace = window.location.pathname.replace(/^\/catalogo\/?/, '').split('/')[0];
         setActivaId((rs as Rutina[]).some((r) => r.id === idEnlace) ? idEnlace : (rs as Rutina[])[0].id);
 
-        // Cesta guardada en este teléfono (se valida contra lo que existe hoy)
+        // Cesta guardada en este teléfono (se valida contra lo que existe hoy). v1 (por producto) se convierte a v2 (por pieza).
         try {
-          const guardada = JSON.parse(localStorage.getItem(CLAVE_CESTA) || '{}') as Record<string, ItemSel>;
+          const piezasTodas = (pz || []) as Pieza[];
           const valida: Record<string, ItemSel> = {};
-          Object.entries(guardada).forEach(([pid, it]) => {
-            const prod = mapaProductos[pid];
-            const lista = porProducto[pid] || [];
+          const aceptar = (clave: string, it: ItemSel) => {
+            const pieza = piezasTodas.find((x) => String(x.id) === clave);
+            if (!pieza) return;
+            const prod = mapaProductos[pieza.producto_id];
+            const lista = porProducto[pieza.producto_id] || [];
             if (!prod || !prod.disponible || lista.length === 0) return;
-            const pr = lista.find((x) => x.id === it.presentacionId) || lista[0];
-            valida[pid] = { presentacionId: pr.id, cantidad: Math.min(9, Math.max(1, Number(it.cantidad) || 1)) };
-          });
+            const pr = lista.find((x) => x.id === it.presentacionId) || lista.find((x) => x.id === pieza.presentacion_foto_id) || lista[0];
+            valida[clave] = { presentacionId: pr.id, cantidad: Math.min(9, Math.max(1, Number(it.cantidad) || 1)) };
+          };
+          const v2 = localStorage.getItem(CLAVE_CESTA);
+          if (v2) {
+            Object.entries(JSON.parse(v2) as Record<string, ItemSel>).forEach(([k, it]) => aceptar(k, it));
+          } else {
+            Object.entries(JSON.parse(localStorage.getItem(CLAVE_CESTA_V1) || '{}') as Record<string, ItemSel>).forEach(([pid, it]) => {
+              const candidatas = piezasTodas.filter((x) => x.producto_id === pid);
+              const pieza = candidatas.find((x) => x.presentacion_foto_id === it.presentacionId) || candidatas[0];
+              if (pieza) aceptar(String(pieza.id), it);
+            });
+          }
           setSeleccion(valida);
         } catch {}
       } catch (e: any) {
@@ -354,31 +370,21 @@ export const Catalogo: React.FC = () => {
     return { presentacionId: inicial?.id || '', cantidad: 1 };
   };
 
-  // Un producto puede aparecer dos veces en la foto (p. ej. shampoo de 1 L y de 400 ml): tocar el otro tamaño cambia el tamaño; tocar el elegido lo quita.
+  // Cada producto dibujado en la foto es una entrada propia de la cesta (si el mismo producto sale en dos tamaños, se pueden llevar ambos).
+  const clave = (p: Pieza) => String(p.id);
   const alternar = (p: Pieza) => {
     const prod = productos[p.producto_id];
     if (!prod || !prod.disponible) return;
     vibrar();
     setSeleccion((prev) => {
       const copia = { ...prev };
-      const actual = copia[p.producto_id];
-      const variasEnFoto = piezas.filter((x) => x.rutina_id === p.rutina_id && x.producto_id === p.producto_id).length > 1;
-      if (actual) {
-        if (variasEnFoto && p.presentacion_foto_id && actual.presentacionId !== p.presentacion_foto_id && (presentaciones[p.producto_id] || []).some((x) => x.id === p.presentacion_foto_id)) {
-          copia[p.producto_id] = { ...actual, presentacionId: p.presentacion_foto_id };
-        } else delete copia[p.producto_id];
-      } else copia[p.producto_id] = seleccionInicial(p);
+      if (copia[clave(p)]) delete copia[clave(p)];
+      else copia[clave(p)] = seleccionInicial(p);
       return copia;
     });
   };
-  const quitarProducto = (productoId: string) => { vibrar(); setSeleccion((prev) => { const c = { ...prev }; delete c[productoId]; return c; }); };
-  // ¿Esta pieza de la foto está elegida? (con dos tamaños del mismo producto, solo brilla el elegido)
-  const piezaMarcada = (p: Pieza): boolean => {
-    const sel = seleccion[p.producto_id];
-    if (!sel) return false;
-    const variasEnFoto = piezas.filter((x) => x.rutina_id === p.rutina_id && x.producto_id === p.producto_id).length > 1;
-    return !variasEnFoto || !p.presentacion_foto_id || sel.presentacionId === p.presentacion_foto_id;
-  };
+  const quitarLinea = (k: string) => { vibrar(); setSeleccion((prev) => { const c = { ...prev }; delete c[k]; return c; }); };
+  const piezaMarcada = (p: Pieza): boolean => Boolean(seleccion[clave(p)]);
 
   const elegirTodoElKit = () => {
     vibrar(14);
@@ -387,26 +393,24 @@ export const Catalogo: React.FC = () => {
       const copia = { ...prev };
       piezasActiva.forEach((p) => {
         const prod = productos[p.producto_id];
-        if (prod && prod.disponible && !copia[p.producto_id]) copia[p.producto_id] = seleccionInicial(p);
+        if (prod && prod.disponible && !copia[clave(p)]) copia[clave(p)] = seleccionInicial(p);
       });
       return copia;
     });
   };
 
-  const cambiar = (productoId: string, cambios: Partial<ItemSel>) =>
-    setSeleccion((prev) => (prev[productoId] ? { ...prev, [productoId]: { ...prev[productoId], ...cambios } } : prev));
+  const cambiar = (k: string, cambios: Partial<ItemSel>) =>
+    setSeleccion((prev) => (prev[k] ? { ...prev, [k]: { ...prev[k], ...cambios } } : prev));
 
   // Líneas de la cesta (sin repetir productos) y su agrupación por MARCA
   const lineas = useMemo(() => {
-    const vistos = new Set<string>();
-    const res: { pieza: Pieza; rutina: Rutina; prod: Producto; sel: ItemSel; pres?: Presentacion }[] = [];
+    const res: { clave: string; pieza: Pieza; rutina: Rutina; prod: Producto; sel: ItemSel; pres?: Presentacion }[] = [];
     rutinas.forEach((r) => {
-      piezas.filter((p) => p.rutina_id === r.id && seleccion[p.producto_id]).forEach((p) => {
+      piezas.filter((p) => p.rutina_id === r.id && seleccion[String(p.id)]).forEach((p) => {
         const prod = productos[p.producto_id];
-        if (!prod || vistos.has(prod.id)) return;
-        vistos.add(prod.id);
-        const sel = seleccion[p.producto_id];
-        res.push({ pieza: p, rutina: r, prod, sel, pres: (presentaciones[prod.id] || []).find((x) => x.id === sel.presentacionId) });
+        if (!prod) return;
+        const sel = seleccion[String(p.id)];
+        res.push({ clave: String(p.id), pieza: p, rutina: r, prod, sel, pres: (presentaciones[prod.id] || []).find((x) => x.id === sel.presentacionId) });
       });
     });
     return res;
@@ -425,14 +429,38 @@ export const Catalogo: React.FC = () => {
   const cantidadTotal = lineas.reduce((s, l) => s + l.sel.cantidad, 0);
   const todosConPrecio = lineas.length > 0 && lineas.every((l) => l.pres?.precio_sugerido != null);
   const totalSugerido = todosConPrecio ? lineas.reduce((s, l) => s + (l.pres!.precio_sugerido as number) * l.sel.cantidad, 0) : null;
-  const disponiblesActiva = Array.from(new Set(piezasActiva.filter((p) => productos[p.producto_id]?.disponible).map((p) => p.producto_id))).length;
-  const productosActiva = Array.from(new Set(piezasActiva.map((p) => p.producto_id)));
-  const elegidasActiva = productosActiva.filter((id) => seleccion[id]).length;
-  const cantidadPorRutina = (id: string) => new Set(piezas.filter((p) => p.rutina_id === id && seleccion[p.producto_id]).map((p) => p.producto_id)).size;
+  const disponiblesActiva = piezasActiva.filter((p) => productos[p.producto_id]?.disponible).length;
+  const elegidasActiva = piezasActiva.filter((p) => seleccion[String(p.id)]).length;
+  const cantidadPorRutina = (id: string) => piezas.filter((p) => p.rutina_id === id && seleccion[String(p.id)]).length;
   const cantidadPorMarca = (marca: string) => rutinas.filter((r) => marcaPorRutina[r.id] === marca).reduce((s, r) => s + cantidadPorRutina(r.id), 0);
 
+  // Foco y resaltado del primer campo obligatorio que falta
+  const enfocarCampo = (id: string) => {
+    window.setTimeout(() => {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el?.focus({ preventScroll: true });
+    }, 60);
+  };
+
   const consultar = async (destino: 'whatsapp' | 'despacho' = 'whatsapp') => {
-    if (lineas.length === 0) return;
+    if (lineas.length === 0) { setError('Elige al menos un producto en la foto.'); return; }
+    // Nombre y WhatsApp son obligatorios (la clienta no tiene cuenta: así la asesora sabe a quién responder)
+    const nombreOk = nombre.trim().replace(/[^A-Za-zÀ-ÿ]/g, '').length >= 3;
+    let tel = telefono.replace(/\D/g, '');
+    if (tel.length === 11 && tel.startsWith('51')) tel = tel.slice(2);
+    const telOk = /^9\d{8}$/.test(tel);
+    if (!nombreOk || !telOk) {
+      setErrores({
+        nombre: nombreOk ? undefined : 'Escribe tu nombre para que tu asesora sepa a quién responder.',
+        telefono: telOk ? undefined : 'Escribe tu WhatsApp de 9 dígitos (empieza con 9).',
+      });
+      setError('');
+      vibrar(20);
+      enfocarCampo(nombreOk ? 'campo-telefono' : 'campo-nombre');
+      return;
+    }
+    setErrores({});
     setEnviando(true);
     setError('');
     const ref = refDelEnlace();
@@ -453,8 +481,8 @@ export const Catalogo: React.FC = () => {
       if (typeof id === 'string' && id) {
         const { error: eI } = await supabase.from('consultas').insert([{
           id,
-          nombre: nombre.trim() || null,
-          telefono: telefono.replace(/\D/g, '') || null,
+          nombre: nombre.trim(),
+          telefono: tel,
           rutina_id: lineas[0]?.rutina.id ?? null,
           ref: ref || null,
           estado: 'nueva',
@@ -484,7 +512,10 @@ export const Catalogo: React.FC = () => {
       setDespachoUrl(`/pedidos?${q.toString()}`);
       return;
     }
-    window.location.href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+    const urlWsp = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+    // Con código registrado se muestra una hoja con el código de referencia antes de abrir WhatsApp
+    if (codigo) { setRegistrada({ codigo, url: urlWsp }); return; }
+    window.location.href = urlWsp;
   };
 
   const alTocar = (e: React.TouchEvent) => { toque.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
@@ -717,7 +748,7 @@ export const Catalogo: React.FC = () => {
                     <p className="text-[11px]" style={{ color: 'var(--muted)' }}>{g.lineas.reduce((s, l) => s + l.sel.cantidad, 0)} und.</p>
                   </div>
                   <ul className="tarjeta overflow-hidden rounded-[24px]">
-                    {g.lineas.map(({ pieza, prod, sel, rutina }, i) => {
+                    {g.lineas.map(({ clave: k, pieza, prod, sel, rutina }, i) => {
                       const pres = presentaciones[prod.id] || [];
                       return (
                         <li key={pieza.id} className="entra flex gap-3 px-3 py-3" style={{ borderTop: i ? '1px solid var(--linea)' : 'none' }}>
@@ -726,7 +757,7 @@ export const Catalogo: React.FC = () => {
                             {/* Nombre completo (puede ocupar 2 líneas) y botón de quitar */}
                             <div className="flex items-start justify-between gap-1">
                               <p className="text-[14px] font-semibold leading-snug" style={{ overflowWrap: 'anywhere' }}>{prod.nombre}</p>
-                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => quitarProducto(prod.id)} title="Quitar de la cesta" className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[var(--hueco)]" style={{ color: 'var(--muted)' }}>
+                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => quitarLinea(k)} title="Quitar de la cesta" className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[var(--hueco)]" style={{ color: 'var(--muted)' }}>
                                 <Icono d={D_TACHO} className="h-[17px] w-[17px]" />
                               </button>
                             </div>
@@ -735,7 +766,7 @@ export const Catalogo: React.FC = () => {
                               {pres.length > 1 ? (
                                 <select
                                   value={sel.presentacionId}
-                                  onChange={(e) => cambiar(prod.id, { presentacionId: e.target.value })}
+                                  onChange={(e) => cambiar(k, { presentacionId: e.target.value })}
                                   className="min-w-0 max-w-[58%] rounded-full py-1.5 pl-3 pr-2 text-[13px] font-medium"
                                   style={{ background: 'var(--hueco)', color: 'var(--ink)', border: 'none' }}
                                   aria-label={`Tamaño de ${prod.nombre}`}
@@ -748,9 +779,9 @@ export const Catalogo: React.FC = () => {
                                 <span className="min-w-0 text-[13px]" style={{ color: 'var(--muted)' }}>{pres[0]?.etiqueta}{pres[0]?.precio_sugerido != null && ` · ref. ${dinero(pres[0].precio_sugerido)}`}</span>
                               )}
                               <div className="flex shrink-0 items-center rounded-full" style={{ background: 'var(--hueco)' }}>
-                                <button type="button" aria-label="Menos" onClick={() => { cambiar(prod.id, { cantidad: Math.max(1, sel.cantidad - 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">−</button>
+                                <button type="button" aria-label="Menos" onClick={() => { cambiar(k, { cantidad: Math.max(1, sel.cantidad - 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">−</button>
                                 <span className="w-4 text-center text-[14px] font-semibold tabular-nums">{sel.cantidad}</span>
-                                <button type="button" aria-label="Más" onClick={() => { cambiar(prod.id, { cantidad: Math.min(9, sel.cantidad + 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">+</button>
+                                <button type="button" aria-label="Más" onClick={() => { cambiar(k, { cantidad: Math.min(9, sel.cantidad + 1) }); vibrar(6); }} className="h-9 w-9 cursor-pointer text-[18px] font-medium leading-none">+</button>
                               </div>
                             </div>
                           </div>
@@ -763,29 +794,30 @@ export const Catalogo: React.FC = () => {
             </div>
           )}
 
-          {/* Datos opcionales */}
-          <div className="mt-5 grid grid-cols-2 gap-2.5">
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Tu nombre"
-              autoComplete="name"
-              enterKeyHint="next"
-              className="h-12 rounded-2xl px-4"
-              style={{ background: 'var(--surface)', border: '1px solid var(--linea)', color: 'var(--ink)' }}
-            />
-            <input
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              placeholder="Tu WhatsApp"
-              inputMode="tel"
-              autoComplete="tel"
-              enterKeyHint="done"
-              className="h-12 rounded-2xl px-4"
-              style={{ background: 'var(--surface)', border: '1px solid var(--linea)', color: 'var(--ink)' }}
-            />
+          {/* Datos de contacto (obligatorios) */}
+          <div className="mt-5 space-y-3">
+            {([
+              { id: 'campo-nombre', etiqueta: 'Tu nombre', valor: nombre, poner: setNombre, error: errores.nombre, props: { autoComplete: 'name', enterKeyHint: 'next' as const, placeholder: 'Ej. María Pérez' }, clave: 'nombre' as const },
+              { id: 'campo-telefono', etiqueta: 'Tu WhatsApp', valor: telefono, poner: setTelefono, error: errores.telefono, props: { inputMode: 'tel' as const, autoComplete: 'tel', enterKeyHint: 'done' as const, placeholder: '9 dígitos, ej. 987654321' }, clave: 'telefono' as const },
+            ]).map((c) => (
+              <div key={c.id}>
+                <label htmlFor={c.id} className="mb-1 block px-1 text-[12px] font-bold">{c.etiqueta} <span style={{ color: '#D9534F' }}>*</span></label>
+                <input
+                  id={c.id}
+                  value={c.valor}
+                  onChange={(e) => { c.poner(e.target.value); if (c.error) setErrores((x) => ({ ...x, [c.clave]: undefined })); }}
+                  aria-invalid={Boolean(c.error)}
+                  aria-describedby={c.error ? `${c.id}-error` : undefined}
+                  required
+                  className="h-12 w-full rounded-2xl px-4"
+                  style={{ background: 'var(--surface)', color: 'var(--ink)', border: c.error ? '1.5px solid #D9534F' : '1px solid var(--linea)', boxShadow: c.error ? '0 0 0 4px rgba(217,83,79,.20)' : 'none', transition: 'box-shadow .2s, border-color .2s' }}
+                  {...c.props}
+                />
+                {c.error && <p id={`${c.id}-error`} role="alert" className="mt-1 px-1 text-[12px] font-semibold" style={{ color: '#D9534F' }}>{c.error}</p>}
+              </div>
+            ))}
           </div>
-          <p className="mt-2 px-1 text-[12px]" style={{ color: 'var(--muted)' }}>Opcional. Tu asesora te responde por WhatsApp y confirma el precio final.</p>
+          <p className="mt-2 px-1 text-[12px]" style={{ color: 'var(--muted)' }}>Tu asesora te responde por WhatsApp y confirma el precio final. Verás un código de cotización de referencia.</p>
           {lineas.length > 0 && (<button type="button" onClick={() => consultar('despacho')} disabled={enviando} className="mt-3 w-full cursor-pointer rounded-2xl py-3 text-[14px] font-semibold disabled:opacity-50" style={{ background: 'var(--hueco)', color: 'var(--ink)' }}>Confirmar mi pedido ahora →</button>)}
           {error && <p className="mt-3 text-center text-[13px] text-red-600">{error}</p>}
         </section>
@@ -875,6 +907,24 @@ export const Catalogo: React.FC = () => {
           </>
         );
       })()}
+      {registrada && (
+        <>
+          <div className="hoja-fondo" onClick={() => setRegistrada(null)} aria-hidden="true" />
+          <div className="hoja" role="dialog" aria-modal="true" aria-label="Cotización registrada">
+            <div className="px-6 pb-6 pt-6 text-center">
+              <span className="boton-acento mx-auto flex h-12 w-12 items-center justify-center rounded-full"><Icono d={D_CHECK} className="h-6 w-6" /></span>
+              <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--muted)' }}>Cotización registrada</p>
+              <p className="titulo-grad mt-1 text-[44px] font-extrabold leading-none tracking-tight">{registrada.codigo}</p>
+              <p className="mx-auto mt-3 max-w-xs text-[14px] leading-snug" style={{ color: 'var(--muted)' }}>Guarda este código: es tu referencia. Envía el mensaje por WhatsApp para que tu asesora confirme el precio final.</p>
+              <a href={registrada.url} target="_blank" rel="noopener noreferrer" onClick={() => vibrar(10)} className="boton-acento mt-5 flex h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[16px] font-semibold">
+                <Icono d={D_WSP} className="h-[19px] w-[19px]" /> Enviar por WhatsApp
+              </a>
+              <button type="button" onClick={() => { const c = registrada.codigo; setRegistrada(null); const q = new URLSearchParams(); q.set('c', c); const rf = refDelEnlace(); if (rf) q.set('ref', rf); q.set('items', lineas.map((l) => `${l.sel.cantidad} × ${l.prod.nombre}${l.pres ? ` (${l.pres.etiqueta})` : ''}`).join('; ').slice(0, 300)); setDespachoUrl(`/pedidos?${q.toString()}`); }} className="mt-2.5 h-12 w-full cursor-pointer rounded-full text-[14px] font-semibold" style={{ background: 'var(--hueco)', color: 'var(--ink)' }}>Ya sé a dónde enviar: confirmar mi pedido</button>
+              <button type="button" onClick={() => setRegistrada(null)} className="mt-1 h-11 w-full cursor-pointer text-[13px] font-medium" style={{ color: 'var(--muted)' }}>Cerrar</button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
