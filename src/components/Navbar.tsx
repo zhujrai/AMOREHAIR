@@ -146,8 +146,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const selector = (
     <div role="tablist" aria-label="Tablero" className={`inline-flex items-center gap-0.5 rounded-xl border p-0.5 ${isDark ? 'border-white/10 bg-[#2A1E1A]' : 'border-[#EADCD3] bg-[#FBF4F0]'}`}>
       {([
-        { id: 'pedidos' as const, texto: 'Pedidos', icono: <PackageCheck className="h-4 w-4" />, n: pendingCount, ayuda: 'Tablero de pedidos y despachos' },
-        { id: 'cotizaciones' as const, texto: 'Cotizaciones', icono: <MessageSquareText className="h-4 w-4" />, n: cotizacionesNuevas, ayuda: 'Tablero de cotizaciones del catálogo' },
+        { id: 'cotizaciones' as const, texto: 'Cotizaciones', paso: '1', icono: <MessageSquareText className="h-4 w-4" />, n: cotizacionesNuevas, ayuda: 'Paso 1: las consultas del catálogo se negocian aquí hasta confirmar el pedido' },
+        { id: 'pedidos' as const, texto: 'Pedidos', paso: '2', icono: <PackageCheck className="h-4 w-4" />, n: pendingCount, ayuda: 'Paso 2: pedidos confirmados, abono, empaque y despacho' },
       ]).map((s) => (
         <button
           key={s.id}
@@ -163,10 +163,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               : isDark ? 'text-zinc-300 hover:bg-white/10' : 'text-[#6B5A55] hover:bg-white'
           }`}
         >
-          {s.icono}
+          <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-black ${seccion === s.id ? 'bg-white text-[#A8634F]' : isDark ? 'bg-white/15 text-zinc-200' : 'bg-[#EADCD3] text-[#6B5A55]'}`} aria-hidden="true">{s.paso}</span>
           <span>{s.texto}</span>
           {s.n > 0 && (
-            <span className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-black ${seccion === s.id ? 'bg-white text-[#A8634F]' : 'bg-[#A8634F] text-white'}`}>{s.n}</span>
+            <span className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-black ${seccion === s.id ? 'bg-white text-[#A8634F]' : 'bg-[#A8634F] text-white'}`} title={s.id === 'cotizaciones' ? 'Por atender' : 'Por despachar'}>{s.n}</span>
           )}
         </button>
       ))}

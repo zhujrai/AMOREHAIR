@@ -354,6 +354,25 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
     return null;
   };
 
+  /** Botón "Confirmar pedido" del detalle: guarda lo escrito, y si falta nombre o WhatsApp abre su edición */
+  const confirmarDesdeDetalle = async (c: Cotizacion) => {
+    const v = valores(c);
+    const venta = num(v.venta);
+    if (v.venta.trim() !== '' && venta === null) return setError('El precio de venta debe ser un número válido.');
+    if (venta === null || venta <= 0) { setError('Para confirmar el pedido indica el precio de venta.'); document.getElementById(`venta-${c.id}`)?.focus(); return; }
+    const actualizada = { ...c, precio_final: venta, motivo_ajuste: v.motivo.trim() || null, notas: v.notas.trim() || null };
+    const ok = await guardar(c, { precio_final: venta, motivo_ajuste: actualizada.motivo_ajuste, notas: actualizada.notas }, 'Guardado');
+    if (!ok) return;
+    const falta = faltaParaConfirmar(actualizada);
+    if (falta) {
+      setError(falta);
+      if (editando !== c.id) empezarEdicion(c);
+      return;
+    }
+    setError('');
+    setConfirmando(actualizada);
+  };
+
   const intentarConfirmar = (c: Cotizacion) => {
     const falta = faltaParaConfirmar(c);
     if (falta) {
@@ -607,7 +626,6 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
               <h2 className="flex-1 text-base font-extrabold">Cotización {c.id}</h2>
               <button type="button" onClick={() => { setDetalleId(null); setError(''); }} data-tip="Cerrar" aria-label="Cerrar" className="tip-der flex h-8 w-8 items-center justify-center rounded-lg text-[#6B5A55] cursor-pointer hover:bg-[#F6E8E1]"><X className="h-5 w-5" /></button>
             </div>
-            {error && <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
             <div className="space-y-3 rounded-2xl border border-[#EADCD3] bg-white p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-bold">{c.id}</span>
@@ -724,34 +742,45 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
               </div>
               <textarea value={v.notas} onChange={(e) => setEdicion((p) => ({ ...p, [c.id]: { ...v, notas: e.target.value } }))} rows={2} placeholder="Notas de la conversación (tipo de cabello, dudas, objeciones, qué decidió…)" className="w-full rounded-xl border border-[#EADCD3] px-2.5 py-2 text-sm" />
 
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => guardarCotizacion(c)} className="rounded-xl bg-[#2B1D1A] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#A8634F] transition-colors">Guardar</button>
-                {venta > 0 && (
-                  <>
-                    <button type="button" onClick={() => copiar(mensajeCotizacion({ ...c, precio_final: venta }), 'Cotización copiada')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Copiar cotización</button>
-                    {tel && (
-                      <a href={`https://wa.me/51${tel}?text=${encodeURIComponent(mensajeCotizacion({ ...c, precio_final: venta }))}`} target="_blank" rel="noreferrer" className="rounded-xl bg-[#25D366] px-3.5 py-2 text-xs font-bold text-white">Enviar por WhatsApp</a>
-                    )}
-                  </>
-                )}
-                {venta > 0 && (<button type="button" onClick={() => compartirImagen(c, venta)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Cotización en imagen</button>)}
-                <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace para confirmar pedido copiado')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Enlace para confirmar pedido</button>
-                {!c.pedido_id && !pedidosPorConsulta[c.id] && c.estado !== 'descartada' && (
-                  <button type="button" onClick={() => intentarConfirmar({ ...c, precio_final: num(v.venta) ?? c.precio_final })} className="ml-auto rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Confirmar pedido</button>
-                )}
-                {(c.pedido_id || pedidosPorConsulta[c.id]) && onVerPedido && (
-                  <button type="button" onClick={() => onVerPedido((c.pedido_id || pedidosPorConsulta[c.id]?.id) as string)} className="ml-auto rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-emerald-700">Ver pedido {c.pedido_id || pedidosPorConsulta[c.id]?.id}</button>
+              {/* Enviar la cotización a la clienta */}
+              <div className="space-y-2 rounded-xl bg-[#FBF4F0] p-3">
+                <p className="text-[10px] font-black uppercase tracking-wide text-[#8E4F3E]">Enviar a la clienta</p>
+                <div className="flex flex-wrap gap-2">
+                  {venta > 0 ? (
+                    <>
+                      <button type="button" onClick={() => copiar(mensajeCotizacion({ ...c, precio_final: venta }), 'Cotización copiada')} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]">Copiar texto</button>
+                      {tel && (
+                        <a href={`https://wa.me/51${tel}?text=${encodeURIComponent(mensajeCotizacion({ ...c, precio_final: venta }))}`} target="_blank" rel="noreferrer" className="rounded-xl bg-[#25D366] px-3.5 py-2 text-xs font-bold text-white">Enviar por WhatsApp</a>
+                      )}
+                      <button type="button" onClick={() => compartirImagen(c, venta)} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]">Compartir como imagen</button>
+                    </>
+                  ) : <p className="text-xs text-[#8A7A76]">Indica el precio de venta para poder enviarla.</p>}
+                  <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace copiado')} className="rounded-xl border border-[#EADCD3] bg-white px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]" title="La clienta abre el enlace y llena ella misma sus datos de envío">Enlace para que ella complete sus datos</button>
+                </div>
+                {tel && (
+                  <div className="flex flex-wrap items-center gap-1.5" aria-label="Respuestas rápidas">
+                    <span className="text-[10px] font-black uppercase tracking-wide text-[#8A7A76]">Respuestas rápidas</span>
+                    {RESPUESTAS.map((rp) => (
+                      <a key={rp.etiqueta} href={`https://wa.me/51${tel}?text=${encodeURIComponent(rp.texto(c))}`} target="_blank" rel="noreferrer" className="rounded-full bg-[#ECFDF5] px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-[#D4EADE]">{rp.etiqueta}</a>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {tel && (
-                <div className="flex flex-wrap items-center gap-1.5" aria-label="Respuestas rápidas">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-[#8A7A76]">Respuestas rápidas</span>
-                  {RESPUESTAS.map((rp) => (
-                    <a key={rp.etiqueta} href={`https://wa.me/51${tel}?text=${encodeURIComponent(rp.texto(c))}`} target="_blank" rel="noreferrer" className="rounded-full bg-[#ECFDF5] px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-[#D4EADE]">{rp.etiqueta}</a>
-                  ))}
+              {/* Pie fijo: siempre visible, con el error y las dos acciones principales */}
+              <div className="sticky bottom-0 -mx-4 -mb-4 space-y-2 rounded-b-2xl border-t border-[#EADCD3] bg-white/95 px-4 py-3 backdrop-blur">
+                {error && <p role="alert" className="rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => guardarCotizacion(c)} className="rounded-xl border border-[#2B1D1A] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#F6E8E1]">Guardar precio y notas</button>
+                  <span className="hidden text-[11px] text-[#8A7A76] sm:inline">Cuando la clienta acepte →</span>
+                  {!c.pedido_id && !pedidosPorConsulta[c.id] && c.estado !== 'descartada' && (
+                    <button type="button" onClick={() => confirmarDesdeDetalle(c)} className="ml-auto rounded-xl bg-[#A8634F] px-4 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Confirmar pedido</button>
+                  )}
+                  {(c.pedido_id || pedidosPorConsulta[c.id]) && onVerPedido && (
+                    <button type="button" onClick={() => onVerPedido((c.pedido_id || pedidosPorConsulta[c.id]?.id) as string)} className="ml-auto rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white cursor-pointer hover:bg-emerald-700">Ver pedido {c.pedido_id || pedidosPorConsulta[c.id]?.id}</button>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         ));
