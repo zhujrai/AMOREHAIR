@@ -146,6 +146,13 @@ interface CotizacionesProps {
   onNuevas?: (n: number) => void;
 }
 
+/** Deja solo los 9 dígitos del celular: admite +51, 51, espacios, guiones y paréntesis */
+const normalizarTel = (raw: string): string => {
+  let d = (raw || '').replace(/\D/g, '');
+  if (d.length === 11 && d.startsWith('51')) d = d.slice(2);
+  return d;
+};
+
 export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFocoAtendido, onVerPedido, onNuevas }) => {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
   const [filtro, setFiltro] = useState('nueva');
@@ -326,7 +333,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
   const guardarEdicion = async (c: Cotizacion) => {
     const lineas = borrador.lineas.filter((l) => l.cantidad > 0);
     if (lineas.length === 0) return setError('La cotización debe tener al menos un producto (para anularla usa el estado "Descartadas").');
-    const tel = borrador.telefono.replace(/\D/g, '');
+    const tel = normalizarTel(borrador.telefono);
     if (borrador.nombre.trim().length < 2) return setError('El nombre de la clienta es obligatorio.');
     if (!/^9\d{8}$/.test(tel)) return setError('El WhatsApp debe tener 9 dígitos y empezar con 9.');
     setError('');
@@ -359,7 +366,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
   const faltaParaConfirmar = (c: Cotizacion): string | null => {
     if (!((c.precio_final ?? 0) > 0)) return 'Para confirmar el pedido indica el precio de venta y guárdalo.';
     if ((c.nombre || '').trim().length < 2) return 'Falta el nombre de la clienta (edítalo en "Editar productos y datos").';
-    if (!/^9\d{8}$/.test((c.telefono || '').replace(/\D/g, '').replace(/^51/, ''))) return 'Falta el WhatsApp de la clienta (9 dígitos, empieza con 9).';
+    if (!/^9\d{8}$/.test(normalizarTel(c.telefono || ''))) return 'Falta el WhatsApp de la clienta (9 dígitos, empieza con 9).';
     return null;
   };
 
@@ -369,8 +376,15 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
     const venta = num(v.venta);
     if (v.venta.trim() !== '' && venta === null) return setError('El precio de venta debe ser un número válido.');
     if (venta === null || venta <= 0) { setError('Para confirmar el pedido indica el precio de venta.'); document.getElementById(`venta-${c.id}`)?.focus(); return; }
-    const actualizada = { ...c, precio_final: venta, motivo_ajuste: v.motivo.trim() || null, notas: v.notas.trim() || null };
-    const ok = await guardar(c, { precio_final: venta, motivo_ajuste: actualizada.motivo_ajuste, notas: actualizada.notas, ...(c.estado === 'nueva' ? { estado: 'en_conversacion' } : {}) }, 'Guardado');
+    const datos: { nombre?: string; telefono?: string } = {};
+    if (editando === c.id) {
+      const tel = normalizarTel(borrador.telefono);
+      if (borrador.nombre.trim().length < 2) return setError('El nombre de la clienta es obligatorio.');
+      if (!/^9\d{8}$/.test(tel)) return setError('El WhatsApp debe tener 9 dígitos y empezar con 9 (puedes escribirlo con +51 o espacios).');
+      datos.nombre = borrador.nombre.trim(); datos.telefono = tel;
+    }
+    const actualizada = { ...c, ...datos, precio_final: venta, motivo_ajuste: v.motivo.trim() || null, notas: v.notas.trim() || null };
+    const ok = await guardar(c, { ...datos, precio_final: venta, motivo_ajuste: actualizada.motivo_ajuste, notas: actualizada.notas, ...(c.estado === 'nueva' ? { estado: 'en_conversacion' } : {}) }, 'Guardado');
     if (!ok) return;
     const falta = faltaParaConfirmar(actualizada);
     if (falta) {
@@ -379,6 +393,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
       return;
     }
     setError('');
+    if (editando === c.id) setEditando(null);
     setConfirmando(actualizada);
   };
 
@@ -439,7 +454,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
       dispatch_date: envio.fecha,
       status: 'nuevos',
       customer_name: c.nombre?.trim() || `Cliente ${c.id}`,
-      customer_phone: (c.telefono || '').replace(/\D/g, '').slice(-9),
+      customer_phone: normalizarTel(c.telefono || '').slice(-9),
       document_type: 'DNI',
       document_number: envio.dni.trim(),
       shipping_type: porConfirmar ? 'shalom' : envio.medio,
@@ -683,7 +698,7 @@ export const Cotizaciones: React.FC<CotizacionesProps> = ({ orders, focoId, onFo
                   <p className="text-xs font-bold">Editar cotización {c.id}{(c.pedido_id || pedidosPorConsulta[c.id]) ? ' · también se actualizará su tarjeta' : ''}</p>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">Nombre *<input value={borrador.nombre} onChange={(e) => setBorrador((b) => ({ ...b, nombre: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm font-semibold normal-case" /></label>
-                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">WhatsApp (9 dígitos) *<input value={borrador.telefono} onChange={(e) => setBorrador((b) => ({ ...b, telefono: e.target.value }))} inputMode="tel" className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm font-semibold normal-case" /></label>
+                    <label className="text-[10px] font-black uppercase tracking-wide text-[#6B5A55]">WhatsApp (9 dígitos) *<input value={borrador.telefono} onChange={(e) => setBorrador((b) => ({ ...b, telefono: e.target.value }))} onBlur={() => setBorrador((b) => ({ ...b, telefono: /^9\d{8}$/.test(normalizarTel(b.telefono)) ? normalizarTel(b.telefono) : b.telefono }))} inputMode="tel" className="mt-1 w-full rounded-xl border border-[#EADCD3] bg-white px-2.5 py-2 text-sm font-semibold normal-case" /></label>
                   </div>
                   <ul className="space-y-2">
                     {borrador.lineas.map((l, i) => {
