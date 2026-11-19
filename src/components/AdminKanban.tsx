@@ -863,6 +863,7 @@ export const AdminKanban: React.FC<AdminKanbanProps> = ({
                               className="w-3.5 h-3.5 rounded text-[#A8634F] accent-[#A8634F] cursor-pointer flex-shrink-0"
                               title="Seleccionar para imprimir rótulo"
                             />
+                            {order.consultaId && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#F6E8E1] text-[#8E4F3E] dark:bg-white/10 dark:text-[#DFBF8B] leading-none flex-shrink-0" title="Viene de la cotización del catálogo">{order.consultaId}</span>)}
                             {order.status === 'nuevos' && !order.seenAt && (<span className="new-pulso text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#A8634F] text-white leading-none flex-shrink-0">New</span>)}
                             <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded-md bg-[#FBF4F0] dark:bg-zinc-800 text-[#1F1613] dark:text-zinc-100 border border-[#EADCD3] dark:border-zinc-700 whitespace-nowrap flex-shrink-0 leading-none select-all">
                               #{order.id}

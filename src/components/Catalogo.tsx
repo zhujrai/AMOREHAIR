@@ -13,6 +13,9 @@ import { useEscapeCierra } from '../utils/useEscapeCierra';
 
 const WHATSAPP = '51940339934';
 const CLAVE_CESTA = 'amore_cesta_v1';
+// Logo de marca (Cloudinary: amore/marca). Claro: fondo casi blanco que se funde con el fondo; oscuro: versión dorada para modo oscuro.
+const LOGO_CLARO = 'https://res.cloudinary.com/gvwnzzml/image/upload/e_trim:12,f_auto,q_auto,c_limit,w_420/v1795066846/amore/marca/logo-horizontal-claro';
+const LOGO_OSCURO = 'https://res.cloudinary.com/gvwnzzml/image/upload/e_trim:12,f_auto,q_auto,c_limit,w_420/v1795066847/amore/marca/logo-horizontal-oscuro';
 // Texto del mensaje del botón de kit completo. IMPORTANTE: debe corresponder a una oferta real que la asesora confirme.
 const TEXTO_KIT = 'Lleva el kit completo y pide tu descuento exclusivo: tu asesora te lo confirma en la cotización.';
 
@@ -46,6 +49,9 @@ const D_BOLSA = 'M6 8h12l-1 12H7L6 8zm3 0V6a3 3 0 0 1 6 0v2';
 const D_CHECK = 'M5 12.5l4.2 4.2L19 7';
 const D_MAS = 'M12 5v14M5 12h14';
 const D_X = 'M6 6l12 12M18 6L6 18';
+const D_IZQ = 'M15 5l-7 7 7 7';
+const D_DER = 'M9 5l7 7-7 7';
+const D_TACHO = 'M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3';
 const D_REJILLA = 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z';
 const D_BUSCAR = 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm9 16l-4-4';
 const D_LUNA = 'M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.8 6.8 0 0 0 9.7 9.7z';
@@ -67,6 +73,58 @@ const Miniatura: React.FC<{ foto: string; zona: Zona; ancho: number; alto: numbe
           style={{ position: 'absolute', maxWidth: 'none', width: ancho * escala, height: alto * escala, left: -zona.x * ancho * escala, top: -zona.y * alto * escala }}
         />
       </div>
+    </div>
+  );
+};
+
+/** Tira horizontal: se desliza con el dedo (táctil) y con mouse tiene flechas, arrastre y teclado; los bordes se difuminan si hay más contenido. */
+const Tira: React.FC<{ etiqueta: string; rol?: string; interior?: string; children: React.ReactNode }> = ({ etiqueta, rol, interior = '', children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [borde, setBorde] = useState({ izq: false, der: false });
+  const [arrastrando, setArrastrando] = useState(false);
+  const arr = useRef({ activo: false, x: 0, left: 0, movido: false });
+  const medir = () => {
+    const el = ref.current;
+    if (!el) return;
+    setBorde({ izq: el.scrollLeft > 6, der: el.scrollLeft + el.clientWidth < el.scrollWidth - 6 });
+  };
+  useEffect(() => {
+    medir();
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [children]);
+  const mover = (d: number) => ref.current?.scrollBy({ left: d * Math.max(180, (ref.current?.clientWidth || 300) * 0.7), behavior: 'smooth' });
+  const mascara = `linear-gradient(90deg, ${borde.izq ? 'transparent 0, #000 28px' : '#000 0'}, ${borde.der ? '#000 calc(100% - 28px), transparent 100%' : '#000 100%'})`;
+  return (
+    <div className="relative -mx-4">
+      <div
+        ref={ref}
+        role={rol}
+        aria-label={etiqueta}
+        tabIndex={0}
+        onScroll={medir}
+        onKeyDown={(e) => { if (e.key === 'ArrowRight') { e.preventDefault(); mover(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); mover(-1); } }}
+        onMouseDown={(e) => { if (e.button !== 0 || !ref.current) return; arr.current = { activo: true, x: e.clientX, left: ref.current.scrollLeft, movido: false }; }}
+        onMouseMove={(e) => {
+          const a = arr.current;
+          if (!a.activo || !ref.current) return;
+          const dx = e.clientX - a.x;
+          if (!a.movido && Math.abs(dx) > 5) { a.movido = true; setArrastrando(true); }
+          if (a.movido) ref.current.scrollLeft = a.left - dx;
+        }}
+        onMouseUp={() => { arr.current.activo = false; setArrastrando(false); }}
+        onMouseLeave={() => { arr.current.activo = false; setArrastrando(false); }}
+        onClickCapture={(e) => { if (arr.current.movido) { e.stopPropagation(); e.preventDefault(); arr.current.movido = false; } }}
+        className={`tira sin-barra flex overflow-x-auto px-4 ${arrastrando ? 'arrastrando' : ''} ${interior}`}
+        style={{ WebkitMaskImage: mascara, maskImage: mascara }}
+      >
+        {children}
+      </div>
+      {borde.izq && <button type="button" className="flecha izq" aria-label={`${etiqueta}: anterior`} onClick={() => mover(-1)}><Icono d={D_IZQ} className="h-4 w-4" /></button>}
+      {borde.der && <button type="button" className="flecha der" aria-label={`${etiqueta}: siguiente`} onClick={() => mover(1)}><Icono d={D_DER} className="h-4 w-4" /></button>}
     </div>
   );
 };
@@ -114,6 +172,10 @@ const ESTILOS = `
 .cat .chip-on .chip-n { background:rgba(255,255,255,.28); color:#fff; }
 .cat .linea-card { position:relative; flex:0 0 auto; width:78px; cursor:pointer; text-align:center; scroll-snap-align:start; }
 .cat .linea-foto { display:block; overflow:hidden; border-radius:20px; transition:all .3s cubic-bezier(.2,.8,.2,1); }
+.cat .flecha { display:none; position:absolute; top:50%; z-index:5; width:34px; height:34px; margin-top:-17px; align-items:center; justify-content:center; border-radius:999px; cursor:pointer; color:var(--ink); background:var(--vidrio); border:1px solid var(--linea); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:0 8px 18px -8px rgba(0,0,0,.35); transition:transform .2s, opacity .2s; }
+.cat .flecha:hover { transform:scale(1.08); }
+.cat .flecha.izq { left:8px; } .cat .flecha.der { right:8px; }
+@media (hover:hover) and (pointer:fine) { .cat .flecha { display:flex; } .cat .tira { cursor:grab; } .cat .tira.arrastrando { cursor:grabbing; user-select:none; } .cat .tira.arrastrando * { pointer-events:none; } }
 .cat .hoja-fondo { position:fixed; inset:0; z-index:40; background:rgba(15,9,8,.55); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); animation:catEntra .25s both; }
 .cat .hoja { position:fixed; left:0; right:0; bottom:0; z-index:41; margin:0 auto; max-width:640px; max-height:88dvh; display:flex; flex-direction:column; border-radius:30px 30px 0 0; background:var(--bg); box-shadow:0 -24px 60px -20px rgba(0,0,0,.5); animation:catSube .32s cubic-bezier(.2,.8,.2,1) both; padding-bottom:env(safe-area-inset-bottom); }
 @keyframes catSube { from { transform:translateY(40px); opacity:0 } to { transform:none; opacity:1 } }
@@ -267,10 +329,24 @@ export const Catalogo: React.FC = () => {
       window.history.replaceState(null, '', `/catalogo/${id}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`);
     } catch {}
   };
+  // Teclado: flechas izquierda/derecha cambian de línea (si no se está escribiendo)
+  useEffect(() => {
+    const f = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.getAttribute('role') === 'tablist' || el.classList.contains('tira'))) return;
+      if (verTodas || despachoUrl) return;
+      if (e.key === 'ArrowRight') irARef.current(1);
+      else if (e.key === 'ArrowLeft') irARef.current(-1);
+    };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, [verTodas, despachoUrl]);
+  const irARef = useRef<(d: number) => void>(() => {});
   const irA = (delta: number) => {
     const i = indiceActiva + delta;
     if (i >= 0 && i < rutinasVisibles.length) { elegirRutina(rutinasVisibles[i].id); vibrar(6); }
   };
+  irARef.current = irA;
 
   const seleccionInicial = (p: Pieza): ItemSel => {
     const pres = presentaciones[p.producto_id] || [];
@@ -392,9 +468,12 @@ export const Catalogo: React.FC = () => {
     const detalle = gruposMarca
       .map((g) => `*${g.marca}*\n${g.lineas.map((l) => `• ${l.sel.cantidad} × ${l.prod.nombre}${l.pres ? ` (${l.pres.etiqueta})` : ''}`).join('\n')}`)
       .join('\n\n');
-    const mensaje =
-      `Hola Amore Salón, ${nombre.trim() ? `soy ${nombre.trim()}. ` : ''}Quiero una cotización:\n\n${detalle}` +
-      `${codigo ? `\n\nCódigo de cotización: ${codigo}` : ''}${ref ? `\nOrigen: ${ref}` : ''}`;
+    // Mensaje para la asesora: se envía normalmente tras un saludo o consulta previa por WhatsApp
+    const nombresLineas = Array.from(new Set(lineas.map((l) => nombreCorto(l.rutina))));
+    const deLineas = nombresLineas.length === 0 ? '' : nombresLineas.length === 1 ? ` de ${nombresLineas[0]}` : ` de ${nombresLineas.slice(0, 2).join(' y ')}${nombresLineas.length > 2 ? ` y ${nombresLineas.length - 2} más` : ''}`;
+    const quien = nombre.trim() ? `Hola 👋 soy ${nombre.trim()}.` : 'Hola 👋';
+    const registro = codigo ? `Registré la cotización *${codigo}*${deLineas} en el catálogo de Amore:` : `Armé mi selección${deLineas} en el catálogo de Amore:`;
+    const mensaje = `${quien} ${registro}\n\n${detalle}\n\n¿Me confirmas el precio total y el costo de envío? 🙌${ref ? `\n(ref. ${ref})` : ''}`;
     setEnviando(false);
     if (destino === 'despacho') {
       // Abre el formulario de despacho encima del catálogo (la cotización ya quedó registrada)
@@ -452,11 +531,10 @@ export const Catalogo: React.FC = () => {
       <style>{ESTILOS}</style>
 
       {/* Encabezado mínimo */}
-      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-[max(14px,env(safe-area-inset-top))]">
-        <div className="leading-none">
-          <p className="text-[19px] font-semibold tracking-[0.34em]" style={{ fontFamily: "ui-serif, Georgia, 'Times New Roman', serif" }}>AMORE</p>
-          <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.28em]" style={{ color: 'var(--muted)' }}>Hair style studio</p>
-        </div>
+      <header className="mx-auto flex max-w-md items-center justify-between px-4 pt-[max(10px,env(safe-area-inset-top))] md:max-w-4xl">
+        <a href="/catalogo" aria-label="Amore Hair Style Studio, inicio del catálogo" className="block">
+          <img src={oscuro ? LOGO_OSCURO : LOGO_CLARO} alt="Amore Hair Style Studio" className="h-[62px] w-auto select-none" style={{ mixBlendMode: oscuro ? 'screen' : 'multiply', filter: oscuro ? 'none' : 'brightness(1.07) contrast(1.12)' }} draggable={false} />
+        </a>
         <div className="flex items-center gap-2">
         <button
           type="button"
@@ -490,7 +568,7 @@ export const Catalogo: React.FC = () => {
           <div className="grid grid-cols-1 gap-3">
             {/* Selector: marcas (chips) + líneas de la marca (carrusel horizontal) + hoja "Ver todas" */}
             <div>
-              <div className="sin-barra -mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist" aria-label="Marcas">
+              <Tira etiqueta="Marcas" rol="tablist" interior="gap-2 pb-1">
                 {['todas', ...marcas].map((m) => {
                   const activo = marcaFiltro === m;
                   const n = m === 'todas' ? cantidadTotal : cantidadPorMarca(m);
@@ -504,8 +582,8 @@ export const Catalogo: React.FC = () => {
                 <button type="button" onClick={() => { setBusqueda(''); setVerTodas(true); vibrar(8); }} className="chip" aria-label="Ver todas las líneas y buscar">
                   <Icono d={D_REJILLA} className="h-4 w-4" /> Ver todas <span className="chip-n">{rutinas.length}</span>
                 </button>
-              </div>
-              <nav aria-label="Líneas" className="sin-barra -mx-4 mt-2.5 flex gap-2.5 overflow-x-auto px-4 pb-2 pt-1" style={{ scrollSnapType: 'x proximity' }}>
+              </Tira>
+              <div className="mt-2.5"><Tira etiqueta="Líneas" interior="gap-2.5 pb-2 pt-1">
                 {rutinasVisibles.map((r) => {
                   const n = cantidadPorRutina(r.id);
                   const esActiva = r.id === activaId;
@@ -519,7 +597,7 @@ export const Catalogo: React.FC = () => {
                     </button>
                   );
                 })}
-              </nav>
+              </Tira></div>
             </div>
 
             {/* Escena de la rutina activa */}
@@ -527,6 +605,8 @@ export const Catalogo: React.FC = () => {
               <div key={activa.id} className="entra relative overflow-hidden rounded-[28px] shadow-[var(--sombra)]" style={{ aspectRatio: `${W} / ${H}`, background: 'var(--hueco)' }}>
                 <img src={activa.foto_url} alt={activa.nombre} className="absolute inset-0 h-full w-full select-none object-cover" draggable={false} />
                 {barrido > 0 && <div key={barrido} className="barrido" aria-hidden="true" />}
+                {indiceActiva > 0 && <button type="button" className="flecha izq" aria-label="Línea anterior" onClick={() => irA(-1)}><Icono d={D_IZQ} className="h-4 w-4" /></button>}
+                {indiceActiva >= 0 && indiceActiva < rutinasVisibles.length - 1 && <button type="button" className="flecha der" aria-label="Línea siguiente" onClick={() => irA(1)}><Icono d={D_DER} className="h-4 w-4" /></button>}
 
                 <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" role="group" aria-label="Productos de la rutina">
                   <defs>
@@ -608,10 +688,7 @@ export const Catalogo: React.FC = () => {
                 )}
               </div>
 
-              {/* Posición dentro de la marca */}
-              {rutinasVisibles.length > 1 && indiceActiva >= 0 && (
-                <p className="mt-3 text-center text-[12px] font-medium" style={{ color: 'var(--muted)' }}>{marcaPorRutina[activaId]} · {indiceActiva + 1} de {rutinasVisibles.length} · desliza para ver más</p>
-              )}
+
             </div>
           </div>
         </div>
@@ -649,8 +726,8 @@ export const Catalogo: React.FC = () => {
                             {/* Nombre completo (puede ocupar 2 líneas) y botón de quitar */}
                             <div className="flex items-start justify-between gap-1">
                               <p className="text-[14px] font-semibold leading-snug" style={{ overflowWrap: 'anywhere' }}>{prod.nombre}</p>
-                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => quitarProducto(prod.id)} className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center" style={{ color: 'var(--muted)' }}>
-                                <Icono d={D_X} className="h-4 w-4" />
+                              <button type="button" aria-label={`Quitar ${prod.nombre}`} onClick={() => quitarProducto(prod.id)} title="Quitar de la cesta" className="-mr-1.5 -mt-1.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[var(--hueco)]" style={{ color: 'var(--muted)' }}>
+                                <Icono d={D_TACHO} className="h-[17px] w-[17px]" />
                               </button>
                             </div>
                             {/* Tamaño y cantidad en su propia línea */}
@@ -709,7 +786,7 @@ export const Catalogo: React.FC = () => {
             />
           </div>
           <p className="mt-2 px-1 text-[12px]" style={{ color: 'var(--muted)' }}>Opcional. Tu asesora te responde por WhatsApp y confirma el precio final.</p>
-          {lineas.length > 0 && (<button type="button" onClick={() => consultar('despacho')} disabled={enviando} className="mt-3 w-full cursor-pointer rounded-2xl py-3 text-[14px] font-semibold disabled:opacity-50" style={{ background: 'var(--hueco)', color: 'var(--ink)' }}>Ya sé a dónde enviar: completar datos de envío →</button>)}
+          {lineas.length > 0 && (<button type="button" onClick={() => consultar('despacho')} disabled={enviando} className="mt-3 w-full cursor-pointer rounded-2xl py-3 text-[14px] font-semibold disabled:opacity-50" style={{ background: 'var(--hueco)', color: 'var(--ink)' }}>Confirmar mi pedido ahora →</button>)}
           {error && <p className="mt-3 text-center text-[13px] text-red-600">{error}</p>}
         </section>
       </main>
@@ -749,12 +826,12 @@ export const Catalogo: React.FC = () => {
         </div>
       </div>
       {despachoUrl && (
-        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--bg)' }} role="dialog" aria-label="Datos de envío">
+        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'var(--bg)' }} role="dialog" aria-label="Confirmar pedido">
           <div className="flex items-center justify-between px-4 py-3">
-            <p className="text-[15px] font-semibold">Datos de envío</p>
+            <p className="text-[15px] font-semibold">Confirmar pedido</p>
             <button type="button" onClick={() => setDespachoUrl(null)} aria-label="Cerrar" className="h-10 w-10 cursor-pointer rounded-full text-xl leading-none" style={{ background: 'var(--hueco)' }}>×</button>
           </div>
-          <iframe src={despachoUrl} title="Formulario de despacho" className="min-h-0 w-full flex-1 border-0" />
+          <iframe src={despachoUrl} title="Confirmar pedido" className="min-h-0 w-full flex-1 border-0" />
         </div>
       )}
       {verTodas && (() => {

@@ -3,6 +3,7 @@
  * Cada pieza del catálogo guarda una `zona` (rectángulo en fracciones 0–1 de la foto) y opcionalmente:
  *  - `forma`: 'botella' | 'frasco' | 'tarro' | 'caja' → se dibuja un contorno suave con esa silueta típica;
  *  - `cuello` / `cx`: ancho (0–1) y centro (0–1) de la tapa/bomba, para ajustar botellas con bomba o tapa angosta;
+ *  - `tapaAlto` / `hombro`: alto de la tapa o bomba (0–1 de la zona) y la altura donde el envase alcanza su ancho completo; sirven para botellas de 400/500 ml (tapa de bisagra, hombro corto) o con bomba alta;
  *  - `contorno`: lista de puntos [u, v] (0–1 dentro de la zona) con la silueta exacta; tiene prioridad sobre `forma`.
  */
 export type FormaProducto = 'botella' | 'frasco' | 'tarro' | 'caja';
@@ -15,6 +16,8 @@ export interface ZonaCatalogo {
   forma?: FormaProducto;
   cuello?: number;
   cx?: number;
+  tapaAlto?: number;
+  hombro?: number;
   contorno?: [number, number][];
 }
 
@@ -33,8 +36,20 @@ function puntosDeForma(z: ZonaCatalogo): Punto[] {
     case 'frasco':
       return [[l, 0], [r, 0], [r, 0.22], [0.98, 0.3], [1, 0.36], [1, 0.95], [0.92, 1], [0.08, 1], [0, 0.95], [0, 0.36], [0.02, 0.3], [l, 0.22]];
     case 'botella':
-    default:
-      return [[l, 0], [r, 0], [r, 0.12], [0.97, 0.22], [1, 0.29], [1, 0.95], [0.92, 1], [0.08, 1], [0, 0.95], [0, 0.29], [0.03, 0.22], [l, 0.12]];
+    default: {
+      // Tapa/bomba (ancho c, alto ta) → hombro curvo → cuerpo de ancho completo hasta la base redondeada
+      const ta = Math.min(0.45, z.tapaAlto ?? 0.12);
+      const hb = Math.max(ta + 0.04, Math.min(0.6, z.hombro ?? 0.29));
+      const s = hb - ta;
+      const rs = r + (1 - r) * 0.62;
+      const ls = l - l * 0.62;
+      return [
+        [l, 0], [r, 0], [r, ta],
+        [rs, ta + s * 0.34], [1 - (1 - rs) * 0.25, ta + s * 0.72], [1, hb],
+        [1, 0.95], [0.92, 1], [0.08, 1], [0, 0.95],
+        [0, hb], [ls * 0.25, ta + s * 0.72], [ls, ta + s * 0.34], [l, ta],
+      ];
+    }
   }
 }
 

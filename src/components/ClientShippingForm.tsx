@@ -476,11 +476,12 @@ export const ClientShippingForm: React.FC<ClientShippingFormProps> = ({
       <div className="mb-2.5 sm:mb-3 px-1 sm:px-2 flex items-center justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#1F1613] dark:text-white">
-            Formulario de envío
+            {consultaDesdeEnlace() ? 'Confirmar pedido' : 'Formulario de envío'}
           </h1>
           <p className="text-xs font-medium text-[#6B5A55] dark:text-zinc-400 mt-0.5">
-            Completa tus datos para coordinar el despacho de tu pedido
+            {consultaDesdeEnlace() ? 'Completa tus datos de envío para confirmar tu pedido' : 'Completa tus datos para coordinar el despacho de tu pedido'}
           </p>
+          {consultaDesdeEnlace() && (<p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#F6E8E1] px-2.5 py-1 text-[11px] font-bold text-[#8E4F3E] dark:bg-white/10 dark:text-[#DFBF8B]">🧾 Cotización {consultaDesdeEnlace()} · el precio final lo confirma tu asesora</p>)}
         </div>
       </div>
 

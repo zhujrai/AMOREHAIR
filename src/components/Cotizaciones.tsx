@@ -56,7 +56,7 @@ const saludo = (c: Cotizacion) => `Hola${c.nombre ? ` ${c.nombre.trim().split(' 
 const RESPUESTAS: { etiqueta: string; texto: (c: Cotizacion) => string }[] = [
   { etiqueta: 'Saludo', texto: (c) => `${saludo(c)} 💖 soy de Amore Salon. Vi tu cotización ${c.id}, ¿te ayudo con alguna duda?` },
   { etiqueta: 'Seguimiento', texto: (c) => `${saludo(c)} 🌸 ¿pudiste revisar tu cotización ${c.id}? Quedo atenta para ayudarte a completar tu pedido.` },
-  { etiqueta: 'Pedir datos de envío', texto: (c) => `${saludo(c)} ✨ para coordinar tu envío completa tus datos aquí:\n${enlaceDespacho(c)}` },
+  { etiqueta: 'Enviar enlace de pedido', texto: (c) => `${saludo(c)} ✨ para confirmar tu pedido completa tus datos de envío aquí:\n${enlaceDespacho(c)}` },
   { etiqueta: 'Disponibilidad', texto: (c) => `${saludo(c)} 💖 ya revisé la disponibilidad de tu cotización ${c.id}: todo lo que elegiste está listo para enviarse.` },
 ];
 
@@ -110,7 +110,7 @@ function mensajeCotizacion(c: Cotizacion): string {
   const total = venta > 0 ? (flete > 0 ? `\n\n*Total: ${dinero(venta + flete)}* (incluye envío)` : `\n\n*Total productos: ${dinero(venta)}*\n_El costo de envío se calcula según tu destino al completar tus datos._`) : '';
   return (
     `Hola${c.nombre ? ` ${c.nombre.trim()}` : ''}, te comparto tu cotización ${c.id}:\n\n${detalle}${total}` +
-    `\n\nSi estás de acuerdo, completa tus datos de envío aquí:\n${enlaceDespacho(c)}`
+    `\n\nSi estás de acuerdo, confirma tu pedido y completa tus datos de envío aquí:\n${enlaceDespacho(c)}`
   );
 }
 
@@ -124,6 +124,7 @@ export const Cotizaciones: React.FC = () => {
   const [aviso, setAviso] = useState('');
   const [edicion, setEdicion] = useState<Record<string, { venta: string; flete: string; motivo: string; notas: string }>>({});
   const [pasando, setPasando] = useState<string | null>(null);
+  const [pedidosPorConsulta, setPedidosPorConsulta] = useState<Record<string, { id: string; status: string }>>({});
   const [rutinasFoto, setRutinasFoto] = useState<RutinaFoto[]>([]);
   const [piezasDB, setPiezasDB] = useState<PiezaDB[]>([]);
   const [nombres, setNombres] = useState<Record<string, string>>({}); // nombre de producto -> id (cotizaciones antiguas sin producto_id)
@@ -145,6 +146,11 @@ export const Cotizaciones: React.FC = () => {
       setListo(true);
       if (u) {
         cargar();
+        supabase.from('orders').select('id,status,raw_data').not('raw_data->>consultaId', 'is', null).limit(500).then(({ data }) => {
+          const m: Record<string, { id: string; status: string }> = {};
+          (data || []).forEach((o: { id: string; status: string; raw_data?: { consultaId?: string } }) => { if (o.raw_data?.consultaId) m[o.raw_data.consultaId] = { id: o.id, status: o.status }; });
+          setPedidosPorConsulta(m);
+        });
         supabase.from('rutinas').select('id,nombre,foto_url,ancho_foto,alto_foto').then(({ data }) => setRutinasFoto((data || []) as RutinaFoto[]));
         supabase.from('productos').select('id,nombre').then(({ data }) => setNombres(Object.fromEntries((data || []).map((p: { id: string; nombre: string }) => [p.nombre, p.id]))));
         supabase.from('rutina_piezas').select('rutina_id,producto_id,zona').then(({ data }) => setPiezasDB((data || []) as PiezaDB[]));
@@ -295,6 +301,14 @@ export const Cotizaciones: React.FC = () => {
     setPasando(null);
   };
 
+  useEffect(() => {
+    cotizaciones.forEach((c) => {
+      const p = pedidosPorConsulta[c.id];
+      if (p && c.estado !== 'cerrada' && c.estado !== 'descartada') guardar(c, { estado: 'cerrada', pedido_id: p.id }, `Cotización ${c.id} confirmada como pedido ${p.id}`);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cotizaciones, pedidosPorConsulta]);
+
   const conteo = useMemo(() => {
     const m: Record<string, number> = {};
     cotizaciones.forEach((c) => { m[c.estado] = (m[c.estado] || 0) + 1; });
@@ -360,7 +374,7 @@ export const Cotizaciones: React.FC = () => {
                 <span className="font-mono text-sm font-bold">{c.id}</span>
                 <span className={c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000 ? 'rounded-md bg-rose-500/15 px-1.5 text-xs font-bold text-rose-700' : 'text-xs text-[#8A7A76]'}>{hace(c.created_at)}{c.estado === 'nueva' && Date.now() - new Date(c.created_at).getTime() > 86400000 ? ' · sin atender' : ''}</span>
                 {c.ref && <span className="rounded bg-[#F6E8E1] px-1.5 py-0.5 font-mono text-[11px] text-[#8E4F3E]">{c.ref}</span>}
-                {c.pedido_id && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">Tarjeta {c.pedido_id}</span>}
+                {(c.pedido_id || pedidosPorConsulta[c.id]) && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">{pedidosPorConsulta[c.id] && !c.pedido_id ? 'Pedido confirmado' : 'Tarjeta'} {c.pedido_id || pedidosPorConsulta[c.id].id}</span>}
                 <select
                   value={c.estado}
                   onChange={(e) => guardar(c, { estado: e.target.value }, 'Estado actualizado')}
@@ -433,8 +447,8 @@ export const Cotizaciones: React.FC = () => {
                   </>
                 )}
                 {venta > 0 && (<button type="button" onClick={() => compartirImagen(c, venta)} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Cotización en imagen</button>)}
-                <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace de despacho copiado')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Enlace de despacho</button>
-                {!c.pedido_id && (
+                <button type="button" onClick={() => copiar(enlaceDespacho(c), 'Enlace para confirmar pedido copiado')} className="rounded-xl border border-[#EADCD3] px-3.5 py-2 text-xs font-bold cursor-pointer hover:bg-[#FBF4F0]">Enlace para confirmar pedido</button>
+                {!c.pedido_id && !pedidosPorConsulta[c.id] && (
                   <button type="button" onClick={() => setPasando(pasando === c.id ? null : c.id)} className="ml-auto rounded-xl bg-[#A8634F] px-3.5 py-2 text-xs font-bold text-white cursor-pointer hover:bg-[#8E4F3E]">Pasar al tablero</button>
                 )}
               </div>
